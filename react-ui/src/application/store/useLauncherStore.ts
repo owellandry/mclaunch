@@ -1,16 +1,16 @@
 import { create } from "zustand";
-import type { LauncherStatus } from "../../core/domain/launcher";
+import type { LauncherStatus, MinecraftVersion } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
 import { useAppStore } from "./useAppStore";
 
 interface LauncherState {
   status: LauncherStatus;
   logs: string[];
-  selectedInstallId: string;
+  availableVersions: MinecraftVersion[];
   setStatus: (status: LauncherStatus) => void;
   addLog: (log: string) => void;
   clearLogs: () => void;
-  setSelectedInstallId: (id: string) => void;
+  fetchVersions: () => Promise<void>;
   launch: () => void;
   initListeners: () => () => void;
 }
@@ -20,12 +20,20 @@ const launcherAdapter = new ElectronLauncherAdapter();
 export const useLauncherStore = create<LauncherState>((set, get) => ({
   status: "idle",
   logs: [],
-  selectedInstallId: "aurora", // default
+  availableVersions: [],
   setStatus: (status) => set({ status }),
   addLog: (log) => set((state) => ({ logs: [...state.logs, log] })),
   clearLogs: () => set({ logs: [] }),
-  setSelectedInstallId: (id) => set({ selectedInstallId: id }),
   
+  fetchVersions: async () => {
+    try {
+      const versions = await launcherAdapter.getVersions();
+      set({ availableVersions: versions });
+    } catch (e) {
+      console.error("Failed to fetch versions", e);
+    }
+  },
+
   launch: () => {
     const { profile, config } = useAppStore.getState();
     const { status, addLog, setStatus } = get();

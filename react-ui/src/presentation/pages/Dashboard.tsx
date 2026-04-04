@@ -1,29 +1,20 @@
+import { useEffect } from "react";
 import { FiPlay } from "react-icons/fi";
 import { useLauncherStore } from "../../application/store/useLauncherStore";
+import { useAppStore } from "../../application/store/useAppStore";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 
-const INSTALLATIONS = [
-  {
-    id: "aurora",
-    label: "Vanilla 1.20.1",
-    channel: "Lanzamiento",
-    vibe: "Supervivencia",
-    description: "¡Explora tu propio mundo único, sobrevive a la noche y crea cualquier cosa que puedas imaginar!",
-  },
-  {
-    id: "pulse",
-    label: "OptiFine 1.19.4",
-    channel: "Modificado",
-    vibe: "Creativo",
-    description: "Gráficos mejorados, shaders y ajustes de rendimiento para la mejor experiencia de construcción.",
-  },
-];
-
 export function Dashboard() {
-  const { status, launch, selectedInstallId, setSelectedInstallId } = useLauncherStore();
+  const { status, launch, availableVersions, fetchVersions } = useLauncherStore();
+  const { config, setConfig } = useAppStore();
   const isRunning = status === "running";
-  const selectedInstall = INSTALLATIONS.find(i => i.id === selectedInstallId) || INSTALLATIONS[0];
+  
+  useEffect(() => {
+    fetchVersions();
+  }, [fetchVersions]);
+
+  const selectedVersion = config.version || "1.20.1";
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -49,13 +40,13 @@ export function Dashboard() {
         {/* Bottom Content */}
         <div className="absolute bottom-10 left-10 max-w-xl">
           <span className="px-3 py-1 bg-primary text-black text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_#A1E9A580]">
-            {selectedInstall.channel}
+            VANILLA RELEASE
           </span>
           <h1 className="text-5xl font-black text-white mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
-            {selectedInstall.label}
+            Minecraft {selectedVersion}
           </h1>
           <p className="text-white/90 font-medium leading-relaxed max-w-md text-sm drop-shadow-md">
-            {selectedInstall.description}
+            ¡Explora tu propio mundo único, sobrevive a la noche y crea cualquier cosa que puedas imaginar con la versión seleccionada!
           </p>
         </div>
 
@@ -115,25 +106,29 @@ export function Dashboard() {
         </Card>
 
         <Card className="flex flex-col">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Cambio Rápido</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Seleccionar Versión</h3>
           <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2">
-            {INSTALLATIONS.map(inst => (
-              <div 
-                key={inst.id}
-                onClick={() => setSelectedInstallId(inst.id)}
-                className={`p-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small ${
-                  selectedInstallId === inst.id 
-                    ? "border-primary bg-primary/10" 
-                    : "border-white/5 bg-surface/50 hover:bg-surface"
-                }`}
-              >
-                <div>
-                  <h4 className="font-bold text-white text-sm uppercase">{inst.label}</h4>
-                  <span className="text-[10px] text-textMuted uppercase tracking-wider">{inst.vibe}</span>
+            {availableVersions.length === 0 ? (
+              <div className="text-textMuted text-xs flex items-center justify-center h-full">Cargando versiones...</div>
+            ) : (
+              availableVersions.map(v => (
+                <div 
+                  key={v.id}
+                  onClick={() => setConfig({ ...config, version: v.id })}
+                  className={`p-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small ${
+                    selectedVersion === v.id 
+                      ? "border-primary bg-primary/10" 
+                      : "border-white/5 bg-surface/50 hover:bg-surface"
+                  }`}
+                >
+                  <div>
+                    <h4 className="font-bold text-white text-sm uppercase">Minecraft {v.id}</h4>
+                    <span className="text-[10px] text-textMuted uppercase tracking-wider">{new Date(v.releaseTime).toLocaleDateString()}</span>
+                  </div>
+                  <div className={`w-3 h-3 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surface border border-white/20'}`} style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
                 </div>
-                <div className={`w-3 h-3 ${selectedInstallId === inst.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surface border border-white/20'}`} style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>
