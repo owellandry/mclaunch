@@ -48,7 +48,7 @@ export function Settings() {
                     onChange={(e) => setMemory(Number(e.target.value))}
                     className="flex-1 accent-primary"
                   />
-                  <span className="w-24 px-3 py-2 bg-surfaceLight border border-white/10 text-center font-mono text-primary text-sm mc-cutout-small">
+                  <span className="w-24 px-3 py-2 bg-surfaceLight border border-black/5 text-center font-mono text-primary text-sm mc-cutout-small">
                     {memory} MB
                   </span>
                 </div>
@@ -72,14 +72,14 @@ export function Settings() {
         <div className="col-span-5 flex flex-col gap-8">
           <Card>
             <SectionTitle eyebrow="Look and feel" title="Sistema Visual" subtitle="Aspectos de UI mockeados." icon={<FiMonitor />} />
-            <div className="bg-surface/30 p-4 border border-white/5 space-y-2 mc-cutout-small">
+            <div className="bg-surfaceLight/30 p-4 border border-black/5 space-y-2 mc-cutout-small">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Modo cinemático</span>
                 <span className="text-primary font-bold uppercase tracking-wider text-[10px]">Activo</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Densidad de paneles</span>
-                <span className="text-white uppercase tracking-wider text-[10px] font-bold">Media</span>
+                <span className="text-textMain uppercase tracking-wider text-[10px] font-bold">Media</span>
               </div>
             </div>
           </Card>
@@ -87,17 +87,17 @@ export function Settings() {
           <Card className="flex-1">
             <SectionTitle eyebrow="Estado" title="Resumen" subtitle="Identidad y recursos activos." icon={<FiCpu />} />
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
+              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
                 <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Piloto Activo</span>
-                <strong className="text-white text-sm uppercase tracking-wider">{profile?.username}</strong>
+                <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
               </div>
-              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
+              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
                 <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Onboarding</span>
                 <strong className="text-primary text-sm uppercase tracking-wider">Completado</strong>
               </div>
-              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
+              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
                 <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Versión Base</span>
-                <strong className="text-white text-sm font-mono">{config.version}</strong>
+                <strong className="text-textMain text-sm font-mono">{config.version}</strong>
               </div>
             </div>
           </Card>

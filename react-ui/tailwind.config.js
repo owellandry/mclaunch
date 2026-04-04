@@ -7,14 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#151515',
-        surface: '#1F1F1F',
-        surfaceLight: '#2a2a2a',
-        primary: '#A1E9A5',
-        primaryHover: '#8ad18e',
-        secondary: '#D84136',
-        textMain: '#FFFFFF',
-        textMuted: '#a1a1aa',
+        background: '#e5e5e5', // Light stone gray
+        surface: '#f4f4f5', // Nearly white
+        surfaceLight: '#d4d4d8', // Gray for borders/accents
+        primary: '#4ade80', // Keep the Minecraft green but slightly more saturated for light bg
+        primaryHover: '#22c55e',
+        secondary: '#ef4444', // Red
+        textMain: '#18181b', // Dark gray almost black
+        textMuted: '#52525b', // Medium gray
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

@@ -23,16 +23,16 @@ export function Onboarding() {
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center relative p-8">
-      <div className="absolute inset-0 bg-[url('/src/assets/hero.png')] bg-cover bg-center opacity-20" />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background" />
+      <div className="absolute inset-0 bg-[url('/src/assets/hero.png')] bg-cover bg-center opacity-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background" />
       
       <div className="w-full max-w-xl z-10 relative">
         <Card className="border-t-4 border-t-primary shadow-2xl">
           <div className="text-center mb-10">
-            <div className="w-20 h-20 bg-surface border border-white/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_#A1E9A533]">
+            <div className="w-20 h-20 bg-surface border border-black/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_#A1E9A533]">
               <FiCommand className="text-4xl" />
             </div>
-            <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
+            <h1 className="text-4xl font-black text-textMain mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
             <p className="text-primary font-mono text-sm tracking-widest uppercase">INICIALIZAR_PERFIL_JUGADOR</p>
           </div>
 

@@ -6,8 +6,8 @@
     @apply bg-background text-textMain font-sans overflow-hidden select-none m-0 p-0;
     /* Subtle grid pattern to evoke a blocky/Minecraft feel */
     background-image: 
-      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+      linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 }
@@ -26,19 +26,19 @@
 
 @layer components {
   .glass-panel {
-    @apply bg-surface/80 backdrop-blur-xl border border-white/5;
+    @apply bg-surface/90 backdrop-blur-xl border border-black/10;
   }
   
   .btn-primary {
-    @apply bg-primary text-black hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_#A1E9A533];
+    @apply bg-primary text-white hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(74,222,128,0.4)];
   }
   
   .btn-secondary {
-    @apply bg-surfaceLight border border-white/10 text-white hover:bg-white/10 transition-colors px-6 py-3 font-bold uppercase tracking-widest;
+    @apply bg-surfaceLight border border-black/10 text-textMain hover:bg-black/5 transition-colors px-6 py-3 font-bold uppercase tracking-widest;
   }
   
   .input-field {
-    @apply bg-surface border-2 border-surfaceLight px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors font-mono mc-cutout-small;
+    @apply bg-surface border-2 border-surfaceLight px-4 py-3 text-textMain focus:outline-none focus:border-primary transition-colors font-mono mc-cutout-small;
   }
 }
 

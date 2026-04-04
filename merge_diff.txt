@@ -1,0 +1,465 @@
+diff --git a/react-ui/src/index.css b/react-ui/src/index.css
+index 0cd704e..3b91cdc 100644
+--- a/react-ui/src/index.css
++++ b/react-ui/src/index.css
+@@ -6,8 +6,8 @@
+     @apply bg-background text-textMain font-sans overflow-hidden select-none m-0 p-0;
+     /* Subtle grid pattern to evoke a blocky/Minecraft feel */
+     background-image: 
+-      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+-      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
++      linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
++      linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+     background-size: 32px 32px;
+   }
+ }
+@@ -26,19 +26,19 @@
+ 
+ @layer components {
+   .glass-panel {
+-    @apply bg-surface/80 backdrop-blur-xl border border-white/5;
++    @apply bg-surface/90 backdrop-blur-xl border border-black/10;
+   }
+   
+   .btn-primary {
+-    @apply bg-primary text-black hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_#A1E9A533];
++    @apply bg-primary text-white hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(74,222,128,0.4)];
+   }
+   
+   .btn-secondary {
+-    @apply bg-surfaceLight border border-white/10 text-white hover:bg-white/10 transition-colors px-6 py-3 font-bold uppercase tracking-widest;
++    @apply bg-surfaceLight border border-black/10 text-textMain hover:bg-black/5 transition-colors px-6 py-3 font-bold uppercase tracking-widest;
+   }
+   
+   .input-field {
+-    @apply bg-surface border-2 border-surfaceLight px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors font-mono mc-cutout-small;
++    @apply bg-surface border-2 border-surfaceLight px-4 py-3 text-textMain focus:outline-none focus:border-primary transition-colors font-mono mc-cutout-small;
+   }
+ }
+ 
+diff --git a/react-ui/src/presentation/components/layout/MainLayout.tsx b/react-ui/src/presentation/components/layout/MainLayout.tsx
+index 6caa82b..5212264 100644
+--- a/react-ui/src/presentation/components/layout/MainLayout.tsx
++++ b/react-ui/src/presentation/components/layout/MainLayout.tsx
+@@ -4,11 +4,11 @@ import { Topbar } from "./Topbar";
+ 
+ export function MainLayout() {
+   return (
+-    <div className="flex h-screen w-screen bg-[#0a0a0a] p-4 relative overflow-hidden">
++    <div className="flex h-screen w-screen bg-[#d4d4d8] p-4 relative overflow-hidden">
+       {/* App Container - Rounded with dark background like the LoL screenshot */}
+-      <div className="flex w-full h-full bg-background border border-white/5 shadow-2xl relative rounded-[24px] overflow-hidden">
++      <div className="flex w-full h-full bg-background border border-black/5 shadow-2xl relative rounded-[24px] overflow-hidden">
+         <Sidebar />
+-        <main className="flex-1 flex flex-col relative z-10 overflow-hidden bg-surface/30">
++        <main className="flex-1 flex flex-col relative z-10 overflow-hidden bg-surface/50">
+           <Topbar />
+           <div className="flex-1 overflow-y-auto px-8 pb-8 pt-4 relative">
+             <Outlet />
+diff --git a/react-ui/src/presentation/components/layout/Sidebar.tsx b/react-ui/src/presentation/components/layout/Sidebar.tsx
+index c47a64e..ba205dc 100644
+--- a/react-ui/src/presentation/components/layout/Sidebar.tsx
++++ b/react-ui/src/presentation/components/layout/Sidebar.tsx
+@@ -12,9 +12,9 @@ export function Sidebar() {
+   const location = useLocation();
+ 
+   return (
+-    <aside className="w-20 border-r border-white/5 flex flex-col items-center py-6 bg-surface/50 backdrop-blur-xl z-20">
++    <aside className="w-20 border-r border-black/5 flex flex-col items-center py-6 bg-surface/80 backdrop-blur-xl z-20">
+       {/* Brand Icon */}
+-      <div className="w-12 h-12 bg-primary text-black flex items-center justify-center shadow-[0_0_15px_#A1E9A566] mb-8 mc-cutout-small">
++      <div className="w-12 h-12 bg-primary text-white flex items-center justify-center shadow-[0_0_15px_#A1E9A566] mb-8 mc-cutout-small">
+         <FiTarget className="text-2xl" />
+       </div>
+ 
+@@ -30,8 +30,8 @@ export function Sidebar() {
+               title={item.label}
+               className={`w-12 h-12 flex items-center justify-center transition-all ${
+                 isActive 
+-                  ? "bg-surfaceLight text-primary border border-white/10 mc-cutout-small" 
+-                  : "text-textMuted hover:bg-white/5 hover:text-white rounded-xl"
++                  ? "bg-surfaceLight text-primary border border-black/5 mc-cutout-small" 
++                  : "text-textMuted hover:bg-black/5 hover:text-textMain rounded-xl"
+               }`}
+             >
+               <Icon className={`text-xl ${isActive ? "drop-shadow-[0_0_8px_#A1E9A5CC]" : ""}`} />
+diff --git a/react-ui/src/presentation/components/layout/Topbar.tsx b/react-ui/src/presentation/components/layout/Topbar.tsx
+index 39e1c99..4885a96 100644
+--- a/react-ui/src/presentation/components/layout/Topbar.tsx
++++ b/react-ui/src/presentation/components/layout/Topbar.tsx
+@@ -6,33 +6,33 @@ export function Topbar() {
+   const displayName = profile?.username || "Player";
+ 
+   return (
+-    <header className="h-20 flex items-center justify-between px-8 z-10 relative shrink-0">
++    <header className="h-20 flex items-center justify-between px-8 z-10 relative shrink-0 border-b border-black/5">
+       <div className="flex items-center gap-6">
+-        <h2 className="text-xl font-black tracking-widest text-white uppercase flex items-center gap-2 font-mono">
+-          MINECRAFT <span className="bg-primary text-black px-2 py-0.5 text-sm mc-cutout-small">HUB</span>
++        <h2 className="text-xl font-black tracking-widest text-textMain uppercase flex items-center gap-2 font-mono">
++          MINECRAFT <span className="bg-primary text-white px-2 py-0.5 text-sm mc-cutout-small">HUB</span>
+         </h2>
+       </div>
+ 
+       <div className="flex items-center gap-6">
+         {/* Search */}
+-        <div className="flex items-center gap-3 bg-surfaceLight/50 border border-white/10 px-4 py-2 w-64 focus-within:border-primary/50 transition-colors mc-cutout-small">
++        <div className="flex items-center gap-3 bg-surfaceLight border border-black/5 px-4 py-2 w-64 focus-within:border-primary/50 transition-colors mc-cutout-small">
+           <FiSearch className="text-textMuted" />
+           <input
+-            className="bg-transparent border-none outline-none text-sm text-white w-full placeholder-textMuted font-mono"
++            className="bg-transparent border-none outline-none text-sm text-textMain w-full placeholder-textMuted font-mono"
+             placeholder="Buscar..."
+             readOnly
+           />
+         </div>
+ 
+         {/* Notifications */}
+-        <button className="w-10 h-10 bg-surfaceLight/50 border border-white/10 flex items-center justify-center text-textMuted hover:text-white hover:border-primary/50 transition-colors mc-cutout-small">
++        <button className="w-10 h-10 bg-surfaceLight border border-black/5 flex items-center justify-center text-textMuted hover:text-textMain hover:border-primary/50 transition-colors mc-cutout-small">
+           <FiBell />
+         </button>
+         
+         {/* Profile */}
+-        <div className="flex items-center gap-3 bg-surfaceLight/50 border border-white/10 pl-4 pr-1 py-1 mc-cutout-small">
+-          <span className="text-sm font-bold text-white uppercase tracking-wider">{displayName}</span>
+-          <div className="w-8 h-8 bg-primary flex items-center justify-center text-black font-black mc-cutout-small">
++        <div className="flex items-center gap-3 bg-surfaceLight border border-black/5 pl-4 pr-1 py-1 mc-cutout-small">
++          <span className="text-sm font-bold text-textMain uppercase tracking-wider">{displayName}</span>
++          <div className="w-8 h-8 bg-primary flex items-center justify-center text-white font-black mc-cutout-small">
+             {displayName.slice(0, 1).toUpperCase()}
+           </div>
+         </div>
+diff --git a/react-ui/src/presentation/components/ui/SectionTitle.tsx b/react-ui/src/presentation/components/ui/SectionTitle.tsx
+index 7a2c7f4..7732692 100644
+--- a/react-ui/src/presentation/components/ui/SectionTitle.tsx
++++ b/react-ui/src/presentation/components/ui/SectionTitle.tsx
+@@ -12,14 +12,14 @@ export function SectionTitle({ eyebrow, title, subtitle, icon, action }: Section
+   return (
+     <div className="flex items-start justify-between mb-6">
+       <div className="flex items-start gap-4">
+-        <div className="p-3 bg-surfaceLight border border-white/10 text-primary text-xl mc-cutout-small shadow-[0_0_15px_#A1E9A51A]">
++        <div className="p-3 bg-surfaceLight border border-black/5 text-primary text-xl mc-cutout-small shadow-[0_0_15px_#A1E9A51A]">
+           {icon}
+         </div>
+         <div>
+           <span className="text-xs font-bold uppercase tracking-wider text-primary mb-1 block">
+             {eyebrow}
+           </span>
+-          <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight">{title}</h2>
++          <h2 className="text-2xl font-black text-textMain mb-1 uppercase tracking-tight">{title}</h2>
+           <p className="text-sm text-textMuted max-w-md">{subtitle}</p>
+         </div>
+       </div>
+diff --git a/react-ui/src/presentation/pages/Dashboard.tsx b/react-ui/src/presentation/pages/Dashboard.tsx
+index 80664b9..f567ad8 100644
+--- a/react-ui/src/presentation/pages/Dashboard.tsx
++++ b/react-ui/src/presentation/pages/Dashboard.tsx
+@@ -19,19 +19,19 @@ export function Dashboard() {
+   return (
+     <div className="flex flex-col gap-6 h-full">
+       {/* Hero Section matching Image 1 */}
+-      <div className="relative w-full h-[45%] overflow-hidden bg-surface rounded-2xl border border-white/5 shadow-2xl">
++      <div className="relative w-full h-[65%] overflow-hidden bg-surface rounded-2xl border border-black/10 shadow-xl">
+         {/* Image */}
+         <div 
+           className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
+           style={{ backgroundImage: `url('/src/assets/hero.png')` }}
+         />
+         {/* Gradient */}
+-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
++        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+         
+         {/* Top Nav (Optional, matching image 1's pill buttons) */}
+         <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
+           {['JUEGOS', 'TIENDA', 'COMUNIDAD', 'SOPORTE'].map(nav => (
+-            <div key={nav} className="px-5 py-1.5 border border-white/20 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/20 hover:bg-white/10 cursor-pointer transition-colors">
++            <div key={nav} className="px-5 py-1.5 border border-white/40 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/40 hover:bg-white/20 cursor-pointer transition-colors shadow-sm">
+               {nav}
+             </div>
+           ))}
+@@ -39,13 +39,13 @@ export function Dashboard() {
+ 
+         {/* Bottom Content */}
+         <div className="absolute bottom-10 left-10 max-w-xl">
+-          <span className="px-3 py-1 bg-primary text-black text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_#A1E9A580]">
++          <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_#A1E9A580]">
+             VANILLA RELEASE
+           </span>
+-          <h1 className="text-5xl font-black text-white mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
++          <h1 className="text-5xl font-black text-textMain mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
+             Minecraft {selectedVersion}
+           </h1>
+-          <p className="text-white/90 font-medium leading-relaxed max-w-md text-sm drop-shadow-md">
++          <p className="text-textMuted font-bold leading-relaxed max-w-md text-sm drop-shadow-md">
+             ¡Explora tu propio mundo único, sobrevive a la noche y crea cualquier cosa que puedas imaginar con la versión seleccionada!
+           </p>
+         </div>
+@@ -74,7 +74,7 @@ export function Dashboard() {
+           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Actividad Semanal</h3>
+           <div className="flex items-end gap-2 flex-1 mb-3 min-h-0">
+             {[40, 70, 30, 90, 50, 20, 100].map((h, i) => (
+-              <div key={i} className="flex-1 bg-surface relative group h-full">
++              <div key={i} className="flex-1 bg-surfaceLight relative group h-full">
+                 <div
+                   className="absolute bottom-0 left-0 right-0 bg-primary transition-all group-hover:bg-primaryHover"
+                   style={{ height: `${h}%` }}
+@@ -85,7 +85,7 @@ export function Dashboard() {
+           <div className="flex justify-between text-[10px] text-textMuted font-mono px-1 shrink-0">
+             <span>D</span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span>
+           </div>
+-          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
++          <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+             Ver Actividad Completa
+           </button>
+         </Card>
+@@ -94,16 +94,16 @@ export function Dashboard() {
+         <Card className="flex flex-col min-h-0">
+           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Tus Estadísticas</h3>
+           <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
+-            <div className="bg-surface/50 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
+-              <span className="text-4xl font-black text-white leading-none">66<span className="text-primary text-xl">%</span></span>
++            <div className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small">
++              <span className="text-4xl font-black text-textMain leading-none">66<span className="text-primary text-xl">%</span></span>
+               <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">Tasa de Victoria</span>
+             </div>
+-            <div className="bg-surface/50 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
+-              <span className="text-4xl font-black text-white leading-none">3.15</span>
++            <div className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small">
++              <span className="text-4xl font-black text-textMain leading-none">3.15</span>
+               <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">KDA</span>
+             </div>
+           </div>
+-          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
++          <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+             Ver Estadísticas
+           </button>
+         </Card>
+@@ -122,11 +122,11 @@ export function Dashboard() {
+                   className={`px-4 py-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small shrink-0 ${
+                     selectedVersion === v.id
+                       ? "border-primary bg-primary/10"
+-                      : "border-white/5 bg-surface/50 hover:bg-surface"
++                      : "border-black/5 bg-surfaceLight/50 hover:bg-surfaceLight"
+                   }`}
+                 >
+                   <div>
+-                    <h4 className={`font-bold text-sm uppercase leading-tight ${selectedVersion === v.id ? 'text-primary' : 'text-white'}`}>
++                    <h4 className={`font-bold text-sm uppercase leading-tight ${selectedVersion === v.id ? 'text-primary' : 'text-textMain'}`}>
+                       Minecraft {v.id}
+                     </h4>
+                     <span className="text-xs text-textMuted tracking-wide">
+@@ -134,14 +134,14 @@ export function Dashboard() {
+                     </span>
+                   </div>
+                   <div
+-                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surface border border-white/20'}`}
++                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surfaceLight border border-black/20'}`}
+                     style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
+                   />
+                 </div>
+               ))
+             )}
+           </div>
+-          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
++          <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+             Ver Todas las Versiones
+           </button>
+         </Card>
+diff --git a/react-ui/src/presentation/pages/Library.tsx b/react-ui/src/presentation/pages/Library.tsx
+index d6d15ad..ee13aaa 100644
+--- a/react-ui/src/presentation/pages/Library.tsx
++++ b/react-ui/src/presentation/pages/Library.tsx
+@@ -27,16 +27,16 @@ export function Library() {
+         />
+         <div className="grid grid-cols-3 gap-6 mt-8 relative z-10">
+           {INSTALLATIONS.map((inst) => (
+-            <div key={inst.id} className="bg-surfaceLight/40 border border-white/10 p-6 hover:bg-surface/80 hover:border-primary/30 transition-all group mc-cutout">
++            <div key={inst.id} className="bg-surfaceLight/40 border border-black/5 p-6 hover:bg-surfaceLight/80 hover:border-primary/30 transition-all group mc-cutout">
+               <div className="flex justify-between items-center mb-4">
+-                <span className="text-xs font-bold px-3 py-1 bg-white/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
++                <span className="text-xs font-bold px-3 py-1 bg-black/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
+                 <span className="w-2 h-2 bg-primary shadow-[0_0_8px_#A1E9A5CC] opacity-0 group-hover:opacity-100 transition-opacity" />
+               </div>
+-              <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">{inst.label}</h3>
++              <h3 className="text-xl font-black text-textMain mb-2 uppercase tracking-tight">{inst.label}</h3>
+               <p className="text-sm text-textMuted mb-6 min-h-[60px]">{inst.desc}</p>
+               <div className="flex items-center justify-between">
+                 <span className="text-[10px] text-primary/80 uppercase tracking-widest font-bold">{inst.vibe}</span>
+-                <span className="text-[10px] text-black bg-primary px-2 py-0.5 font-bold uppercase tracking-widest mc-cutout-small">Listo</span>
++                <span className="text-[10px] text-white bg-primary px-2 py-0.5 font-bold uppercase tracking-widest mc-cutout-small">Listo</span>
+               </div>
+             </div>
+           ))}
+@@ -53,12 +53,12 @@ export function Library() {
+           />
+           <div className="space-y-4">
+             {["Colección Nebula", "Bóveda de mundos", "Ajustes de mods"].map((item, i) => (
+-              <div key={i} className="flex items-center gap-4 p-4 bg-surface/30 border border-white/5 mc-cutout-small">
+-                <div className="w-10 h-10 bg-surface border border-white/10 flex items-center justify-center text-primary mc-cutout-small">
++              <div key={i} className="flex items-center gap-4 p-4 bg-surfaceLight/30 border border-black/5 mc-cutout-small">
++                <div className="w-10 h-10 bg-surfaceLight border border-black/10 flex items-center justify-center text-primary mc-cutout-small">
+                   <FiCompass />
+                 </div>
+                 <div>
+-                  <h4 className="text-white font-bold uppercase tracking-wider text-sm">{item}</h4>
++                  <h4 className="text-textMain font-bold uppercase tracking-wider text-sm">{item}</h4>
+                   <p className="text-xs text-textMuted font-mono">Trabajo en progreso</p>
+                 </div>
+               </div>
+diff --git a/react-ui/src/presentation/pages/Onboarding.tsx b/react-ui/src/presentation/pages/Onboarding.tsx
+index d719672..7aa5948 100644
+--- a/react-ui/src/presentation/pages/Onboarding.tsx
++++ b/react-ui/src/presentation/pages/Onboarding.tsx
+@@ -23,16 +23,16 @@ export function Onboarding() {
+ 
+   return (
+     <div className="min-h-screen w-full bg-background flex items-center justify-center relative p-8">
+-      <div className="absolute inset-0 bg-[url('/src/assets/hero.png')] bg-cover bg-center opacity-20" />
+-      <div className="absolute inset-0 bg-gradient-to-b from-background/50 to-background" />
++      <div className="absolute inset-0 bg-[url('/src/assets/hero.png')] bg-cover bg-center opacity-10" />
++      <div className="absolute inset-0 bg-gradient-to-b from-background/80 to-background" />
+       
+       <div className="w-full max-w-xl z-10 relative">
+         <Card className="border-t-4 border-t-primary shadow-2xl">
+           <div className="text-center mb-10">
+-            <div className="w-20 h-20 bg-surface border border-white/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_#A1E9A533]">
++            <div className="w-20 h-20 bg-surface border border-black/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_#A1E9A533]">
+               <FiCommand className="text-4xl" />
+             </div>
+-            <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
++            <h1 className="text-4xl font-black text-textMain mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
+             <p className="text-primary font-mono text-sm tracking-widest uppercase">INICIALIZAR_PERFIL_JUGADOR</p>
+           </div>
+ 
+diff --git a/react-ui/src/presentation/pages/Servers.tsx b/react-ui/src/presentation/pages/Servers.tsx
+index b490984..fc9695b 100644
+--- a/react-ui/src/presentation/pages/Servers.tsx
++++ b/react-ui/src/presentation/pages/Servers.tsx
+@@ -26,17 +26,17 @@ export function Servers() {
+         />
+         <div className="grid grid-cols-3 gap-6 mt-8">
+           {SERVERS.map((srv) => (
+-            <div key={srv.name} className="bg-surfaceLight/40 border border-white/10 p-6 hover:bg-surface/80 hover:border-primary/30 transition-all mc-cutout">
++            <div key={srv.name} className="bg-surfaceLight/40 border border-black/5 p-6 hover:bg-surfaceLight/80 hover:border-primary/30 transition-all mc-cutout">
+               <div className="flex justify-between items-center mb-4">
+-                <h3 className="text-lg font-black uppercase tracking-tight text-white">{srv.name}</h3>
++                <h3 className="text-lg font-black uppercase tracking-tight text-textMain">{srv.name}</h3>
+                 <span className="text-[10px] font-mono text-primary bg-primary/10 px-2 py-1 mc-cutout-small">{srv.ping}</span>
+               </div>
+               <p className="text-sm text-textMuted mb-6 h-10">{srv.desc}</p>
+-              <div className="flex justify-between items-center pt-4 border-t border-white/5">
++              <div className="flex justify-between items-center pt-4 border-t border-black/5">
+                 <span className="text-[10px] uppercase tracking-widest text-textMuted font-bold">{srv.mode}</span>
+                 <div className="flex items-center gap-2">
+                   <span className="w-2 h-2 bg-primary shadow-[0_0_8px_#A1E9A5CC] mc-cutout-small" />
+-                  <span className="text-[10px] uppercase tracking-widest font-bold text-white">En línea</span>
++                  <span className="text-[10px] uppercase tracking-widest font-bold text-textMain">En línea</span>
+                 </div>
+               </div>
+             </div>
+@@ -47,7 +47,7 @@ export function Servers() {
+       <div className="grid grid-cols-2 gap-8">
+         <Card>
+           <SectionTitle eyebrow="Destacados" title="Targets del mockup" subtitle="Espacios listos para slots sociales." icon={<FiServer />} />
+-          <div className="h-32 flex items-center justify-center border border-dashed border-white/10 bg-surface/20 mc-cutout-small">
++          <div className="h-32 flex items-center justify-center border border-dashed border-black/10 bg-surfaceLight/20 mc-cutout-small">
+              <span className="text-textMuted text-sm font-mono">Espacio para banners destacados</span>
+           </div>
+         </Card>
+@@ -56,12 +56,12 @@ export function Servers() {
+           <SectionTitle eyebrow="Squad" title="Presencia social" subtitle="Lista de amigos visual." icon={<FiUser />} />
+           <div className="space-y-3">
+             {[["LumaFox", "En lobby de Atlas Realm"], ["IronMint", "Armando modpack creativo"]].map(([name, detail]) => (
+-              <div key={name} className="flex items-center gap-4 bg-surface/30 p-3 border border-white/5 mc-cutout-small">
+-                <div className="w-10 h-10 bg-surface border border-white/10 flex items-center justify-center text-primary font-black mc-cutout-small">
++              <div key={name} className="flex items-center gap-4 bg-surfaceLight/30 p-3 border border-black/5 mc-cutout-small">
++                <div className="w-10 h-10 bg-surfaceLight border border-black/10 flex items-center justify-center text-primary font-black mc-cutout-small">
+                   {name.slice(0,1)}
+                 </div>
+                 <div>
+-                  <strong className="text-white text-sm block uppercase tracking-wider">{name}</strong>
++                  <strong className="text-textMain text-sm block uppercase tracking-wider">{name}</strong>
+                   <span className="text-[10px] text-textMuted font-mono">{detail}</span>
+                 </div>
+               </div>
+diff --git a/react-ui/src/presentation/pages/Settings.tsx b/react-ui/src/presentation/pages/Settings.tsx
+index 3633e67..0684577 100644
+--- a/react-ui/src/presentation/pages/Settings.tsx
++++ b/react-ui/src/presentation/pages/Settings.tsx
+@@ -48,7 +48,7 @@ export function Settings() {
+                     onChange={(e) => setMemory(Number(e.target.value))}
+                     className="flex-1 accent-primary"
+                   />
+-                  <span className="w-24 px-3 py-2 bg-surfaceLight border border-white/10 text-center font-mono text-primary text-sm mc-cutout-small">
++                  <span className="w-24 px-3 py-2 bg-surfaceLight border border-black/5 text-center font-mono text-primary text-sm mc-cutout-small">
+                     {memory} MB
+                   </span>
+                 </div>
+@@ -72,14 +72,14 @@ export function Settings() {
+         <div className="col-span-5 flex flex-col gap-8">
+           <Card>
+             <SectionTitle eyebrow="Look and feel" title="Sistema Visual" subtitle="Aspectos de UI mockeados." icon={<FiMonitor />} />
+-            <div className="bg-surface/30 p-4 border border-white/5 space-y-2 mc-cutout-small">
++            <div className="bg-surfaceLight/30 p-4 border border-black/5 space-y-2 mc-cutout-small">
+               <div className="flex justify-between items-center text-sm">
+                 <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Modo cinemático</span>
+                 <span className="text-primary font-bold uppercase tracking-wider text-[10px]">Activo</span>
+               </div>
+               <div className="flex justify-between items-center text-sm">
+                 <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Densidad de paneles</span>
+-                <span className="text-white uppercase tracking-wider text-[10px] font-bold">Media</span>
++                <span className="text-textMain uppercase tracking-wider text-[10px] font-bold">Media</span>
+               </div>
+             </div>
+           </Card>
+@@ -87,17 +87,17 @@ export function Settings() {
+           <Card className="flex-1">
+             <SectionTitle eyebrow="Estado" title="Resumen" subtitle="Identidad y recursos activos." icon={<FiCpu />} />
+             <div className="grid grid-cols-2 gap-4">
+-              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
++              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
+                 <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Piloto Activo</span>
+-                <strong className="text-white text-sm uppercase tracking-wider">{profile?.username}</strong>
++                <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
+               </div>
+-              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
++              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
+                 <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Onboarding</span>
+                 <strong className="text-primary text-sm uppercase tracking-wider">Completado</strong>
+               </div>
+-              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
++              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
+                 <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Versión Base</span>
+-                <strong className="text-white text-sm font-mono">{config.version}</strong>
++                <strong className="text-textMain text-sm font-mono">{config.version}</strong>
+               </div>
+             </div>
+           </Card>
+diff --git a/react-ui/tailwind.config.js b/react-ui/tailwind.config.js
+index 3f69d50..bf0bde3 100644
+--- a/react-ui/tailwind.config.js
++++ b/react-ui/tailwind.config.js
+@@ -7,14 +7,14 @@ export default {
+   theme: {
+     extend: {
+       colors: {
+-        background: '#151515',
+-        surface: '#1F1F1F',
+-        surfaceLight: '#2a2a2a',
+-        primary: '#A1E9A5',
+-        primaryHover: '#8ad18e',
+-        secondary: '#D84136',
+-        textMain: '#FFFFFF',
+-        textMuted: '#a1a1aa',
++        background: '#e5e5e5', // Light stone gray
++        surface: '#f4f4f5', // Nearly white
++        surfaceLight: '#d4d4d8', // Gray for borders/accents
++        primary: '#4ade80', // Keep the Minecraft green but slightly more saturated for light bg
++        primaryHover: '#22c55e',
++        secondary: '#ef4444', // Red
++        textMain: '#18181b', // Dark gray almost black
++        textMuted: '#52525b', // Medium gray
+       },
+       fontFamily: {
+         sans: ['Inter', 'system-ui', 'sans-serif'],
