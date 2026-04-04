@@ -19,7 +19,7 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-6 h-full">
       {/* Hero Section matching Image 1 */}
-      <div className="relative w-full h-[65%] overflow-hidden bg-surface rounded-2xl border border-white/5 shadow-2xl">
+      <div className="relative w-full h-[45%] overflow-hidden bg-surface rounded-2xl border border-white/5 shadow-2xl">
         {/* Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
@@ -68,69 +68,84 @@ export function Dashboard() {
 
       {/* Bottom Panels */}
       <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
-        <Card className="flex flex-col">
+
+        {/* Actividad Semanal */}
+        <Card className="flex flex-col min-h-0">
           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Actividad Semanal</h3>
-          <div className="flex items-end gap-2 h-20 mb-3 mt-auto">
+          <div className="flex items-end gap-2 flex-1 mb-3 min-h-0">
             {[40, 70, 30, 90, 50, 20, 100].map((h, i) => (
               <div key={i} className="flex-1 bg-surface relative group h-full">
-                <div 
-                  className="absolute bottom-0 left-0 right-0 bg-primary transition-all group-hover:bg-primaryHover" 
+                <div
+                  className="absolute bottom-0 left-0 right-0 bg-primary transition-all group-hover:bg-primaryHover"
                   style={{ height: `${h}%` }}
                 />
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-[10px] text-textMuted font-mono px-1">
+          <div className="flex justify-between text-[10px] text-textMuted font-mono px-1 shrink-0">
             <span>D</span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span>
           </div>
-          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small">
+          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
             Ver Actividad Completa
           </button>
         </Card>
 
-        <Card className="flex flex-col">
+        {/* Tus Estadísticas */}
+        <Card className="flex flex-col min-h-0">
           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Tus Estadísticas</h3>
-          <div className="grid grid-cols-2 gap-4 flex-1">
-            <div className="bg-surface/50 p-4 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
-              <span className="text-3xl font-black text-white mb-1">66<span className="text-primary text-lg">%</span></span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center">Tasa de Victoria</span>
+          <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
+            <div className="bg-surface/50 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
+              <span className="text-4xl font-black text-white leading-none">66<span className="text-primary text-xl">%</span></span>
+              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">Tasa de Victoria</span>
             </div>
-            <div className="bg-surface/50 p-4 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
-              <span className="text-3xl font-black text-white mb-1">3.15</span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center">KDA</span>
+            <div className="bg-surface/50 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
+              <span className="text-4xl font-black text-white leading-none">3.15</span>
+              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">KDA</span>
             </div>
           </div>
-          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small">
+          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
             Ver Estadísticas
           </button>
         </Card>
 
-        <Card className="flex flex-col">
+        {/* Selector de Versión */}
+        <Card className="flex flex-col min-h-0">
           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Seleccionar Versión</h3>
-          <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2">
+          <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-2 min-h-0">
             {availableVersions.length === 0 ? (
               <div className="text-textMuted text-xs flex items-center justify-center h-full">Cargando versiones...</div>
             ) : (
               availableVersions.map(v => (
-                <div 
+                <div
                   key={v.id}
                   onClick={() => setConfig({ ...config, version: v.id })}
-                  className={`p-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small ${
-                    selectedVersion === v.id 
-                      ? "border-primary bg-primary/10" 
+                  className={`px-4 py-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small shrink-0 ${
+                    selectedVersion === v.id
+                      ? "border-primary bg-primary/10"
                       : "border-white/5 bg-surface/50 hover:bg-surface"
                   }`}
                 >
                   <div>
-                    <h4 className="font-bold text-white text-sm uppercase">Minecraft {v.id}</h4>
-                    <span className="text-[10px] text-textMuted uppercase tracking-wider">{new Date(v.releaseTime).toLocaleDateString()}</span>
+                    <h4 className={`font-bold text-sm uppercase leading-tight ${selectedVersion === v.id ? 'text-primary' : 'text-white'}`}>
+                      Minecraft {v.id}
+                    </h4>
+                    <span className="text-xs text-textMuted tracking-wide">
+                      {new Date(v.releaseTime).toLocaleDateString()}
+                    </span>
                   </div>
-                  <div className={`w-3 h-3 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surface border border-white/20'}`} style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
+                  <div
+                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surface border border-white/20'}`}
+                    style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
+                  />
                 </div>
               ))
             )}
           </div>
+          <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+            Ver Todas las Versiones
+          </button>
         </Card>
+
       </div>
     </div>
   );

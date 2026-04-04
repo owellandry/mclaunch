@@ -42,7 +42,9 @@ const createWindow = async (): Promise<void> => {
 
   if (isDev) {
     await mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL!);
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+    mainWindow.webContents.once("did-finish-load", () => {
+      mainWindow.webContents.openDevTools({ mode: "detach" });
+    });
     return;
   }
 
