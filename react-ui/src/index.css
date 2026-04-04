@@ -1,58 +1,41 @@
-:root {
-  color-scheme: dark;
-  font-family: "Space Grotesk", "Segoe UI Variable", "Segoe UI", sans-serif;
-  color: #e2edf8;
-  background:
-    radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 28%),
-    radial-gradient(circle at top right, rgba(52, 211, 153, 0.1), transparent 26%),
-    linear-gradient(180deg, #020617 0%, #040b1c 48%, #020617 100%);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-textMain font-sans overflow-hidden select-none m-0 p-0;
+  }
 }
 
-* {
-  box-sizing: border-box;
+@layer components {
+  .glass-panel {
+    @apply bg-surface/50 backdrop-blur-md border border-white/10 rounded-xl;
+  }
+  
+  .btn-primary {
+    @apply bg-primary/20 text-primary border border-primary/50 hover:bg-primary/30 transition-colors px-4 py-2 rounded-lg font-medium shadow-[0_0_15px_rgba(102,252,241,0.2)];
+  }
+  
+  .btn-secondary {
+    @apply bg-surface text-textMain border border-white/10 hover:bg-white/10 transition-colors px-4 py-2 rounded-lg font-medium;
+  }
+  
+  .input-field {
+    @apply bg-background/50 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors;
+  }
 }
 
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-*::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-*::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(125, 211, 252, 0.3);
+::-webkit-scrollbar-thumb {
+  @apply bg-surface/50 rounded-full;
 }
-
-html,
-body,
-#root {
-  min-height: 100vh;
-}
-
-body {
-  margin: 0;
-}
-
-button,
-input,
-select {
-  font: inherit;
-}
-
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-}
-
-a {
-  color: inherit;
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-white/20;
 }
