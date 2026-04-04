@@ -14,7 +14,7 @@ export function Sidebar() {
   return (
     <aside className="w-20 border-r border-white/5 flex flex-col items-center py-6 bg-surface/50 backdrop-blur-xl z-20">
       {/* Brand Icon */}
-      <div className="w-12 h-12 bg-primary text-black flex items-center justify-center shadow-[0_0_15px_rgba(74,222,128,0.4)] mb-8 mc-cutout-small">
+      <div className="w-12 h-12 bg-primary text-black flex items-center justify-center shadow-[0_0_15px_#A1E9A566] mb-8 mc-cutout-small">
         <FiTarget className="text-2xl" />
       </div>
 
@@ -34,7 +34,7 @@ export function Sidebar() {
                   : "text-textMuted hover:bg-white/5 hover:text-white rounded-xl"
               }`}
             >
-              <Icon className={`text-xl ${isActive ? "drop-shadow-[0_0_8px_rgba(74,222,128,0.8)]" : ""}`} />
+              <Icon className={`text-xl ${isActive ? "drop-shadow-[0_0_8px_#A1E9A5CC]" : ""}`} />
             </Link>
           );
         })}

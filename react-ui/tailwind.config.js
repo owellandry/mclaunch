@@ -8,12 +8,12 @@ export default {
     extend: {
       colors: {
         background: '#151515',
-        surface: '#202020',
+        surface: '#1F1F1F',
         surfaceLight: '#2a2a2a',
-        primary: '#4ade80', // Minecraft green
-        primaryHover: '#22c55e',
-        secondary: '#3f3f46',
-        textMain: '#ffffff',
+        primary: '#A1E9A5',
+        primaryHover: '#8ad18e',
+        secondary: '#D84136',
+        textMain: '#FFFFFF',
         textMuted: '#a1a1aa',
       },
       fontFamily: {

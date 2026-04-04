@@ -7,16 +7,16 @@ const INSTALLATIONS = [
   {
     id: "aurora",
     label: "Vanilla 1.20.1",
-    channel: "Release",
-    vibe: "Survival",
-    description: "Explore your own unique world, survive the night, and create anything you can imagine!",
+    channel: "Lanzamiento",
+    vibe: "Supervivencia",
+    description: "¡Explora tu propio mundo único, sobrevive a la noche y crea cualquier cosa que puedas imaginar!",
   },
   {
     id: "pulse",
     label: "OptiFine 1.19.4",
-    channel: "Modded",
-    vibe: "Creative",
-    description: "Enhanced graphics, shaders, and performance tweaks for the ultimate building experience.",
+    channel: "Modificado",
+    vibe: "Creativo",
+    description: "Gráficos mejorados, shaders y ajustes de rendimiento para la mejor experiencia de construcción.",
   },
 ];
 
@@ -39,7 +39,7 @@ export function Dashboard() {
         
         {/* Top Nav (Optional, matching image 1's pill buttons) */}
         <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
-          {['GAMES', 'SHOP', 'COMMUNITY', 'SUPPORT'].map(nav => (
+          {['JUEGOS', 'TIENDA', 'COMUNIDAD', 'SOPORTE'].map(nav => (
             <div key={nav} className="px-5 py-1.5 border border-white/20 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/20 hover:bg-white/10 cursor-pointer transition-colors">
               {nav}
             </div>
@@ -48,7 +48,7 @@ export function Dashboard() {
 
         {/* Bottom Content */}
         <div className="absolute bottom-10 left-10 max-w-xl">
-          <span className="px-3 py-1 bg-primary text-black text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_rgba(74,222,128,0.5)]">
+          <span className="px-3 py-1 bg-primary text-black text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_#A1E9A580]">
             {selectedInstall.channel}
           </span>
           <h1 className="text-5xl font-black text-white mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
@@ -67,9 +67,9 @@ export function Dashboard() {
           <Button 
             onClick={launch} 
             disabled={isRunning} 
-            className={`py-4 px-10 text-lg shadow-[0_0_20px_rgba(74,222,128,0.2)] ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`py-4 px-10 text-lg shadow-[0_0_20px_#A1E9A533] ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            {isRunning ? 'LAUNCHING...' : "LET'S EXPLORE"}
+            {isRunning ? 'INICIANDO...' : "EXPLORAR"}
             {!isRunning && <FiPlay className="ml-2 fill-current" />}
           </Button>
         </div>
@@ -78,7 +78,7 @@ export function Dashboard() {
       {/* Bottom Panels */}
       <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
         <Card className="flex flex-col">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Weekly Activity</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Actividad Semanal</h3>
           <div className="flex items-end gap-2 h-20 mb-3 mt-auto">
             {[40, 70, 30, 90, 50, 20, 100].map((h, i) => (
               <div key={i} className="flex-1 bg-surface relative group h-full">
@@ -90,32 +90,32 @@ export function Dashboard() {
             ))}
           </div>
           <div className="flex justify-between text-[10px] text-textMuted font-mono px-1">
-            <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            <span>D</span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span>
           </div>
           <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small">
-            View Full Activity
+            Ver Actividad Completa
           </button>
         </Card>
 
         <Card className="flex flex-col">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Your Stats</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Tus Estadísticas</h3>
           <div className="grid grid-cols-2 gap-4 flex-1">
             <div className="bg-surface/50 p-4 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
               <span className="text-3xl font-black text-white mb-1">66<span className="text-primary text-lg">%</span></span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest">Win Rate</span>
+              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center">Tasa de Victoria</span>
             </div>
             <div className="bg-surface/50 p-4 flex flex-col justify-center items-center border border-white/5 mc-cutout-small">
               <span className="text-3xl font-black text-white mb-1">3.15</span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest">KDA</span>
+              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center">KDA</span>
             </div>
           </div>
           <button className="w-full mt-4 py-2 bg-surface text-xs font-bold text-white hover:bg-white/10 transition-colors uppercase tracking-wider mc-cutout-small">
-            View Stats
+            Ver Estadísticas
           </button>
         </Card>
 
         <Card className="flex flex-col">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Quick Switch</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Cambio Rápido</h3>
           <div className="flex flex-col gap-3 flex-1 overflow-y-auto pr-2">
             {INSTALLATIONS.map(inst => (
               <div 
@@ -131,7 +131,7 @@ export function Dashboard() {
                   <h4 className="font-bold text-white text-sm uppercase">{inst.label}</h4>
                   <span className="text-[10px] text-textMuted uppercase tracking-wider">{inst.vibe}</span>
                 </div>
-                <div className={`w-3 h-3 ${selectedInstallId === inst.id ? 'bg-primary shadow-[0_0_10px_rgba(74,222,128,0.8)]' : 'bg-surface border border-white/20'}`} style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
+                <div className={`w-3 h-3 ${selectedInstallId === inst.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surface border border-white/20'}`} style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
               </div>
             ))}
           </div>

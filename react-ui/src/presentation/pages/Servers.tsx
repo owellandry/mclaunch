@@ -4,15 +4,15 @@ import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
 
 const SERVERS = [
-  { name: "Atlas Realm", ping: "34 ms", mode: "Eventos", desc: "Temporada neon con hub social curado." },
-  { name: "Northwatch", ping: "58 ms", mode: "Survival", desc: "Ambiente calmado con builder tools visibles." },
-  { name: "Forge District", ping: "21 ms", mode: "Creative", desc: "Lobby premium con parcelas y backups mock." },
+  { name: "Atlas Realm", ping: "34 ms", mode: "Eventos", desc: "Temporada neón con hub social curado." },
+  { name: "Northwatch", ping: "58 ms", mode: "Supervivencia", desc: "Ambiente calmado con herramientas de construcción." },
+  { name: "Forge District", ping: "21 ms", mode: "Creativo", desc: "Lobby premium con parcelas y backups mock." },
 ];
 
 export function Servers() {
   return (
     <div className="flex flex-col gap-8 pb-8">
-      <Card className="border-primary/20 shadow-[0_0_30px_rgba(74,222,128,0.05)]">
+      <Card className="border-primary/20 shadow-[0_0_30px_#A1E9A50D]">
         <SectionTitle
           eyebrow="Multijugador"
           title="Lounge de Servidores"
@@ -20,7 +20,7 @@ export function Servers() {
           icon={<FiRadio />}
           action={
             <Button variant="secondary" icon={<FiZap />}>
-              Join queue
+              Unirse a la cola
             </Button>
           }
         />
@@ -35,8 +35,8 @@ export function Servers() {
               <div className="flex justify-between items-center pt-4 border-t border-white/5">
                 <span className="text-[10px] uppercase tracking-widest text-textMuted font-bold">{srv.mode}</span>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-primary shadow-[0_0_8px_rgba(74,222,128,0.8)] mc-cutout-small" />
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-white">Online</span>
+                  <span className="w-2 h-2 bg-primary shadow-[0_0_8px_#A1E9A5CC] mc-cutout-small" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-white">En línea</span>
                 </div>
               </div>
             </div>

@@ -30,7 +30,7 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-black hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(74,222,128,0.2)];
+    @apply bg-primary text-black hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_#A1E9A533];
   }
   
   .btn-secondary {
