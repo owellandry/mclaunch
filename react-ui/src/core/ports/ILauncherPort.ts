@@ -1,4 +1,4 @@
-import type { LauncherConfig, LauncherStatus, MinecraftVersion } from "../domain/launcher";
+import type { LauncherConfig, MinecraftVersion } from "../domain/launcher";
 
 export interface ILauncherPort {
   launch(config: LauncherConfig, username: string): void;
