@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { LauncherStatus } from "../../core/domain/launcher";
+import type { LauncherStatus } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
 import { useAppStore } from "./useAppStore";
 
@@ -28,7 +28,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   
   launch: () => {
     const { profile, config } = useAppStore.getState();
-    const { status, selectedInstallId, addLog, setStatus } = get();
+    const { status, addLog, setStatus } = get();
 
     if (!profile || profile.username.trim().length < 3 || status === "running") {
       return;

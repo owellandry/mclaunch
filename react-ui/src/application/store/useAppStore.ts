@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { UserProfile } from "../../core/domain/profile";
-import { LauncherConfig } from "../../core/domain/launcher";
+import type { UserProfile } from "../../core/domain/profile";
+import type { LauncherConfig } from "../../core/domain/launcher";
 import { LocalStorageAdapter } from "../../infrastructure/adapters/LocalStorageAdapter";
 
 interface AppState {

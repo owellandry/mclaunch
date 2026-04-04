@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiCommand, FiCpu, FiFolder, FiUser } from "react-icons/fi";
-import { useAppStore } from "../../../application/store/useAppStore";
+import { useAppStore } from "../../application/store/useAppStore";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 
