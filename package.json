@@ -38,6 +38,7 @@
     }
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.12.2",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
@@ -50,6 +51,7 @@
     "react-ui"
   ],
   "dependencies": {
+    "better-sqlite3": "^12.8.0",
     "minecraft-launcher-core": "^3.18.2"
   }
 }

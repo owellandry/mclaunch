@@ -37,6 +37,7 @@ const createWindow = async (): Promise<void> => {
     },
   });
   mainWindow.removeMenu();
+  mainWindow.maximize();
 
   registerLauncherIpc(mainWindow);
 

@@ -23,4 +23,9 @@ export class LocalStorageAdapter implements IStoragePort {
   saveLauncherConfig(config: LauncherConfig): void {
     localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
   }
+
+  clearAll(): void {
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(CONFIG_KEY);
+  }
 }

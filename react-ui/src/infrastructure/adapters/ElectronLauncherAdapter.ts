@@ -26,6 +26,18 @@ export class ElectronLauncherAdapter implements ILauncherPort {
     ];
   }
 
+  getWeeklyActivity(): Promise<number[]> {
+    return window.api.getWeeklyActivity();
+  }
+
+  getStatistics(): Promise<{win_rate: number, kda: number}> {
+    return window.api.getStatistics();
+  }
+
+  getDownloadedVersions(): Promise<string[]> {
+    return window.api.getDownloadedVersions();
+  }
+
   onLog(callback: (message: string) => void): () => void {
     if (window.api && window.api.onLauncherLog) {
       return window.api.onLauncherLog(callback);

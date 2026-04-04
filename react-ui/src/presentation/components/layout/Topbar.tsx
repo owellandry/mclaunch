@@ -2,7 +2,7 @@ import { FiSearch, FiBell } from "react-icons/fi";
 import { useAppStore } from "../../../application/store/useAppStore";
 
 export function Topbar() {
-  const { profile } = useAppStore();
+  const { profile, searchQuery, setSearchQuery } = useAppStore();
   const displayName = profile?.username || "Player";
 
   return (
@@ -20,7 +20,8 @@ export function Topbar() {
           <input
             className="bg-transparent border-none outline-none text-sm text-textMain w-full placeholder-textMuted font-mono"
             placeholder="Buscar..."
-            readOnly
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 

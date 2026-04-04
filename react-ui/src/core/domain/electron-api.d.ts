@@ -18,6 +18,12 @@ export type LauncherStatus = "idle" | "running" | "done" | "error";
 export type ElectronApi = {
   launchMinecraft: (config: LaunchPayload) => void;
   getVersions: () => Promise<MinecraftVersion[]>;
+  getWeeklyActivity: () => Promise<number[]>;
+  getStatistics: () => Promise<{win_rate: number, kda: number}>;
+  getDownloadedVersions: () => Promise<string[]>;
+  clearCache: () => Promise<void>;
+  clearAllData: () => Promise<void>;
+  restartApp: () => void;
   onLauncherLog: (callback: (message: string) => void) => () => void;
   onLauncherStatus: (callback: (status: LauncherStatus) => void) => () => void;
 };
