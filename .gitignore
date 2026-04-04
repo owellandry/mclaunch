@@ -1,0 +1,20 @@
+node_modules/
+dist-electron/
+dist/
+coverage/
+pnpm-lock.yaml
+*.log
+*.tmp
+
+# Vite / React
+react-ui/node_modules/
+react-ui/dist/
+
+# Electron builder artifacts
+release/
+*.blockmap
+
+# IDE / OS
+.DS_Store
+.idea/
+.vscode/
