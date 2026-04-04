@@ -25,7 +25,7 @@ const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "done" |
 };
 
 export const registerLauncherIpc = (window: BrowserWindow): void => {
-  ipcMain.on(CHANNELS.launch, async (_event, payload: LaunchPayload) => {
+  ipcMain.on(CHANNELS.launch, async (_event: unknown, payload: LaunchPayload) => {
     emitStatus(window, "running");
     emitLog(window, `Preparando lanzamiento offline para ${payload.username}...`);
 
