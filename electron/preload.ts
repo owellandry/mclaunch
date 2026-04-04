@@ -6,6 +6,12 @@ const CHANNELS = {
   log: "launcher:log",
   status: "launcher:status",
   getVersions: "launcher:getVersions",
+  getWeeklyActivity: "db:getWeeklyActivity",
+  getStatistics: "db:getStatistics",
+  getDownloadedVersions: "db:getDownloadedVersions",
+  clearCache: "app:clearCache",
+  clearAllData: "app:clearAllData",
+  restartApp: "app:restartApp"
 } as const;
 
 type LauncherStatus = "idle" | "running" | "done" | "error";
@@ -16,6 +22,24 @@ const api = {
   },
   getVersions: (): Promise<MinecraftVersion[]> => {
     return ipcRenderer.invoke(CHANNELS.getVersions);
+  },
+  getWeeklyActivity: (): Promise<number[]> => {
+    return ipcRenderer.invoke(CHANNELS.getWeeklyActivity);
+  },
+  getStatistics: (): Promise<{win_rate: number, kda: number}> => {
+    return ipcRenderer.invoke(CHANNELS.getStatistics);
+  },
+  getDownloadedVersions: (): Promise<string[]> => {
+    return ipcRenderer.invoke(CHANNELS.getDownloadedVersions);
+  },
+  clearCache: (): Promise<void> => {
+    return ipcRenderer.invoke(CHANNELS.clearCache);
+  },
+  clearAllData: (): Promise<void> => {
+    return ipcRenderer.invoke(CHANNELS.clearAllData);
+  },
+  restartApp: (): void => {
+    ipcRenderer.send(CHANNELS.restartApp);
   },
   onLauncherLog: (callback: (message: string) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, message: string): void => callback(message);

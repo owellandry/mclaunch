@@ -1,5 +1,6 @@
-import { BrowserWindow, ipcMain } from "electron";
+import { BrowserWindow, ipcMain, app } from "electron";
 import { Client, Authenticator } from "minecraft-launcher-core";
+import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData } from "./db";
 
 export type LaunchPayload = {
   username: string;
@@ -21,6 +22,12 @@ const CHANNELS = {
   log: "launcher:log",
   status: "launcher:status",
   getVersions: "launcher:getVersions",
+  getWeeklyActivity: "db:getWeeklyActivity",
+  getStatistics: "db:getStatistics",
+  getDownloadedVersions: "db:getDownloadedVersions",
+  clearCache: "app:clearCache",
+  clearAllData: "app:clearAllData",
+  restartApp: "app:restartApp"
 } as const;
 
 const emitLog = (window: BrowserWindow, message: string): void => {
@@ -32,6 +39,33 @@ const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "done" |
 };
 
 export const registerLauncherIpc = (window: BrowserWindow): void => {
+  initDb();
+
+  ipcMain.handle(CHANNELS.getWeeklyActivity, async () => {
+    return getWeeklyActivity();
+  });
+
+  ipcMain.handle(CHANNELS.getStatistics, async () => {
+    return getStatistics();
+  });
+
+  ipcMain.handle(CHANNELS.getDownloadedVersions, async () => {
+    return getDownloadedVersions();
+  });
+
+  ipcMain.handle(CHANNELS.clearCache, async () => {
+    clearCache();
+  });
+
+  ipcMain.handle(CHANNELS.clearAllData, async () => {
+    clearAllData();
+  });
+
+  ipcMain.on(CHANNELS.restartApp, () => {
+    app.relaunch();
+    app.exit(0);
+  });
+
   ipcMain.handle(CHANNELS.getVersions, async () => {
     try {
       const res = await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json");
@@ -78,6 +112,7 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
       emitLog(window, `Iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);
       await launcher.launch(opts);
 
+      addDownloadedVersion(payload.version);
       emitLog(window, "Juego iniciado.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";

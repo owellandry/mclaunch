@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiCpu, FiMonitor, FiSave, FiSliders } from "react-icons/fi";
+import { FiCpu, FiMonitor, FiSave, FiSliders, FiTrash2 } from "react-icons/fi";
 import { useAppStore } from "../../application/store/useAppStore";
 import { Card } from "../components/ui/Card";
 import { SectionTitle } from "../components/ui/SectionTitle";
@@ -15,6 +15,25 @@ export function Settings() {
     setConfig({ ...config, memoryMb: memory, gameDir });
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+  };
+
+  const { clearAll } = useAppStore();
+
+  const handleClearCache = async () => {
+    if (window.api) {
+      await window.api.clearCache();
+      alert("Caché eliminado con éxito.");
+    }
+  };
+
+  const handleClearAllData = async () => {
+    if (confirm("¿Estás seguro de que quieres eliminar todos los datos? El launcher se reiniciará.")) {
+      clearAll();
+      if (window.api) {
+        await window.api.clearAllData();
+        window.api.restartApp();
+      }
+    }
   };
 
   return (
@@ -64,6 +83,20 @@ export function Settings() {
                   onChange={(e) => setGameDir(e.target.value)}
                   className="input-field w-full"
                 />
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-black/5">
+                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
+                  Datos y Mantenimiento
+                </label>
+                <div className="flex items-center gap-4">
+                  <Button onClick={handleClearCache} className="bg-surfaceLight border border-black/10 text-textMain hover:bg-black/5 transition-colors px-6 py-3 font-bold uppercase tracking-widest text-xs" icon={<FiTrash2 />}>
+                    Eliminar Caché
+                  </Button>
+                  <Button onClick={handleClearAllData} className="bg-secondary/10 border border-secondary/20 text-secondary hover:bg-secondary/20 transition-colors px-6 py-3 font-bold uppercase tracking-widest text-xs" icon={<FiTrash2 />}>
+                    Eliminar Datos Completos
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>
