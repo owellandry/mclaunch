@@ -7,9 +7,10 @@ import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 
 export function Dashboard() {
-  const { status, launch, availableVersions, downloadedVersions, weeklyActivity, statistics, fetchVersions } = useLauncherStore();
+  const { status, launch, availableVersions, downloadedVersions, weeklyActivity, statistics, fetchVersions, progress } = useLauncherStore();
   const { config, setConfig, searchQuery } = useAppStore();
   const isRunning = status === "running";
+  const isPlaying = status === "playing";
 
   useEffect(() => {
     fetchVersions();
@@ -17,7 +18,17 @@ export function Dashboard() {
 
   const selectedVersion = config.version || "1.20.1";
   const isDownloaded = downloadedVersions.includes(selectedVersion);
-  const buttonText = isRunning ? 'INICIANDO...' : isDownloaded ? 'INICIAR' : 'DESCARGAR';
+  
+  let buttonText = isDownloaded ? 'INICIAR' : 'DESCARGAR';
+  if (isRunning) {
+    if (progress) {
+      buttonText = `DESCARGANDO... ${progress.percentage}%`;
+    } else {
+      buttonText = 'INICIANDO...';
+    }
+  } else if (isPlaying) {
+    buttonText = 'EN JUEGO';
+  }
 
   const filteredVersions = availableVersions.filter(v => 
     v.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -71,11 +82,21 @@ export function Dashboard() {
         >
           <Button 
             onClick={handleMainAction}
-            disabled={isRunning}
-            className={`py-4 px-10 text-lg shadow-[0_0_20px_#A1E9A533] ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={isRunning || isPlaying}
+            className={`py-4 px-10 text-lg shadow-[0_0_20px_#A1E9A533] relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
           >
-            {buttonText}
-            {!isRunning && <FiPlay className="ml-2 fill-current" />}
+            {/* Progress Bar Background */}
+            {isRunning && progress && (
+              <div 
+                className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300"
+                style={{ width: `${progress.percentage}%` }}
+              />
+            )}
+            
+            <span className="relative z-10 flex items-center">
+              {buttonText}
+              {!isRunning && !isPlaying && <FiPlay className="ml-2 fill-current" />}
+            </span>
           </Button>
         </div>
       </div>

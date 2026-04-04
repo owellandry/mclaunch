@@ -13,7 +13,7 @@ export type MinecraftVersion = {
   releaseTime: string;
 };
 
-export type LauncherStatus = "idle" | "running" | "done" | "error";
+export type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 
 export type ElectronApi = {
   launchMinecraft: (config: LaunchPayload) => void;
@@ -25,6 +25,7 @@ export type ElectronApi = {
   clearAllData: () => Promise<void>;
   restartApp: () => void;
   onLauncherLog: (callback: (message: string) => void) => () => void;
+  onLauncherProgress: (callback: (progress: { type: string; task: number; total: number }) => void) => () => void;
   onLauncherStatus: (callback: (status: LauncherStatus) => void) => () => void;
 };
 

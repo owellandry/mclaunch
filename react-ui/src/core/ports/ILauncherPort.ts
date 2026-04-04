@@ -7,5 +7,6 @@ export interface ILauncherPort {
   getStatistics(): Promise<{win_rate: number, kda: number}>;
   getDownloadedVersions(): Promise<string[]>;
   onLog(callback: (message: string) => void): () => void;
-  onStatus(callback: (status: "idle" | "running" | "done" | "error") => void): () => void;
+  onProgress(callback: (progress: { type: string; task: number; total: number }) => void): () => void;
+  onStatus(callback: (status: "idle" | "running" | "playing" | "done" | "error") => void): () => void;
 }

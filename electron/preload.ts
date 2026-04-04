@@ -4,6 +4,7 @@ import type { LaunchPayload, MinecraftVersion } from "./ipc/launcher";
 const CHANNELS = {
   launch: "launcher:launch",
   log: "launcher:log",
+  progress: "launcher:progress",
   status: "launcher:status",
   getVersions: "launcher:getVersions",
   getWeeklyActivity: "db:getWeeklyActivity",
@@ -14,7 +15,7 @@ const CHANNELS = {
   restartApp: "app:restartApp"
 } as const;
 
-type LauncherStatus = "idle" | "running" | "done" | "error";
+type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 
 const api = {
   launchMinecraft: (config: LaunchPayload): void => {
@@ -45,6 +46,11 @@ const api = {
     const listener = (_event: IpcRendererEvent, message: string): void => callback(message);
     ipcRenderer.on(CHANNELS.log, listener);
     return () => ipcRenderer.removeListener(CHANNELS.log, listener);
+  },
+  onLauncherProgress: (callback: (progress: { type: string; task: number; total: number }) => void): (() => void) => {
+    const listener = (_event: IpcRendererEvent, progress: { type: string; task: number; total: number }): void => callback(progress);
+    ipcRenderer.on(CHANNELS.progress, listener);
+    return () => ipcRenderer.removeListener(CHANNELS.progress, listener);
   },
   onLauncherStatus: (callback: (status: LauncherStatus) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, status: LauncherStatus): void => callback(status);
