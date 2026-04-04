@@ -19,7 +19,7 @@ export function Topbar() {
           <FiSearch className="text-textMuted" />
           <input
             className="bg-transparent border-none outline-none text-sm text-white w-full placeholder-textMuted font-mono"
-            placeholder="Search..."
+            placeholder="Buscar..."
             readOnly
           />
         </div>

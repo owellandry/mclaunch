@@ -29,17 +29,17 @@ export function Onboarding() {
       <div className="w-full max-w-xl z-10 relative">
         <Card className="border-t-4 border-t-primary shadow-2xl">
           <div className="text-center mb-10">
-            <div className="w-20 h-20 bg-surface border border-white/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_rgba(74,222,128,0.2)]">
+            <div className="w-20 h-20 bg-surface border border-white/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_#A1E9A533]">
               <FiCommand className="text-4xl" />
             </div>
-            <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tight">System Setup</h1>
-            <p className="text-primary font-mono text-sm tracking-widest uppercase">INITIALIZE_PLAYER_PROFILE</p>
+            <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
+            <p className="text-primary font-mono text-sm tracking-widest uppercase">INICIALIZAR_PERFIL_JUGADOR</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                <FiUser className="text-primary" /> Player Name
+                <FiUser className="text-primary" /> Nombre del Jugador
               </label>
               <input 
                 type="text"
@@ -48,13 +48,13 @@ export function Onboarding() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="input-field w-full"
-                placeholder="e.g. Steve"
+                placeholder="ej. Steve"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                <FiCpu className="text-primary" /> Memory Allocation (MB)
+                <FiCpu className="text-primary" /> Asignación de Memoria (MB)
               </label>
               <input 
                 type="number"
@@ -69,7 +69,7 @@ export function Onboarding() {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                <FiFolder className="text-primary" /> Game Directory
+                <FiFolder className="text-primary" /> Directorio del Juego
               </label>
               <input 
                 type="text"
@@ -85,7 +85,7 @@ export function Onboarding() {
               className="w-full py-4 text-lg mt-8" 
               disabled={username.trim().length < 3}
             >
-              Confirm & Boot
+              Confirmar e Iniciar
             </Button>
           </form>
         </Card>

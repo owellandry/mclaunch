@@ -29,7 +29,7 @@ export function Settings() {
               icon={<FiSliders />}
               action={
                 <Button onClick={handleSave} icon={<FiSave />} className={isSaved ? "bg-primary text-black" : "btn-secondary mc-button-cutout"}>
-                  {isSaved ? "Guardado" : "Guardar Cambios"}
+                  {isSaved ? "GUARDADO" : "GUARDAR CAMBIOS"}
                 </Button>
               }
             />
