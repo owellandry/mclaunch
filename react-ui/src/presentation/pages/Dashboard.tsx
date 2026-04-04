@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { FiPlay } from "react-icons/fi";
 import { useLauncherStore } from "../../application/store/useLauncherStore";
 import { useAppStore } from "../../application/store/useAppStore";
+import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 
@@ -21,6 +22,13 @@ export function Dashboard() {
   const filteredVersions = availableVersions.filter(v => 
     v.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleMainAction = () => {
+    if (!isDownloaded) {
+      useNotificationStore.getState().addNotification("Iniciando Descarga", `Se comenzó a descargar la versión ${selectedVersion}. Esto puede tardar unos minutos.`, "info");
+    }
+    launch();
+  };
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -62,7 +70,7 @@ export function Dashboard() {
           style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%, 0 100%, 40px 0)' }}
         >
           <Button 
-            onClick={launch} 
+            onClick={handleMainAction}
             disabled={isRunning}
             className={`py-4 px-10 text-lg shadow-[0_0_20px_#A1E9A533] ${isRunning ? 'opacity-50 cursor-not-allowed' : ''}`}
           >

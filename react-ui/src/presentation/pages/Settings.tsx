@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FiCpu, FiMonitor, FiSave, FiSliders, FiTrash2 } from "react-icons/fi";
 import { useAppStore } from "../../application/store/useAppStore";
+import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { Card } from "../components/ui/Card";
 import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
@@ -14,6 +15,7 @@ export function Settings() {
   const handleSave = () => {
     setConfig({ ...config, memoryMb: memory, gameDir });
     setIsSaved(true);
+    useNotificationStore.getState().addNotification("Ajustes guardados", "Tus configuraciones se han guardado correctamente.", "success");
     setTimeout(() => setIsSaved(false), 2000);
   };
 
@@ -22,12 +24,13 @@ export function Settings() {
   const handleClearCache = async () => {
     if (window.api) {
       await window.api.clearCache();
-      alert("Caché eliminado con éxito.");
+      useNotificationStore.getState().addNotification("Caché eliminado", "Se ha liberado espacio temporal de la aplicación.", "success");
     }
   };
 
   const handleClearAllData = async () => {
     if (confirm("¿Estás seguro de que quieres eliminar todos los datos? El launcher se reiniciará.")) {
+      useNotificationStore.getState().addNotification("Limpieza profunda", "Eliminando todos los datos y reiniciando...", "warning");
       clearAll();
       if (window.api) {
         await window.api.clearAllData();

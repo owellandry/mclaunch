@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { LauncherStatus, MinecraftVersion } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
 import { useAppStore } from "./useAppStore";
+import { useNotificationStore } from "./useNotificationStore";
 
 interface LauncherState {
   status: LauncherStatus;
@@ -69,10 +70,39 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
     get().fetchDbData();
     const unsubLog = launcherAdapter.onLog((message) => {
       get().addLog(message);
+      
+      // Dispatch specific notifications based on log messages
+      const addNotif = useNotificationStore.getState().addNotification;
+      const lowerMsg = message.toLowerCase();
+      
+      // Avoid spamming notifications for every progress/download log
+      if (lowerMsg.startsWith("preparando lanzamiento offline")) {
+        addNotif("Preparando juego", "Verificando recursos e iniciando launcher...", "info");
+      }
+      if (lowerMsg.includes("iniciando versión")) {
+        addNotif("Lanzando Minecraft", "El juego está a punto de abrirse.", "info");
+      }
+      if (lowerMsg === "juego iniciado.") {
+        addNotif("¡Minecraft Abierto!", "Disfruta de tu partida.", "success");
+      }
+      if (lowerMsg.startsWith("error en lanzamiento")) {
+        addNotif("Error de lanzamiento", message, "error");
+      }
     });
+
     const unsubStatus = launcherAdapter.onStatus((status) => {
+      const prevStatus = get().status;
       get().setStatus(status);
-      if (status === "done" || status === "idle") {
+      
+      const addNotif = useNotificationStore.getState().addNotification;
+      if (status === "done" && prevStatus === "running") {
+        addNotif("Juego Cerrado", "La sesión de Minecraft ha finalizado.", "info");
+      }
+      if (status === "error") {
+        addNotif("Error Crítico", "El launcher experimentó un error inesperado.", "error");
+      }
+
+      if (status === "done" || status === "idle" || status === "error") {
         get().fetchDbData();
       }
     });
