@@ -3,6 +3,8 @@ dist-electron/
 dist/
 coverage/
 pnpm-lock.yaml
+bun.lock
+package-lock.json
 *.log
 *.tmp
 
