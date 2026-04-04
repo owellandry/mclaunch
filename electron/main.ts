@@ -53,7 +53,7 @@ const createWindow = async (): Promise<void> => {
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
 
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+  session.defaultSession.webRequest.onHeadersReceived((details: { responseHeaders?: Record<string, string[]> }, callback: (response: { responseHeaders: Record<string, string[]> }) => void) => {
     callback({
       responseHeaders: {
         ...details.responseHeaders,

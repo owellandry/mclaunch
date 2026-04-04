@@ -5,13 +5,14 @@
   "description": "Launcher de Minecraft con React + Electron",
   "main": "dist-electron/main.js",
   "scripts": {
+    "predev": "pnpm install --prefer-offline",
     "dev:ui": "pnpm --dir react-ui dev",
-    "dev:electron": "wait-on tcp:5173 && pnpm build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
+    "dev:electron": "wait-on tcp:5173 && pnpm build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 bunx --package electron@36.9.5 electron .",
     "dev": "concurrently -k \"pnpm dev:ui\" \"pnpm dev:electron\"",
     "build:ui": "pnpm --dir react-ui build",
     "build:electron": "tsc -p electron/tsconfig.json",
     "build": "pnpm build:ui && pnpm build:electron",
-    "start": "electron .",
+    "start": "bunx --package electron@36.9.5 electron .",
     "dist": "pnpm build && electron-builder"
   },
   "build": {
