@@ -6,6 +6,14 @@ export type LauncherConfig = {
   gameDir: string;
 };
 
+export type MinecraftVersion = {
+  id: string;
+  type: string;
+  url: string;
+  time: string;
+  releaseTime: string;
+};
+
 export type InstallationCard = {
   id: string;
   label: string;

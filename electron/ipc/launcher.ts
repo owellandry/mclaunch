@@ -1,4 +1,5 @@
 import { BrowserWindow, ipcMain } from "electron";
+import { Client, Authenticator } from "minecraft-launcher-core";
 
 export type LaunchPayload = {
   username: string;
@@ -7,14 +8,20 @@ export type LaunchPayload = {
   gameDir: string;
 };
 
+export type MinecraftVersion = {
+  id: string;
+  type: string;
+  url: string;
+  time: string;
+  releaseTime: string;
+};
+
 const CHANNELS = {
   launch: "launcher:launch",
   log: "launcher:log",
   status: "launcher:status",
+  getVersions: "launcher:getVersions",
 } as const;
-
-const delay = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
 
 const emitLog = (window: BrowserWindow, message: string): void => {
   window.webContents.send(CHANNELS.log, message);
@@ -25,25 +32,56 @@ const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "done" |
 };
 
 export const registerLauncherIpc = (window: BrowserWindow): void => {
+  ipcMain.handle(CHANNELS.getVersions, async () => {
+    try {
+      const res = await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json");
+      const data = await res.json();
+      return data.versions.filter((v: MinecraftVersion) => v.type === "release").slice(0, 50); // Get latest 50 release versions
+    } catch (error) {
+      console.error("Failed to fetch Minecraft versions", error);
+      return [];
+    }
+  });
+
   ipcMain.on(CHANNELS.launch, async (_event: unknown, payload: LaunchPayload) => {
     emitStatus(window, "running");
     emitLog(window, `Preparando lanzamiento offline para ${payload.username}...`);
 
     try {
-      await delay(350);
-      emitLog(window, `Version seleccionada: ${payload.version}`);
-      await delay(350);
-      emitLog(window, `RAM asignada: ${payload.memoryMb} MB`);
-      await delay(350);
-      emitLog(window, `Directorio del juego: ${payload.gameDir}`);
-      await delay(500);
-      emitLog(window, "Resolviendo assets locales...");
-      await delay(500);
-      emitLog(window, "Lanzamiento simulado completado. Listo para integrar minecraft-launcher-core.");
-      emitStatus(window, "done");
+      const launcher = new Client();
+
+      launcher.on("debug", (e) => emitLog(window, `[DEBUG] ${e}`));
+      launcher.on("data", (e) => emitLog(window, `[DATA] ${e}`));
+      launcher.on("download", (e) => emitLog(window, `[DOWNLOAD] ${e}`));
+      launcher.on("progress", (e) => emitLog(window, `[PROGRESS] ${e.type} - ${e.task} / ${e.total}`));
+      launcher.on("close", (e) => {
+        emitLog(window, `[CLOSE] Minecraft cerrado (código: ${e})`);
+        emitStatus(window, "done");
+      });
+
+      const authOptions = await Authenticator.getAuth(payload.username);
+
+      const opts = {
+        clientPackage: undefined,
+        authorization: authOptions,
+        root: payload.gameDir,
+        version: {
+          number: payload.version,
+          type: "release"
+        },
+        memory: {
+          max: `${payload.memoryMb}M`,
+          min: "1024M"
+        }
+      };
+
+      emitLog(window, `Iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);
+      await launcher.launch(opts);
+
+      emitLog(window, "Juego iniciado.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
-      emitLog(window, `Error en simulacion: ${message}`);
+      emitLog(window, `Error en lanzamiento: ${message}`);
       emitStatus(window, "error");
     }
   });

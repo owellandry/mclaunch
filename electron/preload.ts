@@ -1,10 +1,11 @@
 import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
-import type { LaunchPayload } from "./ipc/launcher";
+import type { LaunchPayload, MinecraftVersion } from "./ipc/launcher";
 
 const CHANNELS = {
   launch: "launcher:launch",
   log: "launcher:log",
   status: "launcher:status",
+  getVersions: "launcher:getVersions",
 } as const;
 
 type LauncherStatus = "idle" | "running" | "done" | "error";
@@ -12,6 +13,9 @@ type LauncherStatus = "idle" | "running" | "done" | "error";
 const api = {
   launchMinecraft: (config: LaunchPayload): void => {
     ipcRenderer.send(CHANNELS.launch, config);
+  },
+  getVersions: (): Promise<MinecraftVersion[]> => {
+    return ipcRenderer.invoke(CHANNELS.getVersions);
   },
   onLauncherLog: (callback: (message: string) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, message: string): void => callback(message);
