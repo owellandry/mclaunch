@@ -5,6 +5,7 @@
   "description": "Launcher de Minecraft con React + Electron",
   "main": "dist-electron/main.js",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "predev": "pnpm install --prefer-offline",
     "dev:ui": "pnpm --dir react-ui dev",
     "dev:electron": "wait-on tcp:5173 && pnpm build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 bunx --package electron@36.9.5 electron .",
@@ -53,5 +54,12 @@
   "dependencies": {
     "better-sqlite3": "^12.8.0",
     "minecraft-launcher-core": "^3.18.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron",
+      "electron-winstaller"
+    ]
   }
 }

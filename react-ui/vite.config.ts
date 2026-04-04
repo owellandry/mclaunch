@@ -8,4 +8,12 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  optimizeDeps: {
+    exclude: ['better-sqlite3']
+  },
+  build: {
+    rollupOptions: {
+      external: ['better-sqlite3']
+    }
+  }
 })
