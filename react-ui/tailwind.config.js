@@ -7,14 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0B0C10',
-        surface: '#1F2833',
-        primary: '#66FCF1',
-        secondary: '#45A29E',
-        textMain: '#C5C6C7',
+        background: '#151515',
+        surface: '#202020',
+        surfaceLight: '#2a2a2a',
+        primary: '#4ade80', // Minecraft green
+        primaryHover: '#22c55e',
+        secondary: '#3f3f46',
+        textMain: '#ffffff',
+        textMuted: '#a1a1aa',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
     },
   },

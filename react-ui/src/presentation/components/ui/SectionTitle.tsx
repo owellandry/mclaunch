@@ -12,15 +12,15 @@ export function SectionTitle({ eyebrow, title, subtitle, icon, action }: Section
   return (
     <div className="flex items-start justify-between mb-6">
       <div className="flex items-start gap-4">
-        <div className="p-3 bg-surface/50 rounded-lg text-primary text-xl shadow-[0_0_15px_rgba(102,252,241,0.1)]">
+        <div className="p-3 bg-surfaceLight border border-white/10 text-primary text-xl mc-cutout-small shadow-[0_0_15px_rgba(74,222,128,0.1)]">
           {icon}
         </div>
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-primary mb-1 block">
             {eyebrow}
           </span>
-          <h2 className="text-2xl font-bold text-white mb-1">{title}</h2>
-          <p className="text-sm text-textMain/80 max-w-md">{subtitle}</p>
+          <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight">{title}</h2>
+          <p className="text-sm text-textMuted max-w-md">{subtitle}</p>
         </div>
       </div>
       {action && <div>{action}</div>}

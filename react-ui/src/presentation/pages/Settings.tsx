@@ -28,14 +28,14 @@ export function Settings() {
               subtitle="Control de recursos y rutas del sistema."
               icon={<FiSliders />}
               action={
-                <Button onClick={handleSave} icon={<FiSave />} className={isSaved ? "bg-green-500/20 text-green-400 border-green-500/50" : ""}>
+                <Button onClick={handleSave} icon={<FiSave />} className={isSaved ? "bg-primary text-black" : "btn-secondary mc-button-cutout"}>
                   {isSaved ? "Guardado" : "Guardar Cambios"}
                 </Button>
               }
             />
             <div className="space-y-6 mt-8">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-white flex items-center gap-2">
+                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
                   Memoria RAM Asignada
                 </label>
                 <div className="flex items-center gap-4">
@@ -48,21 +48,21 @@ export function Settings() {
                     onChange={(e) => setMemory(Number(e.target.value))}
                     className="flex-1 accent-primary"
                   />
-                  <span className="w-24 px-3 py-2 bg-surface rounded-lg border border-white/10 text-center font-mono text-primary text-sm shadow-inner">
+                  <span className="w-24 px-3 py-2 bg-surfaceLight border border-white/10 text-center font-mono text-primary text-sm mc-cutout-small">
                     {memory} MB
                   </span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-white flex items-center gap-2">
+                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
                   Directorio Base
                 </label>
                 <input
                   type="text"
                   value={gameDir}
                   onChange={(e) => setGameDir(e.target.value)}
-                  className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-colors font-mono text-sm"
+                  className="input-field w-full"
                 />
               </div>
             </div>
@@ -72,14 +72,14 @@ export function Settings() {
         <div className="col-span-5 flex flex-col gap-8">
           <Card>
             <SectionTitle eyebrow="Look and feel" title="Sistema Visual" subtitle="Aspectos de UI mockeados." icon={<FiMonitor />} />
-            <div className="bg-surface/30 p-4 rounded-xl border border-white/5 space-y-2">
+            <div className="bg-surface/30 p-4 border border-white/5 space-y-2 mc-cutout-small">
               <div className="flex justify-between items-center text-sm">
-                <span className="text-textMain">Modo cinemático</span>
-                <span className="text-primary font-bold">Activo</span>
+                <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Modo cinemático</span>
+                <span className="text-primary font-bold uppercase tracking-wider text-[10px]">Activo</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-textMain">Densidad de paneles</span>
-                <span className="text-white">Media</span>
+                <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Densidad de paneles</span>
+                <span className="text-white uppercase tracking-wider text-[10px] font-bold">Media</span>
               </div>
             </div>
           </Card>
@@ -87,17 +87,17 @@ export function Settings() {
           <Card className="flex-1">
             <SectionTitle eyebrow="Estado" title="Resumen" subtitle="Identidad y recursos activos." icon={<FiCpu />} />
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surface/20 p-3 rounded-lg border border-white/5">
-                <span className="text-[10px] text-textMain uppercase tracking-widest block mb-1">Piloto Activo</span>
-                <strong className="text-white text-sm">{profile?.username}</strong>
+              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
+                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Piloto Activo</span>
+                <strong className="text-white text-sm uppercase tracking-wider">{profile?.username}</strong>
               </div>
-              <div className="bg-surface/20 p-3 rounded-lg border border-white/5">
-                <span className="text-[10px] text-textMain uppercase tracking-widest block mb-1">Onboarding</span>
-                <strong className="text-green-400 text-sm">Completado</strong>
+              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
+                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Onboarding</span>
+                <strong className="text-primary text-sm uppercase tracking-wider">Completado</strong>
               </div>
-              <div className="bg-surface/20 p-3 rounded-lg border border-white/5">
-                <span className="text-[10px] text-textMain uppercase tracking-widest block mb-1">Versión Base</span>
-                <strong className="text-white text-sm">{config.version}</strong>
+              <div className="bg-surface/20 p-3 border border-white/5 mc-cutout-small">
+                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Versión Base</span>
+                <strong className="text-white text-sm font-mono">{config.version}</strong>
               </div>
             </div>
           </Card>
