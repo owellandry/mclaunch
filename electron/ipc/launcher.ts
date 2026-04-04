@@ -20,6 +20,7 @@ export type MinecraftVersion = {
 const CHANNELS = {
   launch: "launcher:launch",
   log: "launcher:log",
+  progress: "launcher:progress",
   status: "launcher:status",
   getVersions: "launcher:getVersions",
   getWeeklyActivity: "db:getWeeklyActivity",
@@ -34,8 +35,12 @@ const emitLog = (window: BrowserWindow, message: string): void => {
   window.webContents.send(CHANNELS.log, message);
 };
 
-const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "done" | "error"): void => {
+const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "playing" | "done" | "error"): void => {
   window.webContents.send(CHANNELS.status, status);
+};
+
+const emitProgress = (window: BrowserWindow, progress: { type: string; task: number; total: number }): void => {
+  window.webContents.send(CHANNELS.progress, progress);
 };
 
 export const registerLauncherIpc = (window: BrowserWindow): void => {
@@ -87,7 +92,10 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
       launcher.on("debug", (e) => emitLog(window, `[DEBUG] ${e}`));
       launcher.on("data", (e) => emitLog(window, `[DATA] ${e}`));
       launcher.on("download", (e) => emitLog(window, `[DOWNLOAD] ${e}`));
-      launcher.on("progress", (e) => emitLog(window, `[PROGRESS] ${e.type} - ${e.task} / ${e.total}`));
+      launcher.on("progress", (e) => {
+        emitLog(window, `[PROGRESS] ${e.type} - ${e.task} / ${e.total}`);
+        emitProgress(window, e);
+      });
       launcher.on("close", (e) => {
         emitLog(window, `[CLOSE] Minecraft cerrado (código: ${e})`);
         emitStatus(window, "done");
@@ -114,6 +122,7 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
 
       addDownloadedVersion(payload.version);
       emitLog(window, "Juego iniciado.");
+      emitStatus(window, "playing");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
       emitLog(window, `Error en lanzamiento: ${message}`);

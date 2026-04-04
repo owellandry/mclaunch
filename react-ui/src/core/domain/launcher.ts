@@ -1,4 +1,4 @@
-export type LauncherStatus = "idle" | "running" | "done" | "error";
+export type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 
 export type LauncherConfig = {
   version: string;

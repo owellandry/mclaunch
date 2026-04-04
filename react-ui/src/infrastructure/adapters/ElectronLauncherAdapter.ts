@@ -1,5 +1,5 @@
 import type { ILauncherPort } from "../../core/ports/ILauncherPort";
-import type { LauncherConfig, LauncherStatus, MinecraftVersion } from "../../core/domain/launcher";
+import type { LauncherConfig, MinecraftVersion } from "../../core/domain/launcher";
 
 export class ElectronLauncherAdapter implements ILauncherPort {
   launch(config: LauncherConfig, username: string): void {
@@ -45,7 +45,14 @@ export class ElectronLauncherAdapter implements ILauncherPort {
     return () => {};
   }
 
-  onStatus(callback: (status: LauncherStatus) => void): () => void {
+  onProgress(callback: (progress: { type: string; task: number; total: number }) => void): () => void {
+    if (window.api && window.api.onLauncherProgress) {
+      return window.api.onLauncherProgress(callback);
+    }
+    return () => {};
+  }
+
+  onStatus(callback: (status: "idle" | "running" | "playing" | "done" | "error") => void): () => void {
     if (window.api && window.api.onLauncherStatus) {
       return window.api.onLauncherStatus(callback);
     }

@@ -7,6 +7,7 @@ import { useNotificationStore } from "./useNotificationStore";
 interface LauncherState {
   status: LauncherStatus;
   logs: string[];
+  progress: { type: string; task: number; total: number; percentage: number } | null;
   availableVersions: MinecraftVersion[];
   downloadedVersions: string[];
   weeklyActivity: number[];
@@ -25,6 +26,7 @@ const launcherAdapter = new ElectronLauncherAdapter();
 export const useLauncherStore = create<LauncherState>((set, get) => ({
   status: "idle",
   logs: [],
+  progress: null,
   availableVersions: [],
   downloadedVersions: [],
   weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
@@ -62,6 +64,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
     addLog(`[launcher] Perfil cargado: ${profile.username.trim()}`);
     addLog(`[launcher] Memoria reservada: ${config.memoryMb} MB`);
     setStatus("running");
+    set({ progress: null });
 
     launcherAdapter.launch(config, profile.username.trim());
   },
@@ -90,12 +93,17 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       }
     });
 
+    const unsubProgress = launcherAdapter.onProgress((prog) => {
+      const percentage = prog.total > 0 ? Math.round((prog.task / prog.total) * 100) : 0;
+      set({ progress: { ...prog, percentage } });
+    });
+
     const unsubStatus = launcherAdapter.onStatus((status) => {
       const prevStatus = get().status;
       get().setStatus(status);
       
       const addNotif = useNotificationStore.getState().addNotification;
-      if (status === "done" && prevStatus === "running") {
+      if (status === "done" && (prevStatus === "running" || prevStatus === "playing")) {
         addNotif("Juego Cerrado", "La sesión de Minecraft ha finalizado.", "info");
       }
       if (status === "error") {
@@ -109,6 +117,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
 
     return () => {
       unsubLog();
+      unsubProgress();
       unsubStatus();
     };
   }
