@@ -1,6 +1,6 @@
-import { IStoragePort } from "../../core/ports/IStoragePort";
-import { UserProfile } from "../../core/domain/profile";
-import { LauncherConfig } from "../../core/domain/launcher";
+import type { IStoragePort } from "../../core/ports/IStoragePort";
+import type { UserProfile } from "../../core/domain/profile";
+import type { LauncherConfig } from "../../core/domain/launcher";
 
 const PROFILE_KEY = "nebula_profile";
 const CONFIG_KEY = "nebula_launcher_config";

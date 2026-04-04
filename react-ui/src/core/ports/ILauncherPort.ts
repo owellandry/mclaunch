@@ -1,4 +1,4 @@
-import { LauncherConfig, LauncherStatus } from "../domain/launcher";
+import type { LauncherConfig, LauncherStatus } from "../domain/launcher";
 
 export interface ILauncherPort {
   launch(config: LauncherConfig, username: string): void;

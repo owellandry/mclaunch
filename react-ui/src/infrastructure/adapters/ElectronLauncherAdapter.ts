@@ -1,5 +1,5 @@
-import { ILauncherPort } from "../../core/ports/ILauncherPort";
-import { LauncherConfig, LauncherStatus } from "../../core/domain/launcher";
+import type { ILauncherPort } from "../../core/ports/ILauncherPort";
+import type { LauncherConfig, LauncherStatus } from "../../core/domain/launcher";
 
 export class ElectronLauncherAdapter implements ILauncherPort {
   launch(config: LauncherConfig, username: string): void {
