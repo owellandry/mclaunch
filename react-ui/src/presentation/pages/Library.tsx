@@ -27,16 +27,16 @@ export function Library() {
         />
         <div className="grid grid-cols-3 gap-6 mt-8 relative z-10">
           {INSTALLATIONS.map((inst) => (
-            <div key={inst.id} className="bg-surfaceLight/40 border border-white/10 p-6 hover:bg-surface/80 hover:border-primary/30 transition-all group mc-cutout">
+            <div key={inst.id} className="bg-surfaceLight/40 border border-black/5 p-6 hover:bg-surfaceLight/80 hover:border-primary/30 transition-all group mc-cutout">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-bold px-3 py-1 bg-white/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
+                <span className="text-xs font-bold px-3 py-1 bg-black/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
                 <span className="w-2 h-2 bg-primary shadow-[0_0_8px_#A1E9A5CC] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
-              <h3 className="text-xl font-black text-white mb-2 uppercase tracking-tight">{inst.label}</h3>
+              <h3 className="text-xl font-black text-textMain mb-2 uppercase tracking-tight">{inst.label}</h3>
               <p className="text-sm text-textMuted mb-6 min-h-[60px]">{inst.desc}</p>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-primary/80 uppercase tracking-widest font-bold">{inst.vibe}</span>
-                <span className="text-[10px] text-black bg-primary px-2 py-0.5 font-bold uppercase tracking-widest mc-cutout-small">Listo</span>
+                <span className="text-[10px] text-white bg-primary px-2 py-0.5 font-bold uppercase tracking-widest mc-cutout-small">Listo</span>
               </div>
             </div>
           ))}
@@ -53,12 +53,12 @@ export function Library() {
           />
           <div className="space-y-4">
             {["Colección Nebula", "Bóveda de mundos", "Ajustes de mods"].map((item, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 bg-surface/30 border border-white/5 mc-cutout-small">
-                <div className="w-10 h-10 bg-surface border border-white/10 flex items-center justify-center text-primary mc-cutout-small">
+              <div key={i} className="flex items-center gap-4 p-4 bg-surfaceLight/30 border border-black/5 mc-cutout-small">
+                <div className="w-10 h-10 bg-surfaceLight border border-black/10 flex items-center justify-center text-primary mc-cutout-small">
                   <FiCompass />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold uppercase tracking-wider text-sm">{item}</h4>
+                  <h4 className="text-textMain font-bold uppercase tracking-wider text-sm">{item}</h4>
                   <p className="text-xs text-textMuted font-mono">Trabajo en progreso</p>
                 </div>
               </div>
