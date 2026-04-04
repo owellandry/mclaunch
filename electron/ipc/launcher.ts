@@ -1,6 +1,17 @@
 import { BrowserWindow, ipcMain, app } from "electron";
 import { Client, Authenticator } from "minecraft-launcher-core";
+import { execSync } from "node:child_process";
+import fs from "node:fs";
 import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData } from "./db";
+
+function isJavaInstalled(): boolean {
+  try {
+    execSync("java -version", { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export type LaunchPayload = {
   username: string;
@@ -84,20 +95,29 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
 
   ipcMain.on(CHANNELS.launch, async (_event: unknown, payload: LaunchPayload) => {
     emitStatus(window, "running");
-    emitLog(window, `Preparando lanzamiento offline para ${payload.username}...`);
+    emitLog(window, `Preparando lanzamiento para ${payload.username}...`);
+
+    // Check Java before doing anything
+    if (!isJavaInstalled()) {
+      emitLog(window, "Error: Java no está instalado. Instala Java 17 o superior desde https://adoptium.net y reinicia el launcher.");
+      emitStatus(window, "error");
+      return;
+    }
 
     try {
+      // Ensure game directory exists
+      fs.mkdirSync(payload.gameDir, { recursive: true });
+
       const launcher = new Client();
 
-      launcher.on("debug", (e) => emitLog(window, `[DEBUG] ${e}`));
-      launcher.on("data", (e) => emitLog(window, `[DATA] ${e}`));
-      launcher.on("download", (e) => emitLog(window, `[DOWNLOAD] ${e}`));
       launcher.on("progress", (e) => {
-        emitLog(window, `[PROGRESS] ${e.type} - ${e.task} / ${e.total}`);
         emitProgress(window, e);
       });
-      launcher.on("close", (e) => {
-        emitLog(window, `[CLOSE] Minecraft cerrado (código: ${e})`);
+      launcher.on("close", (code) => {
+        emitLog(window, `Minecraft cerrado (código: ${code})`);
+        if (code === 0) {
+          addDownloadedVersion(payload.version);
+        }
         emitStatus(window, "done");
       });
 
@@ -114,14 +134,16 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
         memory: {
           max: `${payload.memoryMb}M`,
           min: "1024M"
+        },
+        overrides: {
+          // detach: false prevents Windows from opening a separate console window for the Java process
+          detach: false,
         }
       };
 
-      emitLog(window, `Iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);
+      emitLog(window, `Descargando/iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);
       await launcher.launch(opts);
-
-      addDownloadedVersion(payload.version);
-      emitLog(window, "Juego iniciado.");
+      emitLog(window, "Proceso de Minecraft en ejecución.");
       emitStatus(window, "playing");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";

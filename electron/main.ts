@@ -1,5 +1,10 @@
 import { app, BrowserWindow, Menu, session } from "electron";
 import path from "node:path";
+
+// Fix: GPU shader disk cache causes "Access denied" on Windows when the
+// cache directory is locked by another process. Disable it entirely.
+app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+app.commandLine.appendSwitch("disable-features", "UseSkiaRenderer");
 import { registerLauncherIpc } from "./ipc/launcher";
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);

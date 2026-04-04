@@ -88,7 +88,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       if (lowerMsg === "juego iniciado.") {
         addNotif("¡Minecraft Abierto!", "Disfruta de tu partida.", "success");
       }
-      if (lowerMsg.startsWith("error en lanzamiento")) {
+      if (lowerMsg.startsWith("error en lanzamiento") || lowerMsg.startsWith("error:")) {
         addNotif("Error de lanzamiento", message, "error");
       }
     });
@@ -112,6 +112,8 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
 
       if (status === "done" || status === "idle" || status === "error") {
         get().fetchDbData();
+        // Reset to idle so the button is re-enabled for the next launch
+        setTimeout(() => get().setStatus("idle"), 500);
       }
     });
 
