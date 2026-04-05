@@ -16,7 +16,10 @@ const CHANNELS = {
   getLogo: "db:getLogo",
   setLogo: "db:setLogo",
   getLanguage: "db:getLanguage",
-  setLanguage: "db:setLanguage"
+  setLanguage: "db:setLanguage",
+  loginMicrosoft: "auth:loginMicrosoft",
+  logoutMicrosoft: "auth:logoutMicrosoft",
+  getProfile: "auth:getProfile"
 } as const;
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
@@ -48,6 +51,15 @@ const api = {
   },
   setLanguage: (lang: string): void => {
     ipcRenderer.send(CHANNELS.setLanguage, lang);
+  },
+  loginMicrosoft: (): Promise<any> => {
+    return ipcRenderer.invoke(CHANNELS.loginMicrosoft);
+  },
+  logoutMicrosoft: (): Promise<boolean> => {
+    return ipcRenderer.invoke(CHANNELS.logoutMicrosoft);
+  },
+  getProfile: (): Promise<any> => {
+    return ipcRenderer.invoke(CHANNELS.getProfile);
   },
   clearCache: (): Promise<void> => {
     return ipcRenderer.invoke(CHANNELS.clearCache);

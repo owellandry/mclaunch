@@ -10,6 +10,9 @@ interface AppState {
   logo: string;
   language: string;
   setProfile: (profile: UserProfile) => void;
+  loginMicrosoft: () => Promise<void>;
+  logoutMicrosoft: () => Promise<void>;
+  checkAuth: () => Promise<void>;
   setConfig: (config: LauncherConfig) => void;
   completeOnboarding: (username: string, memoryMb: number, gameDir: string) => void;
   setSearchQuery: (query: string) => void;
@@ -41,6 +44,31 @@ export const useAppStore = create<AppState>((set, get) => {
     setProfile: (profile) => {
       storage.saveProfile(profile);
       set({ profile });
+    },
+    loginMicrosoft: async () => {
+      if (window.api && window.api.loginMicrosoft) {
+        const authData = await window.api.loginMicrosoft();
+        const newProfile: UserProfile = { username: authData.username, isOnboardingCompleted: true };
+        storage.saveProfile(newProfile);
+        set({ profile: newProfile });
+      }
+    },
+    logoutMicrosoft: async () => {
+      if (window.api && window.api.logoutMicrosoft) {
+        await window.api.logoutMicrosoft();
+        storage.clearAll?.();
+        set({ profile: null });
+      }
+    },
+    checkAuth: async () => {
+      if (window.api && window.api.getProfile) {
+        const p = await window.api.getProfile();
+        if (p) {
+          const profile: UserProfile = { username: p.username, isOnboardingCompleted: p.isOnboardingCompleted };
+          storage.saveProfile(profile);
+          set({ profile });
+        }
+      }
     },
     setConfig: (config) => {
       storage.saveLauncherConfig(config);
