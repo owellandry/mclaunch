@@ -1,7 +1,8 @@
 import { BrowserWindow, ipcMain, app } from "electron";
 import { Client, Authenticator } from "minecraft-launcher-core";
-import { execSync } from "node:child_process";
+import { execSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
 import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
 import { Auth } from "msmc";
 
@@ -28,6 +29,27 @@ export type MinecraftVersion = {
   time: string;
   releaseTime: string;
 };
+
+type FabricVersionProfile = {
+  id: string;
+  inheritsFrom: string;
+  releaseTime: string;
+  time: string;
+  type: string;
+  mainClass: string;
+  arguments?: {
+    game?: unknown[];
+    jvm?: unknown[];
+  };
+  libraries?: Array<Record<string, unknown>>;
+};
+
+const MC_HOME_CLIENT = {
+  modId: "mclaunch-home",
+  supportedVersion: "1.20.1",
+  loaderVersion: "0.18.6",
+  profileBaseUrl: "https://meta.fabricmc.net/v2/versions/loader",
+} as const;
 
 const CHANNELS = {
   launch: "launcher:launch",
@@ -60,6 +82,210 @@ const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "playing
 
 const emitProgress = (window: BrowserWindow, progress: { type: string; task: number; total: number }): void => {
   window.webContents.send(CHANNELS.progress, progress);
+};
+
+const emitGradleOutput = (window: BrowserWindow, output: string | null | undefined): void => {
+  if (!output) {
+    return;
+  }
+
+  output
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(-8)
+    .forEach((line) => emitLog(window, `[mc-home-client] ${line}`));
+};
+
+const readJsonFile = <T>(filePath: string): T | null => {
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8")) as T;
+  } catch {
+    return null;
+  }
+};
+
+const resolveExistingPath = (candidates: string[]): string | null => {
+  for (const candidate of candidates) {
+    if (candidate && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
+
+const getWorkspaceRootCandidates = (): string[] => {
+  const appPath = app.getAppPath();
+  const cwd = process.cwd();
+  const resourcesPath = process.resourcesPath;
+
+  return Array.from(
+    new Set(
+      [cwd, appPath, path.dirname(appPath), resourcesPath, path.dirname(resourcesPath)].filter(Boolean)
+    )
+  );
+};
+
+const resolveMcHomeClientProjectDir = (): string | null => {
+  const candidates = getWorkspaceRootCandidates().map((rootDir) => path.join(rootDir, "mc-home-client"));
+  return resolveExistingPath(candidates);
+};
+
+const resolveLatestHomeClientJar = (projectDir: string): string | null => {
+  const libsDir = path.join(projectDir, "build", "libs");
+  if (!fs.existsSync(libsDir)) {
+    return null;
+  }
+
+  const jars = fs
+    .readdirSync(libsDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => name.endsWith(".jar") && !name.includes("-sources") && !name.includes("-dev"))
+    .map((name) => {
+      const fullPath = path.join(libsDir, name);
+      return {
+        fullPath,
+        modifiedAt: fs.statSync(fullPath).mtimeMs,
+      };
+    })
+    .sort((left, right) => right.modifiedAt - left.modifiedAt);
+
+  return jars[0]?.fullPath ?? null;
+};
+
+const buildHomeClientWorkspace = (window: BrowserWindow, projectDir: string): string | null => {
+  const wrapperPath = process.platform === "win32"
+    ? path.join(projectDir, "gradlew.bat")
+    : path.join(projectDir, "gradlew");
+
+  if (!fs.existsSync(wrapperPath)) {
+    emitLog(window, "[mc-home-client] No se encontró gradle wrapper, usando el último jar disponible.");
+    return resolveLatestHomeClientJar(projectDir);
+  }
+
+  emitLog(window, "[mc-home-client] Compilando el cliente del home screen para sincronizar cambios...");
+
+  const command = process.platform === "win32" ? "cmd.exe" : wrapperPath;
+  const args = process.platform === "win32"
+    ? ["/c", wrapperPath, "--no-daemon", "build"]
+    : ["--no-daemon", "build"];
+
+  const result = spawnSync(command, args, {
+    cwd: projectDir,
+    encoding: "utf8",
+  });
+
+  emitGradleOutput(window, result.stdout);
+  emitGradleOutput(window, result.stderr);
+
+  if (result.status !== 0) {
+    emitLog(window, `[mc-home-client] La compilación falló (código ${result.status ?? "desconocido"}), intentando usar el último jar existente.`);
+  }
+
+  return resolveLatestHomeClientJar(projectDir);
+};
+
+const resolveHomeClientArtifact = (window: BrowserWindow): string | null => {
+  const projectDir = resolveMcHomeClientProjectDir();
+  if (!projectDir) {
+    emitLog(window, "[mc-home-client] No se encontró el subproyecto mc-home-client. El launcher seguirá en modo vanilla.");
+    return null;
+  }
+
+  const jarPath = buildHomeClientWorkspace(window, projectDir);
+  if (!jarPath) {
+    emitLog(window, "[mc-home-client] No se encontró ningún jar compilado para instalar.");
+    return null;
+  }
+
+  return jarPath;
+};
+
+const ensureFabricProfile = async (window: BrowserWindow, gameDir: string, minecraftVersion: string): Promise<FabricVersionProfile | null> => {
+  if (minecraftVersion !== MC_HOME_CLIENT.supportedVersion) {
+    emitLog(
+      window,
+      `[mc-home-client] ${minecraftVersion} todavía no tiene home screen personalizado. Se usará vanilla.`
+    );
+    return null;
+  }
+
+  const profileId = `fabric-loader-${MC_HOME_CLIENT.loaderVersion}-${minecraftVersion}`;
+  const profileDir = path.join(gameDir, "versions", profileId);
+  const profilePath = path.join(profileDir, `${profileId}.json`);
+  const cachedProfile = readJsonFile<FabricVersionProfile>(profilePath);
+
+  try {
+    const response = await fetch(`${MC_HOME_CLIENT.profileBaseUrl}/${minecraftVersion}/${MC_HOME_CLIENT.loaderVersion}/profile/json`);
+    if (!response.ok) {
+      throw new Error(`Fabric Meta respondió ${response.status}`);
+    }
+
+    const profile = (await response.json()) as FabricVersionProfile;
+    fs.mkdirSync(profileDir, { recursive: true });
+    fs.writeFileSync(profilePath, JSON.stringify(profile, null, 2));
+    emitLog(window, `[mc-home-client] Perfil Fabric ${profile.id} listo en versions/.`);
+    return profile;
+  } catch (error) {
+    if (cachedProfile) {
+      emitLog(window, "[mc-home-client] No se pudo refrescar Fabric Meta, usando el perfil Fabric en caché.");
+      return cachedProfile;
+    }
+
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    emitLog(window, `[mc-home-client] No se pudo preparar Fabric: ${message}`);
+    return null;
+  }
+};
+
+const installHomeClientMod = (window: BrowserWindow, gameDir: string, jarPath: string): string => {
+  const modsDir = path.join(gameDir, "mods");
+  const destination = path.join(modsDir, `${MC_HOME_CLIENT.modId}.jar`);
+
+  fs.mkdirSync(modsDir, { recursive: true });
+
+  for (const existingFile of fs.readdirSync(modsDir)) {
+    if (
+      existingFile !== path.basename(destination) &&
+      existingFile.startsWith(MC_HOME_CLIENT.modId) &&
+      existingFile.endsWith(".jar")
+    ) {
+      fs.rmSync(path.join(modsDir, existingFile), { force: true });
+    }
+  }
+
+  fs.copyFileSync(jarPath, destination);
+  emitLog(window, `[mc-home-client] Mod sincronizado en ${destination}`);
+
+  return destination;
+};
+
+const prepareHomeClientRuntime = async (
+  window: BrowserWindow,
+  payload: LaunchPayload
+): Promise<{ enabled: boolean; customVersionId?: string }> => {
+  const profile = await ensureFabricProfile(window, payload.gameDir, payload.version);
+  if (!profile) {
+    return { enabled: false };
+  }
+
+  const jarPath = resolveHomeClientArtifact(window);
+  if (!jarPath) {
+    return { enabled: false };
+  }
+
+  installHomeClientMod(window, payload.gameDir, jarPath);
+
+  return {
+    enabled: true,
+    customVersionId: profile.id,
+  };
 };
 
 const resolveAuthErrorMessage = (error: unknown): string => {
@@ -360,11 +586,21 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
     try {
       // Ensure game directory exists
       fs.mkdirSync(payload.gameDir, { recursive: true });
+      const homeClientRuntime = await prepareHomeClientRuntime(window, payload);
 
       const launcher = new Client();
 
       launcher.on("progress", (e) => {
         emitProgress(window, e);
+      });
+      launcher.on("debug", (message) => {
+        emitLog(window, String(message));
+      });
+      launcher.on("data", (message) => {
+        const text = String(message).trim();
+        if (text) {
+          emitLog(window, `[minecraft] ${text}`);
+        }
       });
       launcher.on("close", (code) => {
         emitLog(window, `Minecraft cerrado (código: ${code})`);
@@ -395,7 +631,8 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
         root: payload.gameDir,
         version: {
           number: payload.version,
-          type: "release"
+          type: "release",
+          custom: homeClientRuntime.customVersionId
         },
         memory: {
           max: `${payload.memoryMb}M`,
@@ -407,7 +644,15 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
       };
 
       emitLog(window, `Descargando/iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);
-      await launcher.launch(opts);
+      const flavorLabel = homeClientRuntime.enabled
+        ? `Fabric + ${MC_HOME_CLIENT.modId}`
+        : "vanilla";
+
+      emitLog(window, `Lanzando perfil ${payload.version} en modo ${flavorLabel} con ${payload.memoryMb}MB de RAM...`);
+      const minecraftProcess = await launcher.launch(opts);
+      if (!minecraftProcess) {
+        throw new Error("El proceso de Minecraft no pudo iniciarse.");
+      }
       emitLog(window, "Proceso de Minecraft en ejecución.");
       emitStatus(window, "playing");
     } catch (error) {

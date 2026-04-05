@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "mclaunch-home",
+  "version": "${version}",
+  "name": "MC Launch Home",
+  "description": "Client-side home screen layer for MC Launch.",
+  "authors": [
+    "MC Launch"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.mclaunch.home.McLaunchHomeClient"
+    ]
+  },
+  "mixins": [
+    "mclaunch-home.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=17"
+  }
+}

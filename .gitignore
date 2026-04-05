@@ -39,6 +39,7 @@ pnpm-debug.log*
 .vite/
 coverage/
 .claude
+.tmp-gradle/
 
 # IDE / OS / Editor
 .DS_Store
