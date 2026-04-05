@@ -12,7 +12,7 @@ const SERVERS = [
 export function Servers() {
   return (
     <div className="flex flex-col gap-8 pb-8">
-      <Card className="border-primary/20 shadow-[0_0_30px_#A1E9A50D]">
+      <Card className="border-primary/20 shadow-[0_0_30px_var(--color-primary-shadow)]">
         <SectionTitle
           eyebrow="Multijugador"
           title="Lounge de Servidores"
@@ -35,7 +35,7 @@ export function Servers() {
               <div className="flex justify-between items-center pt-4 border-t border-black/5">
                 <span className="text-[10px] uppercase tracking-widest text-textMuted font-bold">{srv.mode}</span>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-primary shadow-[0_0_8px_#A1E9A5CC] mc-cutout-small" />
+                  <span className="w-2 h-2 bg-primary shadow-[0_0_8px_var(--color-primary-shadow)] mc-cutout-small" />
                   <span className="text-[10px] uppercase tracking-widest font-bold text-textMain">En línea</span>
                 </div>
               </div>

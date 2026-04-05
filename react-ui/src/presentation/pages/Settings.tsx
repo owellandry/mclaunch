@@ -7,11 +7,11 @@ import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
 
 const AVAILABLE_LOGOS = [
-  { id: "logo_gren.svg", name: "Green (Default)" },
-  { id: "logo_blue.svg", name: "Blue" },
-  { id: "logo_lemon.svg", name: "Lemon" },
-  { id: "logo_purple.svg", name: "Purple" },
-  { id: "logo_yellow.svg", name: "Yellow" },
+  { id: "logo_gren.svg", name: "Verde (Por defecto)" },
+  { id: "logo_blue.svg", name: "Azul" },
+  { id: "logo_lemon.svg", name: "Limón" },
+  { id: "logo_purple.svg", name: "Púrpura" },
+  { id: "logo_yellow.svg", name: "Amarillo" },
 ];
 
 export function Settings() {
@@ -133,7 +133,7 @@ export function Settings() {
 
         <div className="col-span-5 flex flex-col gap-8">
           <Card>
-            <SectionTitle eyebrow="Look and feel" title="Sistema Visual" subtitle="Aspectos de UI mockeados." icon={<FiMonitor />} />
+            <SectionTitle eyebrow="Apariencia" title="Sistema Visual" subtitle="Aspectos de la interfaz." icon={<FiMonitor />} />
             <div className="bg-surfaceLight/30 p-4 border border-black/5 space-y-2 mc-cutout-small">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-textMuted uppercase tracking-wider text-[10px] font-bold">Modo cinemático</span>
@@ -154,7 +154,7 @@ export function Settings() {
                 <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
               </div>
               <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
-                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Onboarding</span>
+                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">Inicio</span>
                 <strong className="text-primary text-sm uppercase tracking-wider">Completado</strong>
               </div>
               <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">

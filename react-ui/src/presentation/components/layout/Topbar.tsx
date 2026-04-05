@@ -29,7 +29,7 @@ export function Topbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   
-  const displayName = profile?.username || "Player";
+  const displayName = profile?.username || "Jugador";
   const count = unreadCount();
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export function Topbar() {
       <div className="flex items-center gap-3" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         <h2 className="text-sm font-black tracking-[0.25em] text-textMain uppercase font-mono flex items-center gap-2">
           MINECRAFT
-          <span className="bg-primary text-white px-2 py-0.5 text-[10px] mc-cutout-small shadow-[0_0_8px_#A1E9A566]">
+          <span className="bg-primary text-white px-2 py-0.5 text-[10px] mc-cutout-small shadow-[0_0_8px_var(--color-primary-shadow)]">
             LAUNCH
           </span>
         </h2>

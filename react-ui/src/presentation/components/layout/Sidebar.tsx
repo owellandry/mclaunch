@@ -36,12 +36,12 @@ export function Sidebar() {
               to={item.path}
               title={item.label}
               className={`w-12 h-12 flex items-center justify-center transition-all ${
-                isActive 
-                  ? "bg-surfaceLight text-primary border border-black/5 mc-cutout-small" 
+                isActive
+                  ? "bg-surfaceLight text-primary border border-black/5 mc-cutout-small"
                   : "text-textMuted hover:bg-black/5 hover:text-textMain rounded-xl"
               }`}
             >
-              <Icon className={`text-xl ${isActive ? "drop-shadow-[0_0_8px_#A1E9A5CC]" : ""}`} />
+              <Icon className={`text-xl ${isActive ? "drop-shadow-[0_0_8px_var(--color-primary-shadow)]" : ""}`} />
             </Link>
           );
         })}

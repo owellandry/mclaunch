@@ -1,6 +1,42 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+:root {
+  --color-primary: #4ade80;
+  --color-primary-hover: #22c55e;
+  --color-primary-shadow: rgba(74, 222, 128, 0.4);
+}
+
+.theme-logo_gren {
+  --color-primary: #4ade80;
+  --color-primary-hover: #22c55e;
+  --color-primary-shadow: rgba(74, 222, 128, 0.4);
+}
+
+.theme-logo_blue {
+  --color-primary: #60a5fa;
+  --color-primary-hover: #3b82f6;
+  --color-primary-shadow: rgba(96, 165, 250, 0.4);
+}
+
+.theme-logo_lemon {
+  --color-primary: #bef264;
+  --color-primary-hover: #a3e635;
+  --color-primary-shadow: rgba(190, 242, 100, 0.4);
+}
+
+.theme-logo_purple {
+  --color-primary: #c084fc;
+  --color-primary-hover: #a855f7;
+  --color-primary-shadow: rgba(192, 132, 252, 0.4);
+}
+
+.theme-logo_yellow {
+  --color-primary: #fde047;
+  --color-primary-hover: #eab308;
+  --color-primary-shadow: rgba(253, 224, 71, 0.4);
+}
+
 @layer base {
   body {
     @apply bg-background text-textMain font-sans overflow-hidden select-none m-0 p-0;
@@ -30,7 +66,7 @@
   }
   
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_rgba(74,222,128,0.4)];
+    @apply bg-primary text-white hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_var(--color-primary-shadow)];
   }
   
   .btn-secondary {

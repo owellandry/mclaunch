@@ -64,8 +64,8 @@ export function Dashboard() {
 
         {/* Bottom Content */}
         <div className="absolute bottom-10 left-10 max-w-xl">
-          <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_#A1E9A580]">
-            VANILLA RELEASE
+          <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_var(--color-primary-shadow)]">
+            VERSIÓN VANILLA
           </span>
           <h1 className="text-5xl font-black text-textMain mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
             Minecraft {selectedVersion}
@@ -80,10 +80,10 @@ export function Dashboard() {
           className="absolute bottom-0 right-0 bg-background p-6 pl-8 pt-8"
           style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%, 0 100%, 40px 0)' }}
         >
-          <Button 
+          <Button
             onClick={handleMainAction}
             disabled={isRunning || isPlaying}
-            className={`py-4 px-10 text-lg shadow-[0_0_20px_#A1E9A533] relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
+            className={`py-4 px-10 text-lg shadow-[0_0_20px_var(--color-primary-shadow)] relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
           >
             {/* Progress Bar Background */}
             {isRunning && progress && (
@@ -169,7 +169,7 @@ export function Dashboard() {
                     </span>
                   </div>
                   <div
-                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surfaceLight border border-black/20'}`}
+                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_var(--color-primary-shadow)]' : 'bg-surfaceLight border border-black/20'}`}
                     style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
                   />
                 </div>

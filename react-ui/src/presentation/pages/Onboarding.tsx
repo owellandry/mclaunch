@@ -29,7 +29,7 @@ export function Onboarding() {
       <div className="w-full max-w-xl z-10 relative">
         <Card className="border-t-4 border-t-primary shadow-2xl">
           <div className="text-center mb-10">
-            <div className="w-20 h-20 bg-surface border border-black/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_#A1E9A533]">
+            <div className="w-20 h-20 bg-surface border border-black/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_var(--color-primary-shadow)]">
               <FiCommand className="text-4xl" />
             </div>
             <h1 className="text-4xl font-black text-textMain mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
