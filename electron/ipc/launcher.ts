@@ -108,8 +108,8 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
       db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('mclc_auth', JSON.stringify(mcToken));
 
       return {
-        username: mc.profile.name,
-        uuid: mc.profile.id,
+        username: mc.profile?.name || "Player",
+        uuid: mc.profile?.id || "00000000-0000-0000-0000-000000000000",
         isOnboardingCompleted: true
       };
     } catch (e: any) {
