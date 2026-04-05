@@ -7,10 +7,13 @@ interface AppState {
   profile: UserProfile | null;
   config: LauncherConfig;
   searchQuery: string;
+  logo: string;
   setProfile: (profile: UserProfile) => void;
   setConfig: (config: LauncherConfig) => void;
   completeOnboarding: (username: string, memoryMb: number, gameDir: string) => void;
   setSearchQuery: (query: string) => void;
+  setLogo: (logo: string) => void;
+  fetchLogo: () => Promise<void>;
   clearAll: () => void;
 }
 
@@ -30,6 +33,7 @@ export const useAppStore = create<AppState>((set, get) => {
     profile: initialProfile,
     config: initialConfig,
     searchQuery: "",
+    logo: "logo_gren.svg",
     setProfile: (profile) => {
       storage.saveProfile(profile);
       set({ profile });
@@ -46,9 +50,21 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ profile: newProfile, config: newConfig });
     },
     setSearchQuery: (query) => set({ searchQuery: query }),
+    setLogo: (logo: string) => {
+      set({ logo });
+      if (window.api && window.api.setLogo) {
+        window.api.setLogo(logo);
+      }
+    },
+    fetchLogo: async () => {
+      if (window.api && window.api.getLogo) {
+        const logo = await window.api.getLogo();
+        set({ logo });
+      }
+    },
     clearAll: () => {
       storage.clearAll?.();
-      set({ profile: null, config: initialConfig, searchQuery: "" });
+      set({ profile: null, config: initialConfig, searchQuery: "", logo: "logo_gren.svg" });
     }
   };
 });

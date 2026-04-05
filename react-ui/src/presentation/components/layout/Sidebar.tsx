@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { FiGrid, FiLayers, FiServer, FiSettings } from "react-icons/fi";
-import logoSvg from "../../../assets/logo/logo_gren.svg";
+import { useAppStore } from "../../../application/store/useAppStore";
 
 const NAV_ITEMS = [
   { id: "dashboard", path: "/dashboard", label: "Inicio", icon: FiGrid },
@@ -11,13 +11,14 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const location = useLocation();
+  const { logo } = useAppStore();
 
   return (
     <aside className="w-20 border-r border-black/5 flex flex-col items-center py-6 bg-surface/80 backdrop-blur-xl z-20">
       {/* Brand Icon — logo */}
       <div className="mb-8 flex flex-col items-center gap-1.5">
         <img
-          src={logoSvg}
+          src={`./logo/${logo}`}
           alt="MCLaunch"
           className="w-12 h-12 "
         />
