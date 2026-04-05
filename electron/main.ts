@@ -13,7 +13,7 @@ const DEV_CSP = [
   "default-src 'self' http://localhost:5173 ws://localhost:5173",
   "script-src 'self' 'unsafe-inline' http://localhost:5173",
   "style-src 'self' 'unsafe-inline' http://localhost:5173",
-  "img-src 'self' data: blob: http://localhost:5173",
+  "img-src 'self' data: blob: http://localhost:5173 https://mc-heads.net https://textures.minecraft.net http://textures.minecraft.net",
   "font-src 'self' data:",
   "connect-src 'self' http://localhost:5173 ws://localhost:5173",
 ].join("; ");
@@ -22,10 +22,18 @@ const PROD_CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data: blob: https://mc-heads.net https://textures.minecraft.net http://textures.minecraft.net",
   "font-src 'self' data:",
   "connect-src 'self'",
 ].join("; ");
+
+const shouldInjectAppCsp = (url: string): boolean => {
+  if (isDev) {
+    return url.startsWith("http://localhost:5173");
+  }
+
+  return url.startsWith("file://");
+};
 
 const createWindow = async (): Promise<void> => {
   const mainWindow = new BrowserWindow({
@@ -69,7 +77,14 @@ const createWindow = async (): Promise<void> => {
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
 
-  session.defaultSession.webRequest.onHeadersReceived((details: { responseHeaders?: Record<string, string[]> }, callback: (response: { responseHeaders: Record<string, string[]> }) => void) => {
+  session.defaultSession.webRequest.onHeadersReceived((details: { url: string; responseHeaders?: Record<string, string[]> }, callback: (response: { responseHeaders: Record<string, string[]> }) => void) => {
+    if (!shouldInjectAppCsp(details.url)) {
+      callback({
+        responseHeaders: details.responseHeaders ?? {},
+      });
+      return;
+    }
+
     callback({
       responseHeaders: {
         ...details.responseHeaders,

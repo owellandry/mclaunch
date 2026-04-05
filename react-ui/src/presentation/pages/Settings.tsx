@@ -5,6 +5,7 @@ import { useNotificationStore } from "../../application/store/useNotificationSto
 import { Card } from "../components/ui/Card";
 import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
+import { MinecraftAvatar } from "../components/ui/MinecraftAvatar";
 import { useTranslation } from "react-i18next";
 
 import { useNavigate } from "react-router-dom";
@@ -178,7 +179,10 @@ export function Settings() {
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
                   <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.active_pilot")}</span>
-                  <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
+                  <div className="flex items-center gap-3">
+                    <MinecraftAvatar username={profile?.username || "Player"} uuid={profile?.uuid} skinUrl={profile?.skinUrl} size={36} />
+                    <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
+                  </div>
                 </div>
                 <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
                   <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.startup")}</span>

@@ -81,6 +81,164 @@ const resolveAuthErrorMessage = (error: unknown): string => {
   return "Error desconocido al iniciar sesión";
 };
 
+const isMicrosoftAuthRedirect = (url: string, redirectUri: string): boolean => {
+  return url.startsWith(redirectUri);
+};
+
+const extractMicrosoftAuthCode = (url: string, redirectUri: string): string | null => {
+  if (!isMicrosoftAuthRedirect(url, redirectUri)) {
+    return null;
+  }
+
+  try {
+    return new URL(url).searchParams.get("code");
+  } catch {
+    return null;
+  }
+};
+
+const extractMicrosoftAuthError = (url: string, redirectUri: string): string | null => {
+  if (!isMicrosoftAuthRedirect(url, redirectUri)) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    const error = parsedUrl.searchParams.get("error");
+    const description = parsedUrl.searchParams.get("error_description");
+
+    if (!error && !description) {
+      return null;
+    }
+
+    if (error === "access_denied") {
+      return "Inicio de sesión cancelado por el usuario";
+    }
+
+    return description || error;
+  } catch {
+    return null;
+  }
+};
+
+const resolveSkinUrl = (profile: {
+  skins?: Array<{ state?: string; url?: string }>;
+} | null | undefined): string | null => {
+  if (!profile?.skins?.length) {
+    return null;
+  }
+
+  const activeSkin = profile.skins.find((skin) => skin.state === "ACTIVE" && typeof skin.url === "string" && skin.url.trim());
+  if (activeSkin?.url) {
+    return activeSkin.url;
+  }
+
+  const firstSkin = profile.skins.find((skin) => typeof skin.url === "string" && skin.url.trim());
+  return firstSkin?.url ?? null;
+};
+
+const loginWithMicrosoftPopup = async (parentWindow: BrowserWindow): Promise<any> => {
+  const auth = new Auth("select_account");
+  const redirectUri = auth.token.redirect;
+  const authWindow = new BrowserWindow({
+    parent: parentWindow,
+    modal: true,
+    width: 520,
+    height: 700,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    autoHideMenuBar: true,
+    show: false,
+    title: "Iniciar sesión con Microsoft",
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false,
+    },
+  });
+
+  let isCompleted = false;
+  let isClosingProgrammatically = false;
+
+  const closeWindowSafely = (): void => {
+    if (authWindow.isDestroyed()) {
+      return;
+    }
+
+    isClosingProgrammatically = true;
+    authWindow.close();
+  };
+
+  const authCode = await new Promise<string>((resolve, reject) => {
+    const handleNavigation = (targetUrl: string): void => {
+      const oauthError = extractMicrosoftAuthError(targetUrl, redirectUri);
+      if (oauthError) {
+        isCompleted = true;
+        closeWindowSafely();
+        reject(new Error(oauthError));
+        return;
+      }
+
+      const code = extractMicrosoftAuthCode(targetUrl, redirectUri);
+      if (!code) {
+        return;
+      }
+
+      isCompleted = true;
+      closeWindowSafely();
+      resolve(code);
+    };
+
+    authWindow.once("ready-to-show", () => {
+      authWindow.show();
+    });
+
+    authWindow.on("closed", () => {
+      if (!isCompleted && !isClosingProgrammatically) {
+        reject(new Error("Inicio de sesión cancelado por el usuario"));
+      }
+    });
+
+    authWindow.webContents.on("will-redirect", (event, targetUrl) => {
+      if (isMicrosoftAuthRedirect(targetUrl, redirectUri)) {
+        event.preventDefault();
+      }
+      handleNavigation(targetUrl);
+    });
+
+    authWindow.webContents.on("will-navigate", (event, targetUrl) => {
+      if (isMicrosoftAuthRedirect(targetUrl, redirectUri)) {
+        event.preventDefault();
+      }
+      handleNavigation(targetUrl);
+    });
+
+    authWindow.webContents.on("did-navigate", (_event, targetUrl) => {
+      handleNavigation(targetUrl);
+    });
+
+    authWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
+      if (isCompleted || errorCode === -3) {
+        return;
+      }
+
+      if (isMicrosoftAuthRedirect(validatedUrl, redirectUri)) {
+        handleNavigation(validatedUrl);
+        return;
+      }
+
+      reject(new Error(`No se pudo cargar la ventana de autenticación: ${errorDescription}`));
+    });
+
+    authWindow.loadURL(auth.createLink()).catch((error: unknown) => {
+      reject(error instanceof Error ? error : new Error("No se pudo abrir el inicio de sesión de Microsoft"));
+    });
+  });
+
+  return auth.login(authCode);
+};
+
 export const registerLauncherIpc = (window: BrowserWindow): void => {
   initDb();
 
@@ -114,8 +272,7 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
 
   ipcMain.handle(CHANNELS.loginMicrosoft, async () => {
     try {
-      const auth = new Auth("select_account");
-      const xbox = await auth.launch("electron");
+      const xbox = await loginWithMicrosoftPopup(window);
       const mc = await xbox.getMinecraft();
       
       const msmcToken = xbox.save();
@@ -129,11 +286,12 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
       return {
         username: mc.profile?.name || "Player",
         uuid: mc.profile?.id || "00000000-0000-0000-0000-000000000000",
+        skinUrl: resolveSkinUrl(mc.profile),
         isOnboardingCompleted: true
       };
     } catch (error: unknown) {
       const message = resolveAuthErrorMessage(error);
-      if (message.includes("error.gui.closed")) {
+      if (message.includes("error.gui.closed") || message.includes("access_denied")) {
         throw new Error("Inicio de sesión cancelado por el usuario");
       }
       console.error("Error en login de Microsoft:", error);
@@ -154,6 +312,7 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
         return {
           username: p.name,
           uuid: p.id,
+          skinUrl: resolveSkinUrl(p),
           isOnboardingCompleted: true
         };
       } catch {

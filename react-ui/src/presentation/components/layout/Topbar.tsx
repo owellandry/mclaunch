@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FiSearch, FiBell, FiCheck, FiTrash2, FiInfo, FiCheckCircle, FiAlertTriangle, FiXCircle } from "react-icons/fi";
 import { useAppStore } from "../../../application/store/useAppStore";
 import { useNotificationStore } from "../../../application/store/useNotificationStore";
 import { useTranslation } from "react-i18next";
+import { MinecraftAvatar } from "../ui/MinecraftAvatar";
+import { PLAYER_AVATAR_TRANSITION_NAME, PLAYER_PROFILE_CHIP_TRANSITION_NAME, startViewTransition } from "../../lib/viewTransition";
 
 function getNotificationIcon(type: string) {
   switch (type) {
@@ -30,6 +33,7 @@ export function Topbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const navigate = useNavigate();
   
   const displayName = profile?.username || t("topbar.player");
   const count = unreadCount();
@@ -47,6 +51,9 @@ export function Topbar() {
   const minimize = () => window.api?.minimizeWindow?.();
   const maximize = () => window.api?.maximizeWindow?.();
   const close    = () => window.api?.closeWindow?.();
+  const openSkinStudio = () => {
+    startViewTransition(() => navigate("/profile"));
+  };
 
   return (
     <header
@@ -146,12 +153,22 @@ export function Topbar() {
         </div>
         
         {/* Profile */}
-        <div className="flex items-center gap-3 bg-surfaceLight border border-black/5 pl-4 pr-1 py-1 mc-cutout-small">
+        <button
+          type="button"
+          onClick={openSkinStudio}
+          title={t("topbar.profile")}
+          className="flex items-center gap-3 bg-surfaceLight border border-black/5 pl-4 pr-1 py-1 mc-cutout-small transition-colors hover:border-primary/40 hover:bg-black/5"
+          style={{ viewTransitionName: PLAYER_PROFILE_CHIP_TRANSITION_NAME }}
+        >
           <span className="text-sm font-bold text-textMain uppercase tracking-wider">{displayName}</span>
-          <div className="w-8 h-8 bg-primary flex items-center justify-center text-white font-black mc-cutout-small">
-            {displayName.slice(0, 1).toUpperCase()}
-          </div>
-        </div>
+          <MinecraftAvatar
+            username={displayName}
+            uuid={profile?.uuid}
+            skinUrl={profile?.skinUrl}
+            size={32}
+            transitionName={PLAYER_AVATAR_TRANSITION_NAME}
+          />
+        </button>
 
         {/* Window controls */}
         <div className="flex items-center gap-1 ml-2">

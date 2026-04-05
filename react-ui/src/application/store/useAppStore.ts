@@ -48,7 +48,12 @@ export const useAppStore = create<AppState>((set, get) => {
     loginMicrosoft: async () => {
       if (window.api && window.api.loginMicrosoft) {
         const authData = await window.api.loginMicrosoft();
-        const newProfile: UserProfile = { username: authData.username, isOnboardingCompleted: true };
+        const newProfile: UserProfile = {
+          username: authData.username,
+          uuid: authData.uuid,
+          skinUrl: authData.skinUrl ?? null,
+          isOnboardingCompleted: true
+        };
         storage.saveProfile(newProfile);
         set({ profile: newProfile });
       }
@@ -64,7 +69,12 @@ export const useAppStore = create<AppState>((set, get) => {
       if (window.api && window.api.getProfile) {
         const p = await window.api.getProfile();
         if (p) {
-          const profile: UserProfile = { username: p.username, isOnboardingCompleted: p.isOnboardingCompleted };
+          const profile: UserProfile = {
+            username: p.username,
+            uuid: p.uuid,
+            skinUrl: p.skinUrl ?? null,
+            isOnboardingCompleted: p.isOnboardingCompleted
+          };
           storage.saveProfile(profile);
           set({ profile });
         }
@@ -75,7 +85,12 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ config });
     },
     completeOnboarding: (username, memoryMb, gameDir) => {
-      const newProfile: UserProfile = { username, isOnboardingCompleted: true };
+      const currentProfile = get().profile;
+      const newProfile: UserProfile = {
+        ...currentProfile,
+        username,
+        isOnboardingCompleted: true
+      };
       const newConfig: LauncherConfig = { ...get().config, memoryMb, gameDir };
       storage.saveProfile(newProfile);
       storage.saveLauncherConfig(newConfig);

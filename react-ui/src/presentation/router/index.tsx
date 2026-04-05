@@ -5,6 +5,7 @@ import { Dashboard } from "../pages/Dashboard";
 import { Library } from "../pages/Library";
 import { Servers } from "../pages/Servers";
 import { Settings } from "../pages/Settings";
+import { SkinStudio } from "../pages/SkinStudio";
 import { useAppStore } from "../../application/store/useAppStore";
 
 function AuthGuard() {
@@ -33,6 +34,7 @@ export const router = createHashRouter([
           { path: "dashboard", element: <Dashboard /> },
           { path: "library", element: <Library /> },
           { path: "servers", element: <Servers /> },
+          { path: "profile", element: <SkinStudio /> },
           { path: "settings", element: <Settings /> },
         ]
       }
