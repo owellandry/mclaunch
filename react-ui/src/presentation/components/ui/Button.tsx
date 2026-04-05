@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
   icon?: ReactNode;
 }
 
@@ -12,6 +12,7 @@ export function Button({ variant = "primary", icon, children, className = "", ..
     primary: "btn-primary mc-button-cutout",
     secondary: "btn-secondary mc-button-cutout",
     ghost: "bg-transparent text-textMuted hover:text-primary px-4 py-2 uppercase tracking-widest",
+    danger: "bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 mc-cutout-small",
   };
 
   return (

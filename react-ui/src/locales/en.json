@@ -81,7 +81,9 @@
     "blue": "Blue",
     "lemon": "Lemon",
     "purple": "Purple",
-    "yellow": "Yellow"
+    "yellow": "Yellow",
+    "logout": "Log Out",
+    "logout_desc": "Disconnecting Microsoft account..."
   },
   "onboarding": {
     "sys_config": "System Configuration",
@@ -89,7 +91,18 @@
     "player_name": "Player Name",
     "ram_mb": "Memory Allocation (MB)",
     "game_dir": "Game Directory",
-    "confirm_start": "Confirm and Start"
+    "confirm_start": "Confirm and Start",
+    "welcome": "Welcome to Launcher",
+    "subtitle": "Login to begin your adventure",
+    "premium_only": "Premium Players Only",
+    "premium_desc": "For now, we only allow official Minecraft accounts.",
+    "login_microsoft": "LOGIN WITH MICROSOFT",
+    "logging_in": "CONNECTING...",
+    "advanced_settings": "Advanced Settings",
+    "login_success": "Session Started",
+    "login_success_desc": "You have successfully logged in with your Microsoft account.",
+    "login_error": "Login Error",
+    "login_error_desc": "There was a problem connecting with your account."
   },
   "library": {
     "library": "Library",

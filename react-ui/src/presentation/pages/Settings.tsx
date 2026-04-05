@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiCpu, FiMonitor, FiSave, FiSliders, FiTrash2 } from "react-icons/fi";
+import { FiCpu, FiMonitor, FiSave, FiSliders, FiTrash2, FiLogOut } from "react-icons/fi";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { Card } from "../components/ui/Card";
@@ -7,9 +7,13 @@ import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
 import { useTranslation } from "react-i18next";
 
+import { useNavigate } from "react-router-dom";
+
 export function Settings() {
-  const { config, setConfig, profile, logo, setLogo, language, setLanguage } = useAppStore();
+  const { config, setConfig, profile, logo, setLogo, language, setLanguage, logoutMicrosoft } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const AVAILABLE_LOGOS = [
     { id: "logo_gren.svg", name: t("settings.green") },
@@ -47,6 +51,12 @@ export function Settings() {
         window.api.restartApp();
       }
     }
+  };
+
+  const handleLogout = async () => {
+    addNotification(t("settings.logout"), t("settings.logout_desc"), "warning");
+    await logoutMicrosoft();
+    navigate("/onboarding");
   };
 
   return (
@@ -164,22 +174,29 @@ export function Settings() {
           </Card>
 
           <Card className="flex-1">
-            <SectionTitle eyebrow={t("settings.status")} title={t("settings.summary")} subtitle={t("settings.identity_resources")} icon={<FiCpu />} />
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
-                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.active_pilot")}</span>
-                <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
+              <SectionTitle eyebrow={t("settings.status")} title={t("settings.summary")} subtitle={t("settings.identity_resources")} icon={<FiCpu />} />
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
+                  <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.active_pilot")}</span>
+                  <strong className="text-textMain text-sm uppercase tracking-wider">{profile?.username}</strong>
+                </div>
+                <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
+                  <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.startup")}</span>
+                  <strong className="text-primary text-sm uppercase tracking-wider">{t("settings.completed")}</strong>
+                </div>
+                <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small col-span-2">
+                  <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.base_version")}</span>
+                  <strong className="text-textMain text-sm font-mono">{config.version}</strong>
+                </div>
               </div>
-              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
-                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.startup")}</span>
-                <strong className="text-primary text-sm uppercase tracking-wider">{t("settings.completed")}</strong>
-              </div>
-              <div className="bg-surfaceLight/20 p-3 border border-black/5 mc-cutout-small">
-                <span className="text-[10px] text-textMuted uppercase tracking-widest block mb-1">{t("settings.base_version")}</span>
-                <strong className="text-textMain text-sm font-mono">{config.version}</strong>
-              </div>
-            </div>
-          </Card>
+              <Button
+                variant="danger"
+                onClick={handleLogout}
+                className="w-full mt-4 flex items-center justify-center gap-2 py-4"
+              >
+                <FiLogOut /> {t("settings.logout")}
+              </Button>
+            </Card>
         </div>
       </div>
     </div>

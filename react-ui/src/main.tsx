@@ -12,15 +12,17 @@ function AppRoot() {
   const initListeners = useLauncherStore((state) => state.initListeners);
   const fetchLogo = useAppStore((state) => state.fetchLogo);
   const fetchLanguage = useAppStore((state) => state.fetchLanguage);
+  const checkAuth = useAppStore((state) => state.checkAuth);
   const logo = useAppStore((state) => state.logo);
   const language = useAppStore((state) => state.language);
 
   useEffect(() => {
     fetchLogo();
     fetchLanguage();
+    checkAuth();
     const cleanup = initListeners();
     return cleanup;
-  }, [initListeners, fetchLogo, fetchLanguage]);
+  }, [initListeners, fetchLogo, fetchLanguage, checkAuth]);
 
   useEffect(() => {
     if (language) {

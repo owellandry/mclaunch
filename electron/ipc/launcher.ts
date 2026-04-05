@@ -2,7 +2,8 @@ import { BrowserWindow, ipcMain, app } from "electron";
 import { Client, Authenticator } from "minecraft-launcher-core";
 import { execSync } from "node:child_process";
 import fs from "node:fs";
-import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage } from "./db";
+import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
+import { Auth } from "msmc";
 
 function isJavaInstalled(): boolean {
   try {
@@ -43,7 +44,10 @@ const CHANNELS = {
   getLogo: "db:getLogo",
   setLogo: "db:setLogo",
   getLanguage: "db:getLanguage",
-  setLanguage: "db:setLanguage"
+  setLanguage: "db:setLanguage",
+  loginMicrosoft: "auth:loginMicrosoft",
+  logoutMicrosoft: "auth:logoutMicrosoft",
+  getProfile: "auth:getProfile"
 } as const;
 
 const emitLog = (window: BrowserWindow, message: string): void => {
@@ -87,6 +91,53 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
 
   ipcMain.on(CHANNELS.setLanguage, (_event, lang: string) => {
     setLanguage(lang);
+  });
+
+  ipcMain.handle(CHANNELS.loginMicrosoft, async () => {
+    try {
+      const auth = new Auth("select_account");
+      const xbox = await auth.launch("electron");
+      const mc = await xbox.getMinecraft();
+      
+      const msmcToken = xbox.save();
+      const mcToken = mc.mclc();
+      
+      // Guardar el perfil y el token en DB
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('msmc_token', msmcToken);
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('mc_profile', JSON.stringify(mc.profile));
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('mclc_auth', JSON.stringify(mcToken));
+
+      return {
+        username: mc.profile?.name || "Player",
+        uuid: mc.profile?.id || "00000000-0000-0000-0000-000000000000",
+        isOnboardingCompleted: true
+      };
+    } catch (e: any) {
+      console.error("Error en login de Microsoft:", e);
+      throw new Error(e.message || "Error desconocido al iniciar sesión");
+    }
+  });
+
+  ipcMain.handle(CHANNELS.logoutMicrosoft, async () => {
+    db.prepare("DELETE FROM app_settings WHERE key IN ('msmc_token', 'mc_profile', 'mclc_auth')").run();
+    return true;
+  });
+
+  ipcMain.handle(CHANNELS.getProfile, async () => {
+    const row = db.prepare("SELECT value FROM app_settings WHERE key = 'mc_profile'").get() as any;
+    if (row) {
+      try {
+        const p = JSON.parse(row.value);
+        return {
+          username: p.name,
+          uuid: p.id,
+          isOnboardingCompleted: true
+        };
+      } catch {
+        return null;
+      }
+    }
+    return null;
   });
 
   ipcMain.handle(CHANNELS.clearCache, async () => {
@@ -141,11 +192,24 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
         emitStatus(window, "done");
       });
 
-      const authOptions = await Authenticator.getAuth(payload.username);
+      const authRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mclc_auth'").get() as any;
+      let authorization;
+      
+      if (authRow) {
+        authorization = JSON.parse(authRow.value);
+      } else {
+        // Fallback para desarrollo/offline si no hay token de microsoft
+        const profileRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mc_profile'").get() as any;
+        let playerName = payload.username || "Player";
+        if (profileRow) {
+          try { playerName = JSON.parse(profileRow.value).name; } catch {}
+        }
+        authorization = await Authenticator.getAuth(playerName);
+      }
 
       const opts = {
         clientPackage: undefined,
-        authorization: authOptions,
+        authorization,
         root: payload.gameDir,
         version: {
           number: payload.version,
