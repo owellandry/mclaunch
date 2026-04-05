@@ -239,7 +239,7 @@ public final class McLaunchHomePreviewScreen extends Screen {
     }
 
     private void drawVersionRow(DrawContext ctx, int x, int y, int w, int h, String version, boolean selected) {
-        int bg     = selected ? 0x2204ADE80 : SURFACE_LIGHT;
+        int bg     = selected ? 0x2244DE80 : SURFACE_LIGHT;
         int border = selected ? BORDER_GREEN : BORDER;
         int fg     = selected ? PRIMARY : TEXT;
 
