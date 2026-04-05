@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { FiSearch, FiBell, FiCheck, FiTrash2, FiInfo, FiCheckCircle, FiAlertTriangle, FiXCircle } from "react-icons/fi";
 import { useAppStore } from "../../../application/store/useAppStore";
 import { useNotificationStore } from "../../../application/store/useNotificationStore";
+import { useTranslation } from "react-i18next";
 
 function getNotificationIcon(type: string) {
   switch (type) {
@@ -12,15 +13,15 @@ function getNotificationIcon(type: string) {
   }
 }
 
-function timeAgo(timestamp: number) {
+function timeAgo(timestamp: number, t: any) {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return "hace un momento";
+  if (seconds < 60) return t("topbar.just_now");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `hace ${minutes} m`;
+  if (minutes < 60) return t("topbar.ago_m", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `hace ${hours} h`;
+  if (hours < 24) return t("topbar.ago_h", { count: hours });
   const days = Math.floor(hours / 24);
-  return `hace ${days} d`;
+  return t("topbar.ago_d", { count: days });
 }
 
 export function Topbar() {
@@ -28,8 +29,9 @@ export function Topbar() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
   
-  const displayName = profile?.username || "Player";
+  const displayName = profile?.username || t("topbar.player");
   const count = unreadCount();
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function Topbar() {
       <div className="flex items-center gap-3" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         <h2 className="text-sm font-black tracking-[0.25em] text-textMain uppercase font-mono flex items-center gap-2">
           MINECRAFT
-          <span className="bg-primary text-white px-2 py-0.5 text-[10px] mc-cutout-small shadow-[0_0_8px_#A1E9A566]">
+          <span className="bg-primary text-white px-2 py-0.5 text-[10px] mc-cutout-small shadow-[0_0_8px_var(--color-primary-shadow)]">
             LAUNCH
           </span>
         </h2>
@@ -67,7 +69,7 @@ export function Topbar() {
           <FiSearch className="text-textMuted" />
           <input
             className="bg-transparent border-none outline-none text-sm text-textMain w-full placeholder-textMuted font-mono"
-            placeholder="Buscar..."
+            placeholder={t("topbar.search")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -77,6 +79,7 @@ export function Topbar() {
         <div className="relative" ref={notifRef}>
           <button 
             onClick={() => setShowNotifications(!showNotifications)}
+            title={t("topbar.notifications")}
             className={`w-10 h-10 bg-surfaceLight border flex items-center justify-center transition-colors mc-cutout-small relative
               ${showNotifications ? 'border-primary/50 text-textMain' : 'border-black/5 text-textMuted hover:text-textMain hover:border-primary/50'}`}
           >
@@ -92,12 +95,12 @@ export function Topbar() {
           {showNotifications && (
             <div className="absolute right-0 top-12 w-80 bg-surfaceLight border border-black/5 shadow-2xl mc-cutout-small z-50 overflow-hidden flex flex-col">
               <div className="flex items-center justify-between p-4 border-b border-black/5 bg-black/5">
-                <h3 className="text-sm font-bold text-textMain uppercase tracking-widest">Notificaciones</h3>
+                <h3 className="text-sm font-bold text-textMain uppercase tracking-widest">{t("topbar.notifications")}</h3>
                 <div className="flex gap-2">
-                  <button onClick={markAllAsRead} className="text-textMuted hover:text-primary transition-colors" title="Marcar todas como leídas">
+                  <button onClick={markAllAsRead} className="text-textMuted hover:text-primary transition-colors" title={t("topbar.mark_all_read")}>
                     <FiCheck />
                   </button>
-                  <button onClick={clearAll} className="text-textMuted hover:text-red-500 transition-colors" title="Limpiar todas">
+                  <button onClick={clearAll} className="text-textMuted hover:text-red-500 transition-colors" title={t("topbar.clear_all")}>
                     <FiTrash2 />
                   </button>
                 </div>
@@ -106,7 +109,7 @@ export function Topbar() {
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center text-textMuted text-xs">
-                    No tienes notificaciones
+                    {t("topbar.no_notifications")}
                   </div>
                 ) : (
                   notifications.map((notif) => (
@@ -128,7 +131,7 @@ export function Topbar() {
                           {notif.message}
                         </p>
                         <span className="text-[10px] text-textMuted/70 block mt-2 font-mono">
-                          {timeAgo(notif.timestamp)}
+                          {timeAgo(notif.timestamp, t)}
                         </span>
                       </div>
                       {!notif.read && (
@@ -154,21 +157,21 @@ export function Topbar() {
         <div className="flex items-center gap-1 ml-2">
           <button
             onClick={minimize}
-            title="Minimizar"
+            title={t("topbar.minimize")}
             className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-black/8 transition-colors mc-cutout-small text-lg leading-none"
           >
             <span className="block w-3 h-[2px] bg-current mt-1" />
           </button>
           <button
             onClick={maximize}
-            title="Maximizar"
+            title={t("topbar.maximize")}
             className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-black/8 transition-colors mc-cutout-small"
           >
             <span className="block w-3 h-3 border-2 border-current" style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
           </button>
           <button
             onClick={close}
-            title="Cerrar"
+            title={t("topbar.close")}
             className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-white hover:bg-red-500 transition-colors mc-cutout-small font-bold text-sm"
           >
             ✕

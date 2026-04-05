@@ -5,8 +5,10 @@ import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
+import { useTranslation } from "react-i18next";
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const { status, launch, availableVersions, downloadedVersions, weeklyActivity, statistics, fetchVersions, progress } = useLauncherStore();
   const { config, setConfig, searchQuery } = useAppStore();
   const isRunning = status === "running";
@@ -19,15 +21,15 @@ export function Dashboard() {
   const selectedVersion = config.version || "1.20.1";
   const isDownloaded = downloadedVersions.includes(selectedVersion);
   
-  let buttonText = isDownloaded ? 'INICIAR' : 'DESCARGAR';
+  let buttonText = isDownloaded ? t("dashboard.play") : t("dashboard.download");
   if (isRunning) {
     if (!isDownloaded && progress) {
-      buttonText = `DESCARGANDO... ${progress.percentage}%`;
+      buttonText = t("dashboard.downloading", { percent: progress.percentage });
     } else {
-      buttonText = 'INICIANDO...';
+      buttonText = t("dashboard.starting");
     }
   } else if (isPlaying) {
-    buttonText = 'EN JUEGO';
+    buttonText = t("dashboard.playing");
   }
 
   const filteredVersions = availableVersions.filter(v => 
@@ -55,23 +57,28 @@ export function Dashboard() {
         
         {/* Top Nav (Optional, matching image 1's pill buttons) */}
         <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
-          {['JUEGOS', 'TIENDA', 'COMUNIDAD', 'SOPORTE'].map(nav => (
-            <div key={nav} className="px-5 py-1.5 border border-white/40 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/40 hover:bg-white/20 cursor-pointer transition-colors shadow-sm">
-              {nav}
+          {[
+            { key: 'games', label: 'JUEGOS' },
+            { key: 'store', label: 'TIENDA' },
+            { key: 'community', label: 'COMUNIDAD' },
+            { key: 'support', label: 'SOPORTE' }
+          ].map(nav => (
+            <div key={nav.key} className="px-5 py-1.5 border border-white/40 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/40 hover:bg-white/20 cursor-pointer transition-colors shadow-sm">
+              {t(`dashboard.${nav.key}`, nav.label)}
             </div>
           ))}
         </div>
 
         {/* Bottom Content */}
         <div className="absolute bottom-10 left-10 max-w-xl">
-          <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_#A1E9A580]">
-            VANILLA RELEASE
+          <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_var(--color-primary-shadow)]">
+            {t("dashboard.vanilla_release")}
           </span>
           <h1 className="text-5xl font-black text-textMain mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
             Minecraft {selectedVersion}
           </h1>
           <p className="text-textMuted font-bold leading-relaxed max-w-md text-sm drop-shadow-md">
-            ¡Explora tu propio mundo único, sobrevive a la noche y crea cualquier cosa que puedas imaginar con la versión seleccionada!
+            {t("dashboard.hero_desc")}
           </p>
         </div>
 
@@ -80,10 +87,10 @@ export function Dashboard() {
           className="absolute bottom-0 right-0 bg-background p-6 pl-8 pt-8"
           style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%, 0 100%, 40px 0)' }}
         >
-          <Button 
+          <Button
             onClick={handleMainAction}
             disabled={isRunning || isPlaying}
-            className={`py-4 px-10 text-lg shadow-[0_0_20px_#A1E9A533] relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
+            className={`py-4 px-10 text-lg shadow-[0_0_20px_var(--color-primary-shadow)] relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
           >
             {/* Progress Bar Background */}
             {isRunning && progress && (
@@ -106,7 +113,7 @@ export function Dashboard() {
 
         {/* Actividad Semanal */}
         <Card className="flex flex-col min-h-0">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Actividad Semanal</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.weekly_activity")}</h3>
           <div className="flex items-end gap-2 flex-1 mb-3 min-h-0">
             {weeklyActivity.map((h, i) => (
               <div key={i} className="flex-1 bg-surfaceLight relative group h-full">
@@ -121,34 +128,34 @@ export function Dashboard() {
             <span>D</span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span>
           </div>
           <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
-            Ver Actividad Completa
+            {t("dashboard.see_full_activity")}
           </button>
         </Card>
 
         {/* Tus Estadísticas */}
         <Card className="flex flex-col min-h-0">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Tus Estadísticas</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.your_stats")}</h3>
           <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
             <div className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small">
               <span className="text-4xl font-black text-textMain leading-none">{statistics.win_rate}<span className="text-primary text-xl">%</span></span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">Tasa de Victoria</span>
+              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">{t("dashboard.win_rate")}</span>
             </div>
             <div className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small">
               <span className="text-4xl font-black text-textMain leading-none">{statistics.kda}</span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">KDA</span>
+              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">{t("dashboard.kda")}</span>
             </div>
           </div>
           <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
-            Ver Estadísticas
+            {t("dashboard.see_stats")}
           </button>
         </Card>
 
         {/* Selector de Versión */}
         <Card className="flex flex-col min-h-0">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">Seleccionar Versión</h3>
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.select_version")}</h3>
           <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-2 min-h-0">
             {filteredVersions.length === 0 ? (
-              <div className="text-textMuted text-xs flex items-center justify-center h-full">Cargando versiones o sin resultados...</div>
+              <div className="text-textMuted text-xs flex items-center justify-center h-full">{t("dashboard.loading_versions")}</div>
             ) : (
               filteredVersions.map(v => (
                 <div
@@ -169,7 +176,7 @@ export function Dashboard() {
                     </span>
                   </div>
                   <div
-                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_#A1E9A5CC]' : 'bg-surfaceLight border border-black/20'}`}
+                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_var(--color-primary-shadow)]' : 'bg-surfaceLight border border-black/20'}`}
                     style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
                   />
                 </div>
@@ -177,7 +184,7 @@ export function Dashboard() {
             )}
           </div>
           <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
-            Ver Todas las Versiones
+            {t("dashboard.see_all_versions")}
           </button>
         </Card>
 

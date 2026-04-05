@@ -1,26 +1,28 @@
-import { FiRadio, FiServer, FiUser, FiZap } from "react-icons/fi";
+import { FiRadio, FiServer, FiUser, FiZap, FiGlobe, FiUsers } from "react-icons/fi";
 import { Card } from "../components/ui/Card";
 import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
-
-const SERVERS = [
-  { name: "Atlas Realm", ping: "34 ms", mode: "Eventos", desc: "Temporada neón con hub social curado." },
-  { name: "Northwatch", ping: "58 ms", mode: "Supervivencia", desc: "Ambiente calmado con herramientas de construcción." },
-  { name: "Forge District", ping: "21 ms", mode: "Creativo", desc: "Lobby premium con parcelas y backups mock." },
-];
+import { useTranslation } from "react-i18next";
 
 export function Servers() {
+  const { t } = useTranslation();
+
+  const SERVERS = [
+    { name: "Hypixel", ping: "24ms", players: "45K/100K", mode: t("servers.events"), desc: "Minijuegos, Skyblock y más." },
+    { name: "Wynncraft", ping: "45ms", players: "2K/5K", mode: t("servers.survival"), desc: "El MMORPG definitivo en Minecraft." },
+    { name: "MCC Island", ping: "30ms", players: "1K/2K", mode: t("servers.creative"), desc: "Compite con tus amigos en MCC." },
+  ];
   return (
     <div className="flex flex-col gap-8 pb-8">
-      <Card className="border-primary/20 shadow-[0_0_30px_#A1E9A50D]">
+      <Card className="border-primary/20 shadow-[0_0_30px_var(--color-primary-shadow)]">
         <SectionTitle
-          eyebrow="Multijugador"
-          title="Lounge de Servidores"
-          subtitle="Todo es mockup por ahora, pero la experiencia ya se siente social y viva."
+          eyebrow={t("servers.multiplayer")}
+          title={t("servers.server_lounge")}
+          subtitle={t("servers.lounge_desc")}
           icon={<FiRadio />}
           action={
             <Button variant="secondary" icon={<FiZap />}>
-              Unirse a la cola
+              {t("servers.join_queue")}
             </Button>
           }
         />
@@ -35,8 +37,8 @@ export function Servers() {
               <div className="flex justify-between items-center pt-4 border-t border-black/5">
                 <span className="text-[10px] uppercase tracking-widest text-textMuted font-bold">{srv.mode}</span>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-primary shadow-[0_0_8px_#A1E9A5CC] mc-cutout-small" />
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-textMain">En línea</span>
+                  <span className="w-2 h-2 bg-primary shadow-[0_0_8px_var(--color-primary-shadow)] mc-cutout-small" />
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-textMain">{t("servers.online")}</span>
                 </div>
               </div>
             </div>
@@ -46,26 +48,27 @@ export function Servers() {
 
       <div className="grid grid-cols-2 gap-8">
         <Card>
-          <SectionTitle eyebrow="Destacados" title="Targets del mockup" subtitle="Espacios listos para slots sociales." icon={<FiServer />} />
-          <div className="h-32 flex items-center justify-center border border-dashed border-black/10 bg-surfaceLight/20 mc-cutout-small">
-             <span className="text-textMuted text-sm font-mono">Espacio para banners destacados</span>
+          <SectionTitle
+            eyebrow={t("servers.featured")}
+            title={t("servers.mockup_targets")}
+            subtitle={t("servers.ready_slots")}
+            icon={<FiServer />}
+          />
+          <div className="mt-6 bg-surfaceLight/30 border border-black/5 h-32 flex flex-col items-center justify-center text-textMuted uppercase tracking-widest text-sm font-bold mc-cutout border-dashed">
+            <FiGlobe className="text-2xl mb-2 opacity-50" />
+            {t("servers.banner_space")}
           </div>
         </Card>
-        
         <Card>
-          <SectionTitle eyebrow="Squad" title="Presencia social" subtitle="Lista de amigos visual." icon={<FiUser />} />
-          <div className="space-y-3">
-            {[["LumaFox", "En lobby de Atlas Realm"], ["IronMint", "Armando modpack creativo"]].map(([name, detail]) => (
-              <div key={name} className="flex items-center gap-4 bg-surfaceLight/30 p-3 border border-black/5 mc-cutout-small">
-                <div className="w-10 h-10 bg-surfaceLight border border-black/10 flex items-center justify-center text-primary font-black mc-cutout-small">
-                  {name.slice(0,1)}
-                </div>
-                <div>
-                  <strong className="text-textMain text-sm block uppercase tracking-wider">{name}</strong>
-                  <span className="text-[10px] text-textMuted font-mono">{detail}</span>
-                </div>
-              </div>
-            ))}
+          <SectionTitle
+            eyebrow={t("servers.squad")}
+            title={t("servers.social_presence")}
+            subtitle={t("servers.visual_friends")}
+            icon={<FiUser />}
+          />
+          <div className="mt-6 bg-surfaceLight/30 border border-black/5 h-32 flex flex-col items-center justify-center text-textMuted uppercase tracking-widest text-sm font-bold mc-cutout border-dashed">
+            <FiUsers className="text-2xl mb-2 opacity-50" />
+            [ {t("library.wip")} ]
           </div>
         </Card>
       </div>

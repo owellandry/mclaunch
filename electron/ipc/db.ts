@@ -35,6 +35,11 @@ export function initDb() {
     db.prepare("INSERT INTO app_settings (key, value) VALUES (?, ?)").run('logo', 'logo_gren.svg');
   }
 
+  const langSetting = db.prepare("SELECT * FROM app_settings WHERE key = 'language'").get();
+  if (!langSetting) {
+    db.prepare("INSERT INTO app_settings (key, value) VALUES (?, ?)").run('language', 'es');
+  }
+
   const stats = db.prepare('SELECT * FROM statistics').get();
   if (!stats) {
     db.prepare('INSERT INTO statistics (win_rate, kda) VALUES (?, ?)').run(66.0, 3.15);
@@ -86,6 +91,15 @@ export function getLogo(): string {
 
 export function setLogo(logo: string) {
   db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('logo', logo);
+}
+
+export function getLanguage(): string {
+  const row = db.prepare("SELECT value FROM app_settings WHERE key = 'language'").get() as any;
+  return row ? row.value : 'es';
+}
+
+export function setLanguage(lang: string) {
+  db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('language', lang);
 }
 
 export function clearCache() {
