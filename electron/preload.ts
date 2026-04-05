@@ -14,7 +14,9 @@ const CHANNELS = {
   clearAllData: "app:clearAllData",
   restartApp: "app:restartApp",
   getLogo: "db:getLogo",
-  setLogo: "db:setLogo"
+  setLogo: "db:setLogo",
+  getLanguage: "db:getLanguage",
+  setLanguage: "db:setLanguage"
 } as const;
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
@@ -40,6 +42,12 @@ const api = {
   },
   setLogo: (logo: string): void => {
     ipcRenderer.send(CHANNELS.setLogo, logo);
+  },
+  getLanguage: (): Promise<string> => {
+    return ipcRenderer.invoke(CHANNELS.getLanguage);
+  },
+  setLanguage: (lang: string): void => {
+    ipcRenderer.send(CHANNELS.setLanguage, lang);
   },
   clearCache: (): Promise<void> => {
     return ipcRenderer.invoke(CHANNELS.clearCache);

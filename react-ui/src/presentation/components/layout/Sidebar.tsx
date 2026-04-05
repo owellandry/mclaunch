@@ -1,17 +1,19 @@
 import { Link, useLocation } from "react-router-dom";
 import { FiGrid, FiLayers, FiServer, FiSettings } from "react-icons/fi";
 import { useAppStore } from "../../../application/store/useAppStore";
-
-const NAV_ITEMS = [
-  { id: "dashboard", path: "/dashboard", label: "Inicio", icon: FiGrid },
-  { id: "library", path: "/library", label: "Biblioteca", icon: FiLayers },
-  { id: "servers", path: "/servers", label: "Servidores", icon: FiServer },
-  { id: "settings", path: "/settings", label: "Ajustes", icon: FiSettings },
-];
+import { useTranslation } from "react-i18next";
 
 export function Sidebar() {
   const location = useLocation();
   const { logo } = useAppStore();
+  const { t } = useTranslation();
+
+  const NAV_ITEMS = [
+    { id: "dashboard", path: "/dashboard", label: t("sidebar.dashboard"), icon: FiGrid },
+    { id: "library", path: "/library", label: t("sidebar.library"), icon: FiLayers },
+    { id: "servers", path: "/servers", label: t("sidebar.servers"), icon: FiServer },
+    { id: "settings", path: "/settings", label: t("sidebar.settings"), icon: FiSettings },
+  ];
 
   return (
     <aside className="w-20 border-r border-black/5 flex flex-col items-center py-6 bg-surface/80 backdrop-blur-xl z-20">

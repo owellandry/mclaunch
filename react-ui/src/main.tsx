@@ -5,17 +5,28 @@ import { router } from './presentation/router'
 import { useLauncherStore } from './application/store/useLauncherStore'
 import { useAppStore } from './application/store/useAppStore'
 import './index.css'
+import './i18n'
+import i18n from './i18n'
 
 function AppRoot() {
   const initListeners = useLauncherStore((state) => state.initListeners);
   const fetchLogo = useAppStore((state) => state.fetchLogo);
+  const fetchLanguage = useAppStore((state) => state.fetchLanguage);
   const logo = useAppStore((state) => state.logo);
+  const language = useAppStore((state) => state.language);
 
   useEffect(() => {
     fetchLogo();
+    fetchLanguage();
     const cleanup = initListeners();
     return cleanup;
-  }, [initListeners, fetchLogo]);
+  }, [initListeners, fetchLogo, fetchLanguage]);
+
+  useEffect(() => {
+    if (language) {
+      i18n.changeLanguage(language);
+    }
+  }, [language]);
 
   useEffect(() => {
     // Remove previous theme classes

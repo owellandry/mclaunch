@@ -8,12 +8,15 @@ interface AppState {
   config: LauncherConfig;
   searchQuery: string;
   logo: string;
+  language: string;
   setProfile: (profile: UserProfile) => void;
   setConfig: (config: LauncherConfig) => void;
   completeOnboarding: (username: string, memoryMb: number, gameDir: string) => void;
   setSearchQuery: (query: string) => void;
   setLogo: (logo: string) => void;
   fetchLogo: () => Promise<void>;
+  setLanguage: (lang: string) => void;
+  fetchLanguage: () => Promise<void>;
   clearAll: () => void;
 }
 
@@ -34,6 +37,7 @@ export const useAppStore = create<AppState>((set, get) => {
     config: initialConfig,
     searchQuery: "",
     logo: "logo_gren.svg",
+    language: "es",
     setProfile: (profile) => {
       storage.saveProfile(profile);
       set({ profile });
@@ -62,9 +66,21 @@ export const useAppStore = create<AppState>((set, get) => {
         set({ logo });
       }
     },
+    setLanguage: (language: string) => {
+      set({ language });
+      if (window.api && window.api.setLanguage) {
+        window.api.setLanguage(language);
+      }
+    },
+    fetchLanguage: async () => {
+      if (window.api && window.api.getLanguage) {
+        const language = await window.api.getLanguage();
+        set({ language });
+      }
+    },
     clearAll: () => {
       storage.clearAll?.();
-      set({ profile: null, config: initialConfig, searchQuery: "", logo: "logo_gren.svg" });
+      set({ profile: null, config: initialConfig, searchQuery: "", logo: "logo_gren.svg", language: "es" });
     }
   };
 });

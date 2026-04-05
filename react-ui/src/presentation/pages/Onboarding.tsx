@@ -4,10 +4,12 @@ import { FiCommand, FiCpu, FiFolder, FiUser } from "react-icons/fi";
 import { useAppStore } from "../../application/store/useAppStore";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
+import { useTranslation } from "react-i18next";
 
 export function Onboarding() {
   const navigate = useNavigate();
   const { completeOnboarding, config } = useAppStore();
+  const { t } = useTranslation();
   
   const [username, setUsername] = useState("");
   const [memory, setMemory] = useState(config.memoryMb);
@@ -32,14 +34,14 @@ export function Onboarding() {
             <div className="w-20 h-20 bg-surface border border-black/10 text-primary mx-auto mb-6 flex items-center justify-center mc-cutout-small shadow-[0_0_20px_var(--color-primary-shadow)]">
               <FiCommand className="text-4xl" />
             </div>
-            <h1 className="text-4xl font-black text-textMain mb-2 uppercase tracking-tight">Configuración del Sistema</h1>
-            <p className="text-primary font-mono text-sm tracking-widest uppercase">INICIALIZAR_PERFIL_JUGADOR</p>
+            <h1 className="text-4xl font-black text-textMain mb-2 uppercase tracking-tight">{t("onboarding.sys_config")}</h1>
+            <p className="text-primary font-mono text-sm tracking-widest uppercase">{t("onboarding.init_profile")}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                <FiUser className="text-primary" /> Nombre del Jugador
+                <FiUser className="text-primary" /> {t("onboarding.player_name")}
               </label>
               <input 
                 type="text"
@@ -54,7 +56,7 @@ export function Onboarding() {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                <FiCpu className="text-primary" /> Asignación de Memoria (MB)
+                <FiCpu className="text-primary" /> {t("onboarding.ram_mb")}
               </label>
               <input 
                 type="number"
@@ -69,7 +71,7 @@ export function Onboarding() {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                <FiFolder className="text-primary" /> Directorio del Juego
+                <FiFolder className="text-primary" /> {t("onboarding.game_dir")}
               </label>
               <input 
                 type="text"
@@ -85,7 +87,7 @@ export function Onboarding() {
               className="w-full py-4 text-lg mt-8" 
               disabled={username.trim().length < 3}
             >
-              Confirmar e Iniciar
+              {t("onboarding.confirm_start")}
             </Button>
           </form>
         </Card>
