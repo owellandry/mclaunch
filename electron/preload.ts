@@ -12,7 +12,9 @@ const CHANNELS = {
   getDownloadedVersions: "db:getDownloadedVersions",
   clearCache: "app:clearCache",
   clearAllData: "app:clearAllData",
-  restartApp: "app:restartApp"
+  restartApp: "app:restartApp",
+  getLogo: "db:getLogo",
+  setLogo: "db:setLogo"
 } as const;
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
@@ -32,6 +34,12 @@ const api = {
   },
   getDownloadedVersions: (): Promise<string[]> => {
     return ipcRenderer.invoke(CHANNELS.getDownloadedVersions);
+  },
+  getLogo: (): Promise<string> => {
+    return ipcRenderer.invoke(CHANNELS.getLogo);
+  },
+  setLogo: (logo: string): void => {
+    ipcRenderer.send(CHANNELS.setLogo, logo);
   },
   clearCache: (): Promise<void> => {
     return ipcRenderer.invoke(CHANNELS.clearCache);

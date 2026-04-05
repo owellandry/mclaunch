@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain, app } from "electron";
 import { Client, Authenticator } from "minecraft-launcher-core";
 import { execSync } from "node:child_process";
 import fs from "node:fs";
-import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData } from "./db";
+import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData, getLogo, setLogo } from "./db";
 
 function isJavaInstalled(): boolean {
   try {
@@ -39,7 +39,9 @@ const CHANNELS = {
   getDownloadedVersions: "db:getDownloadedVersions",
   clearCache: "app:clearCache",
   clearAllData: "app:clearAllData",
-  restartApp: "app:restartApp"
+  restartApp: "app:restartApp",
+  getLogo: "db:getLogo",
+  setLogo: "db:setLogo"
 } as const;
 
 const emitLog = (window: BrowserWindow, message: string): void => {
@@ -67,6 +69,14 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
 
   ipcMain.handle(CHANNELS.getDownloadedVersions, async () => {
     return getDownloadedVersions();
+  });
+
+  ipcMain.handle(CHANNELS.getLogo, async () => {
+    return getLogo();
+  });
+
+  ipcMain.on(CHANNELS.setLogo, (_event, logo: string) => {
+    setLogo(logo);
   });
 
   ipcMain.handle(CHANNELS.clearCache, async () => {

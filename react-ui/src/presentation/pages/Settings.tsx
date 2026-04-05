@@ -6,8 +6,16 @@ import { Card } from "../components/ui/Card";
 import { SectionTitle } from "../components/ui/SectionTitle";
 import { Button } from "../components/ui/Button";
 
+const AVAILABLE_LOGOS = [
+  { id: "logo_gren.svg", name: "Green (Default)" },
+  { id: "logo_blue.svg", name: "Blue" },
+  { id: "logo_lemon.svg", name: "Lemon" },
+  { id: "logo_purple.svg", name: "Purple" },
+  { id: "logo_yellow.svg", name: "Yellow" },
+];
+
 export function Settings() {
-  const { config, setConfig, profile } = useAppStore();
+  const { config, setConfig, profile, logo, setLogo } = useAppStore();
   const [memory, setMemory] = useState(config.memoryMb);
   const [gameDir, setGameDir] = useState(config.gameDir);
   const [isSaved, setIsSaved] = useState(false);
@@ -86,6 +94,24 @@ export function Settings() {
                   onChange={(e) => setGameDir(e.target.value)}
                   className="input-field w-full"
                 />
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-black/5">
+                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
+                  Personalización Visual
+                </label>
+                <div className="grid grid-cols-5 gap-4 mt-2">
+                  {AVAILABLE_LOGOS.map((item) => (
+                    <div 
+                      key={item.id} 
+                      className={`cursor-pointer border-2 p-2 flex flex-col items-center gap-2 mc-cutout-small transition-all ${logo === item.id ? 'border-primary bg-primary/10' : 'border-transparent bg-surfaceLight hover:bg-black/5'}`}
+                      onClick={() => setLogo(item.id)}
+                    >
+                      <img src={`./logo/${item.id}`} alt={item.name} className="w-12 h-12 object-contain" />
+                      <span className="text-[10px] font-bold text-textMuted uppercase tracking-wider text-center">{item.name.split(' ')[0]}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2 pt-4 border-t border-black/5">

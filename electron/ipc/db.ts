@@ -24,7 +24,16 @@ export function initDb() {
       version TEXT PRIMARY KEY,
       installed_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `);
+
+  const settings = db.prepare("SELECT * FROM app_settings WHERE key = 'logo'").get();
+  if (!settings) {
+    db.prepare("INSERT INTO app_settings (key, value) VALUES (?, ?)").run('logo', 'logo_gren.svg');
+  }
 
   const stats = db.prepare('SELECT * FROM statistics').get();
   if (!stats) {
@@ -68,6 +77,15 @@ export function getDownloadedVersions(): string[] {
 
 export function addDownloadedVersion(version: string) {
   db.prepare('INSERT OR IGNORE INTO downloaded_versions (version, installed_at) VALUES (?, ?)').run(version, new Date().toISOString());
+}
+
+export function getLogo(): string {
+  const row = db.prepare("SELECT value FROM app_settings WHERE key = 'logo'").get() as any;
+  return row ? row.value : 'logo_gren.svg';
+}
+
+export function setLogo(logo: string) {
+  db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run('logo', logo);
 }
 
 export function clearCache() {

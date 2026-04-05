@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
+import { createHashRouter, Navigate, Outlet } from "react-router-dom";
 import { MainLayout } from "../components/layout/MainLayout";
 import { Onboarding } from "../pages/Onboarding";
 import { Dashboard } from "../pages/Dashboard";
@@ -9,15 +9,15 @@ import { useAppStore } from "../../application/store/useAppStore";
 
 function AuthGuard() {
   const profile = useAppStore((state) => state.profile);
-  
+
   if (!profile || !profile.isOnboardingCompleted) {
     return <Navigate to="/onboarding" replace />;
   }
-  
+
   return <Outlet />;
 }
 
-export const router = createBrowserRouter([
+export const router = createHashRouter([
   {
     path: "/onboarding",
     element: <Onboarding />,
