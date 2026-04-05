@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiCpu, FiFolder, FiUnlock } from "react-icons/fi";
+import { FiUnlock } from "react-icons/fi";
 import { FaMicrosoft } from "react-icons/fa";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useTranslation } from "react-i18next";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 
 export function Onboarding() {
-  const [memoryMb, setMemoryMb] = useState(4096);
-  const [gameDir, setGameDir] = useState("./mclaunch_data");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { completeOnboarding, loginMicrosoft } = useAppStore();
   const { addNotification } = useNotificationStore();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const memoryMb = 4096;
+  const gameDir = "./mclaunch_data";
 
   const handleMicrosoftLogin = async () => {
     setIsLoggingIn(true);
@@ -61,49 +61,19 @@ export function Onboarding() {
             <button
               onClick={handleMicrosoftLogin}
               disabled={isLoggingIn}
-              className="w-full bg-[#00A4EF] hover:bg-[#008bc9] disabled:bg-[#00A4EF]/50 text-white transition-all duration-300 py-5 font-black uppercase tracking-widest flex items-center justify-center gap-4 mc-cutout shadow-[0_0_20px_rgba(0,164,239,0.3)] hover:shadow-[0_0_30px_rgba(0,164,239,0.5)] disabled:shadow-none"
+              className="w-full bg-[#00A4EF] hover:bg-[#008bc9] disabled:bg-[#00A4EF]/50 text-white transition-all duration-300 py-5 font-black uppercase tracking-widest flex items-center justify-center gap-3 mc-cutout shadow-[0_0_20px_rgba(0,164,239,0.3)] hover:shadow-[0_0_30px_rgba(0,164,239,0.5)] disabled:shadow-none"
             >
               {isLoggingIn ? (
                 <span className="animate-pulse">{t("onboarding.logging_in")}</span>
               ) : (
                 <>
-                  <FaMicrosoft className="text-2xl" /> {t("onboarding.login_microsoft")}
+                  <span className="inline-flex h-6 w-6 items-center justify-center shrink-0">
+                    <FaMicrosoft className="text-[1.2rem] leading-none" />
+                  </span>
+                  <span className="leading-none">{t("onboarding.login_microsoft")}</span>
                 </>
               )}
             </button>
-
-            <div className="pt-8 border-t border-black/10 space-y-6">
-              <h3 className="text-xs font-black text-textMuted uppercase tracking-widest text-center">
-                {t("onboarding.advanced_settings")}
-              </h3>
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center justify-between">
-                  <span className="flex items-center gap-2"><FiCpu className="text-primary" /> {t("onboarding.ram_mb")}</span>
-                  <span className="text-primary font-mono bg-primary/10 px-2 py-0.5 mc-cutout-small">{memoryMb}</span>
-                </label>
-                <input
-                  type="range"
-                  min="1024"
-                  max="16384"
-                  step="512"
-                  value={memoryMb}
-                  onChange={(e) => setMemoryMb(Number(e.target.value))}
-                  className="w-full accent-primary mt-2"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-textMuted uppercase tracking-wider flex items-center gap-2">
-                  <FiFolder className="text-primary" /> {t("onboarding.game_dir")}
-                </label>
-                <input
-                  type="text"
-                  value={gameDir}
-                  onChange={(e) => setGameDir(e.target.value)}
-                  className="w-full bg-surface border border-black/10 text-textMain px-4 py-3 font-mono focus:border-primary/50 outline-none transition-colors mc-cutout-small text-xs"
-                />
-              </div>
-            </div>
           </div>
         </div>
       </div>

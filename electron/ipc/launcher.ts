@@ -62,6 +62,25 @@ const emitProgress = (window: BrowserWindow, progress: { type: string; task: num
   window.webContents.send(CHANNELS.progress, progress);
 };
 
+const resolveAuthErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  if (typeof error === "string") {
+    return error;
+  }
+  if (typeof error === "object" && error !== null) {
+    const anyError = error as Record<string, unknown>;
+    const candidates = [anyError.message, anyError.error, anyError.code, anyError.reason];
+    for (const candidate of candidates) {
+      if (typeof candidate === "string" && candidate.trim()) {
+        return candidate;
+      }
+    }
+  }
+  return "Error desconocido al iniciar sesión";
+};
+
 export const registerLauncherIpc = (window: BrowserWindow): void => {
   initDb();
 
@@ -112,9 +131,13 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
         uuid: mc.profile?.id || "00000000-0000-0000-0000-000000000000",
         isOnboardingCompleted: true
       };
-    } catch (e: any) {
-      console.error("Error en login de Microsoft:", e);
-      throw new Error(e.message || "Error desconocido al iniciar sesión");
+    } catch (error: unknown) {
+      const message = resolveAuthErrorMessage(error);
+      if (message.includes("error.gui.closed")) {
+        throw new Error("Inicio de sesión cancelado por el usuario");
+      }
+      console.error("Error en login de Microsoft:", error);
+      throw new Error(message);
     }
   });
 
