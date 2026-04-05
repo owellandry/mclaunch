@@ -641,6 +641,9 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
         overrides: {
           detached: false,
         },
+        window: {
+          fullscreen: true,
+        },
       };
 
       emitLog(window, `Descargando/iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);

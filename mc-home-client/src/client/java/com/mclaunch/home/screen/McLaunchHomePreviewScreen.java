@@ -35,6 +35,7 @@ public final class McLaunchHomePreviewScreen extends Screen {
     private volatile Identifier cachedSkin = null;
     private volatile boolean cachedSlimArms = false;
     private volatile boolean skinModelResolved = false;
+    private PlayerPreviewRenderer playerPreviewRenderer;
 
     public McLaunchHomePreviewScreen(Screen parent) {
         super(McLaunchText.tr("screen.mclaunch_home.preview.title", "MC Launch Home", "Inicio MC Launch"));
@@ -51,6 +52,10 @@ public final class McLaunchHomePreviewScreen extends Screen {
                 guiScaleForced = true;
                 return;
             }
+        }
+
+        if (this.client != null && this.playerPreviewRenderer == null) {
+            this.playerPreviewRenderer = new PlayerPreviewRenderer(this.client);
         }
 
         int panelW = 320;
@@ -273,6 +278,16 @@ public final class McLaunchHomePreviewScreen extends Screen {
 
         Identifier skin = cachedSkin != null ? cachedSkin : getDefaultSkin();
         boolean slimArms = usesSlimArms();
+        int previewWidth = Math.min(rightSpace - 40, 260);
+        int previewHeight = Math.min(this.height - 100, 300);
+        int previewX = panelW + (rightSpace - previewWidth) / 2;
+        int previewY = Math.max(36, this.height / 2 - previewHeight / 2 - 18);
+
+        if (this.playerPreviewRenderer != null
+                && this.playerPreviewRenderer.render(ctx, previewX, previewY, previewWidth, previewHeight, skin, slimArms, this.client.getTickDelta())) {
+            return;
+        }
+
         int armWidth = slimArms ? 3 : 4;
         int spriteWidthUnits = 8 + armWidth * 2;
         int spriteHeightUnits = 32;
