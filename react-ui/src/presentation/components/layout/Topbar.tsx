@@ -42,15 +42,26 @@ export function Topbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const minimize = () => window.api?.minimizeWindow?.();
+  const maximize = () => window.api?.maximizeWindow?.();
+  const close    = () => window.api?.closeWindow?.();
+
   return (
-    <header className="h-20 flex items-center justify-between px-8 z-10 relative shrink-0 border-b border-black/5">
-      <div className="flex items-center gap-6">
-        <h2 className="text-xl font-black tracking-widest text-textMain uppercase flex items-center gap-2 font-mono">
-          MINECRAFT <span className="bg-primary text-white px-2 py-0.5 text-sm mc-cutout-small">HUB</span>
+    <header
+      className="h-14 flex items-center justify-between px-6 z-10 relative shrink-0 border-b border-black/5 select-none"
+      style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+    >
+      {/* Title */}
+      <div className="flex items-center gap-3" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+        <h2 className="text-sm font-black tracking-[0.25em] text-textMain uppercase font-mono flex items-center gap-2">
+          MINECRAFT
+          <span className="bg-primary text-white px-2 py-0.5 text-[10px] mc-cutout-small shadow-[0_0_8px_#A1E9A566]">
+            LAUNCH
+          </span>
         </h2>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         {/* Search */}
         <div className="flex items-center gap-3 bg-surfaceLight border border-black/5 px-4 py-2 w-64 focus-within:border-primary/50 transition-colors mc-cutout-small">
           <FiSearch className="text-textMuted" />
@@ -137,6 +148,31 @@ export function Topbar() {
           <div className="w-8 h-8 bg-primary flex items-center justify-center text-white font-black mc-cutout-small">
             {displayName.slice(0, 1).toUpperCase()}
           </div>
+        </div>
+
+        {/* Window controls */}
+        <div className="flex items-center gap-1 ml-2">
+          <button
+            onClick={minimize}
+            title="Minimizar"
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-black/8 transition-colors mc-cutout-small text-lg leading-none"
+          >
+            <span className="block w-3 h-[2px] bg-current mt-1" />
+          </button>
+          <button
+            onClick={maximize}
+            title="Maximizar"
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-black/8 transition-colors mc-cutout-small"
+          >
+            <span className="block w-3 h-3 border-2 border-current" style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
+          </button>
+          <button
+            onClick={close}
+            title="Cerrar"
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-white hover:bg-red-500 transition-colors mc-cutout-small font-bold text-sm"
+          >
+            ✕
+          </button>
         </div>
       </div>
     </header>

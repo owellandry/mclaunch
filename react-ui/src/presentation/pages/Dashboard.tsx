@@ -21,7 +21,7 @@ export function Dashboard() {
   
   let buttonText = isDownloaded ? 'INICIAR' : 'DESCARGAR';
   if (isRunning) {
-    if (progress) {
+    if (!isDownloaded && progress) {
       buttonText = `DESCARGANDO... ${progress.percentage}%`;
     } else {
       buttonText = 'INICIANDO...';

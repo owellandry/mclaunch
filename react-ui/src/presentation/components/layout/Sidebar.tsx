@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { FiGrid, FiLayers, FiServer, FiSettings, FiTarget } from "react-icons/fi";
+import { FiGrid, FiLayers, FiServer, FiSettings } from "react-icons/fi";
+import logoSvg from "../../../assets/logo/logo_gren.svg";
 
 const NAV_ITEMS = [
   { id: "dashboard", path: "/dashboard", label: "Inicio", icon: FiGrid },
@@ -13,9 +14,14 @@ export function Sidebar() {
 
   return (
     <aside className="w-20 border-r border-black/5 flex flex-col items-center py-6 bg-surface/80 backdrop-blur-xl z-20">
-      {/* Brand Icon */}
-      <div className="w-12 h-12 bg-primary text-white flex items-center justify-center shadow-[0_0_15px_#A1E9A566] mb-8 mc-cutout-small">
-        <FiTarget className="text-2xl" />
+      {/* Brand Icon — logo */}
+      <div className="mb-8 flex flex-col items-center gap-1.5">
+        <img
+          src={logoSvg}
+          alt="MCLaunch"
+          className="w-12 h-12 "
+        />
+        <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">MC</span>
       </div>
 
       {/* Navigation */}

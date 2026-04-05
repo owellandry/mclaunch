@@ -24,6 +24,9 @@ export type ElectronApi = {
   clearCache: () => Promise<void>;
   clearAllData: () => Promise<void>;
   restartApp: () => void;
+  minimizeWindow: () => void;
+  maximizeWindow: () => void;
+  closeWindow: () => void;
   onLauncherLog: (callback: (message: string) => void) => () => void;
   onLauncherProgress: (callback: (progress: { type: string; task: number; total: number }) => void) => () => void;
   onLauncherStatus: (callback: (status: LauncherStatus) => void) => () => void;

@@ -38,6 +38,7 @@ pnpm-debug.log*
 .pnpm-store/
 .vite/
 coverage/
+.claude
 
 # IDE / OS / Editor
 .DS_Store

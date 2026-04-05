@@ -42,6 +42,9 @@ const api = {
   restartApp: (): void => {
     ipcRenderer.send(CHANNELS.restartApp);
   },
+  minimizeWindow: (): void => ipcRenderer.send("window:minimize"),
+  maximizeWindow: (): void => ipcRenderer.send("window:maximize"),
+  closeWindow: (): void => ipcRenderer.send("window:close"),
   onLauncherLog: (callback: (message: string) => void): (() => void) => {
     const listener = (_event: IpcRendererEvent, message: string): void => callback(message);
     ipcRenderer.on(CHANNELS.log, listener);

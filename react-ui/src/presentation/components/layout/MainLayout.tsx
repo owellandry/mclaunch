@@ -4,9 +4,8 @@ import { Topbar } from "./Topbar";
 
 export function MainLayout() {
   return (
-    <div className="flex h-screen w-screen bg-[#d4d4d8] p-4 relative overflow-hidden">
-      {/* App Container - Rounded with dark background like the LoL screenshot */}
-      <div className="flex w-full h-full bg-background border border-black/5 shadow-2xl relative rounded-[24px] overflow-hidden">
+    <div className="flex h-screen w-screen bg-background relative overflow-hidden">
+      <div className="flex w-full h-full relative">
         <Sidebar />
         <main className="flex-1 flex flex-col relative z-10 overflow-hidden bg-surface/50">
           <Topbar />

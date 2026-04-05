@@ -136,9 +136,8 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
           min: "1024M"
         },
         overrides: {
-          // detach: false prevents Windows from opening a separate console window for the Java process
-          detach: false,
-        }
+          detached: false,
+        },
       };
 
       emitLog(window, `Descargando/iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);

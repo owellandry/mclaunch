@@ -1,11 +1,11 @@
-import { app, BrowserWindow, Menu, session } from "electron";
+import { app, BrowserWindow, Menu, session, ipcMain } from "electron";
 import path from "node:path";
+import { registerLauncherIpc } from "./ipc/launcher";
 
 // Fix: GPU shader disk cache causes "Access denied" on Windows when the
 // cache directory is locked by another process. Disable it entirely.
 app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
 app.commandLine.appendSwitch("disable-features", "UseSkiaRenderer");
-import { registerLauncherIpc } from "./ipc/launcher";
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 
@@ -34,6 +34,7 @@ const createWindow = async (): Promise<void> => {
     minWidth: 960,
     minHeight: 620,
     title: "MC Launch",
+    frame: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
@@ -43,6 +44,13 @@ const createWindow = async (): Promise<void> => {
   });
   mainWindow.removeMenu();
   mainWindow.maximize();
+
+  ipcMain.on("window:minimize", () => mainWindow.minimize());
+  ipcMain.on("window:maximize", () => {
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+  });
+  ipcMain.on("window:close", () => mainWindow.close());
 
   registerLauncherIpc(mainWindow);
 
