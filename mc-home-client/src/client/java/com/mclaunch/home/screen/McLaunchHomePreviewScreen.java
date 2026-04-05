@@ -1,6 +1,7 @@
 package com.mclaunch.home.screen;
 
 import com.mclaunch.home.ui.McLaunchText;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -8,7 +9,19 @@ import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.entity.model.EntityModelLayers;
+import net.minecraft.client.render.entity.model.PlayerEntityModel;
+import net.minecraft.client.util.DefaultSkinHelper;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import org.joml.Quaternionf;
+
+import java.util.UUID;
 
 public final class McLaunchHomePreviewScreen extends Screen {
 
@@ -24,6 +37,8 @@ public final class McLaunchHomePreviewScreen extends Screen {
     private static final int TEXT_MUTED    = 0xFFA1A1AA;
 
     private final Screen parent;
+    private boolean guiScaleForced = false;
+    private PlayerEntityModel<?> playerModel;
 
     public McLaunchHomePreviewScreen(Screen parent) {
         super(McLaunchText.tr("screen.mclaunch_home.preview.title", "MC Launch Home", "Inicio MC Launch"));
@@ -32,6 +47,15 @@ public final class McLaunchHomePreviewScreen extends Screen {
 
     @Override
     protected void init() {
+        if (!guiScaleForced && this.client != null) {
+            int currentScale = this.client.options.getGuiScale().getValue();
+            if (currentScale != 2) {
+                this.client.options.getGuiScale().setValue(2);
+                this.client.onResolutionChanged();
+                guiScaleForced = true;
+                return; // Se re-inicializará automáticamente
+            }
+        }
         int panelW = 320;
         if (this.width < 500) {
             panelW = this.width / 2 + 50; // Ajustar en pantallas pequeñas
@@ -103,6 +127,9 @@ public final class McLaunchHomePreviewScreen extends Screen {
 
         // Decoración de fondo en el espacio vacío
         renderBackgroundDecorations(ctx);
+
+        // Renderizar el jugador 3D
+        render3DPlayer(ctx, mouseX, mouseY);
 
         // 2. Panel Izquierdo (Sidebar)
         int panelW = 320;
@@ -181,6 +208,79 @@ public final class McLaunchHomePreviewScreen extends Screen {
         int bgTextW = this.textRenderer.getWidth(bgText);
         ctx.drawTextWithShadow(this.textRenderer, bgText, -bgTextW / 2, -4, 0x08FFFFFF);
         ctx.getMatrices().pop();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private void render3DPlayer(DrawContext ctx, int mouseX, int mouseY) {
+        if (this.client == null) return;
+        
+        int panelW = 320;
+        if (this.width < 500) panelW = this.width / 2 + 50;
+        int rightSpace = this.width - panelW;
+        if (rightSpace < 150) return; // Pantalla muy pequeña
+
+        int centerX = panelW + rightSpace / 2;
+        int centerY = this.height / 2 + 60; // Centro un poco más abajo
+        int size = this.height / 3;
+
+        if (this.playerModel == null) {
+            try {
+                ModelPart modelPart = this.client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER);
+                this.playerModel = new PlayerEntityModel(modelPart, false);
+            } catch (Exception e) {
+                return; // Fallback seguro
+            }
+        }
+
+        Identifier skin = DefaultSkinHelper.getTexture();
+        try {
+            if (this.client.getSession() != null) {
+                UUID uuid = this.client.getSession().getUuidOrNull();
+                if (uuid != null) {
+                    skin = DefaultSkinHelper.getTexture(uuid);
+                }
+            }
+        } catch (Exception ignored) {}
+
+        MatrixStack matrices = ctx.getMatrices();
+        matrices.push();
+        matrices.translate(centerX, centerY, 1000.0);
+        matrices.scale((float)size, (float)size, (float)size);
+        
+        Quaternionf quaternionf = new Quaternionf().rotateZ((float) Math.PI);
+        matrices.multiply(quaternionf);
+
+        float dx = (float)centerX - mouseX;
+        float dy = (float)(centerY - size / 2) - mouseY;
+        
+        float f = (float)Math.atan((double)(dx / 40.0F));
+        float g = (float)Math.atan((double)(dy / 40.0F));
+        matrices.multiply(new Quaternionf().rotateY(f * 0.5F));
+        
+        // Reset arms and legs to default standing position
+        playerModel.leftArm.pitch = 0; playerModel.leftArm.yaw = 0; playerModel.leftArm.roll = 0;
+        playerModel.rightArm.pitch = 0; playerModel.rightArm.yaw = 0; playerModel.rightArm.roll = 0;
+        playerModel.leftLeg.pitch = 0; playerModel.leftLeg.yaw = 0; playerModel.leftLeg.roll = 0;
+        playerModel.rightLeg.pitch = 0; playerModel.rightLeg.yaw = 0; playerModel.rightLeg.roll = 0;
+        playerModel.body.pitch = 0; playerModel.body.yaw = 0; playerModel.body.roll = 0;
+
+        playerModel.head.pitch = g * 0.5F;
+        playerModel.head.yaw = f * 0.5F;
+        playerModel.hat.pitch = playerModel.head.pitch;
+        playerModel.hat.yaw = playerModel.head.yaw;
+
+        VertexConsumerProvider.Immediate immediate = this.client.getBufferBuilders().getEntityVertexConsumers();
+        VertexConsumer vertexConsumer = immediate.getBuffer(RenderLayer.getEntityTranslucent(skin));
+        
+        // Iluminación simulada para UI (similar a InventoryScreen)
+        RenderSystem.setShaderLights(new org.joml.Vector3f(-0.2f, 1.0f, -0.2f).normalize(), new org.joml.Vector3f(0.2f, 1.0f, 0.2f).normalize());
+        
+        playerModel.render(matrices, vertexConsumer, 0xF000F0, 0xFFFFFFFF, 1.0f, 1.0f, 1.0f, 1.0f);
+        
+        immediate.draw();
+        matrices.pop();
+        
+        RenderSystem.applyModelViewMatrix();
     }
 
     @Override
