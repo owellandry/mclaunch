@@ -10,11 +10,13 @@ import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
+import net.minecraft.client.texture.PlayerSkin;
 import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
@@ -39,6 +41,7 @@ public final class McLaunchHomePreviewScreen extends Screen {
     private final Screen parent;
     private boolean guiScaleForced = false;
     private PlayerEntityModel<?> playerModel;
+    private volatile Identifier cachedSkin = null;
 
     public McLaunchHomePreviewScreen(Screen parent) {
         super(McLaunchText.tr("screen.mclaunch_home.preview.title", "MC Launch Home", "Inicio MC Launch"));
@@ -118,6 +121,31 @@ public final class McLaunchHomePreviewScreen extends Screen {
         this.addDrawableChild(new ModernButtonWidget(startX, bottomY, btnW, 20,
                 McLaunchText.tr("screen.mclaunch_home.preview.back", "← Vanilla Menu", "← Menú Clásico"),
                 btn -> this.close()));
+
+        // Cargar skin del jugador de forma asíncrona
+        loadSkinAsync();
+    }
+
+    private void loadSkinAsync() {
+        if (this.client == null || cachedSkin != null) return;
+        try {
+            com.mojang.authlib.GameProfile profile = this.client.getSession().getProfile();
+            if (profile != null) {
+                this.client.getSkinProvider().fetchSkinTextures(profile)
+                        .thenAccept((PlayerSkin playerSkin) -> {
+                            if (playerSkin != null) cachedSkin = playerSkin.texture();
+                        });
+            }
+        } catch (Exception ignored) {
+            // fetchSkinTextures no disponible; se usará skin por defecto
+        }
+    }
+
+    private Identifier getDefaultSkin() {
+        UUID uuid = (this.client != null && this.client.getSession() != null)
+                ? this.client.getSession().getUuidOrNull()
+                : null;
+        return uuid != null ? DefaultSkinHelper.getTexture(uuid) : DefaultSkinHelper.getTexture();
     }
 
     @Override
@@ -232,23 +260,17 @@ public final class McLaunchHomePreviewScreen extends Screen {
             }
         }
 
-        Identifier skin = DefaultSkinHelper.getTexture();
-        try {
-            if (this.client.getSession() != null) {
-                UUID uuid = this.client.getSession().getUuidOrNull();
-                if (uuid != null) {
-                    skin = DefaultSkinHelper.getTexture(uuid);
-                }
-            }
-        } catch (Exception ignored) {}
+        // Usar skin cargada asíncronamente; si aún no está lista, usar la default
+        Identifier skin = cachedSkin != null ? cachedSkin : getDefaultSkin();
 
         MatrixStack matrices = ctx.getMatrices();
         matrices.push();
         matrices.translate(centerX, centerY, 1000.0);
-        matrices.scale((float)size, (float)size, (float)size);
-        
-        Quaternionf quaternionf = new Quaternionf().rotateZ((float) Math.PI);
-        matrices.multiply(quaternionf);
+        // Y positivo: el espacio del modelo ya tiene Y hacia abajo (igual que pantalla),
+        // negarla causaba la inversión. Z negativo para profundidad correcta.
+        matrices.scale((float)size, (float)size, (float)(-size));
+        matrices.multiply(new Quaternionf().rotateZ((float)Math.PI)); // voltear derecho
+        matrices.multiply(new Quaternionf().rotateY((float)Math.PI)); // cara a cámara
 
         float dx = (float)centerX - mouseX;
         float dy = (float)(centerY - size / 2) - mouseY;
@@ -270,12 +292,12 @@ public final class McLaunchHomePreviewScreen extends Screen {
         playerModel.hat.yaw = playerModel.head.yaw;
 
         VertexConsumerProvider.Immediate immediate = this.client.getBufferBuilders().getEntityVertexConsumers();
-        VertexConsumer vertexConsumer = immediate.getBuffer(RenderLayer.getEntityTranslucent(skin));
+        VertexConsumer vertexConsumer = immediate.getBuffer(RenderLayer.getEntityCutoutNoCull(skin));
         
         // Iluminación simulada para UI (similar a InventoryScreen)
         RenderSystem.setShaderLights(new org.joml.Vector3f(-0.2f, 1.0f, -0.2f).normalize(), new org.joml.Vector3f(0.2f, 1.0f, 0.2f).normalize());
         
-        playerModel.render(matrices, vertexConsumer, 0xF000F0, 0xFFFFFFFF, 1.0f, 1.0f, 1.0f, 1.0f);
+        playerModel.render(matrices, vertexConsumer, 0xF000F0, OverlayTexture.DEFAULT_UV, 1.0f, 1.0f, 1.0f, 1.0f);
         
         immediate.draw();
         matrices.pop();
