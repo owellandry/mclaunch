@@ -31,8 +31,8 @@ function normalizeSkinUrl(skinUrl?: string | null): string | null {
 export function SkinStudio() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
-  const { profile } = useAppStore();
-  const { addNotification } = useNotificationStore();
+  const profile = useAppStore((state) => state.profile);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const [draftSkinUrl, setDraftSkinUrl] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_STORAGE_KEY));
   const [draftSkinName, setDraftSkinName] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_NAME_STORAGE_KEY));

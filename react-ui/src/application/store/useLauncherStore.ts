@@ -24,12 +24,18 @@ interface LauncherState {
   clearLogs: () => void;
   fetchVersions: () => Promise<void>;
   fetchDbData: () => Promise<void>;
-  hydrateDashboard: () => Promise<void>;
+  hydrateDashboard: (force?: boolean) => Promise<void>;
   launch: () => void;
   initListeners: () => () => void;
 }
 
 const launcherAdapter = new ElectronLauncherAdapter();
+const MAX_LOG_ENTRIES = 200;
+const DASHBOARD_HYDRATE_TTL_MS = 30_000;
+
+let dashboardHydrationPromise: Promise<void> | null = null;
+let lastHydratedAt = 0;
+let lastHydratedGameDir = "";
 
 export const useLauncherStore = create<LauncherState>((set, get) => ({
   status: "idle",
@@ -41,7 +47,13 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
   statistics: { win_rate: 0, kda: 0 },
   setStatus: (status) => set({ status }),
-  addLog: (log) => set((state) => ({ logs: [...state.logs, log] })),
+  addLog: (log) =>
+    set((state) => ({
+      logs:
+        state.logs.length >= MAX_LOG_ENTRIES
+          ? [...state.logs.slice(-(MAX_LOG_ENTRIES - 1)), log]
+          : [...state.logs, log],
+    })),
   clearLogs: () => set({ logs: [] }),
   fetchVersions: async () => {
     try {
@@ -66,8 +78,28 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       throw e;
     }
   },
-  hydrateDashboard: async () => {
-    await Promise.all([get().fetchVersions(), get().fetchDbData()]);
+  hydrateDashboard: async (force = false) => {
+    const { gameDir } = useAppStore.getState().config;
+    const now = Date.now();
+
+    if (!force && dashboardHydrationPromise) {
+      return dashboardHydrationPromise;
+    }
+
+    if (!force && lastHydratedGameDir === gameDir && now - lastHydratedAt < DASHBOARD_HYDRATE_TTL_MS) {
+      return;
+    }
+
+    dashboardHydrationPromise = Promise.all([get().fetchVersions(), get().fetchDbData()])
+      .then(() => {
+        lastHydratedAt = Date.now();
+        lastHydratedGameDir = gameDir;
+      })
+      .finally(() => {
+        dashboardHydrationPromise = null;
+      });
+
+    return dashboardHydrationPromise;
   },
 
   launch: () => {
@@ -130,6 +162,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       }
 
       if (status === "done" || status === "idle" || status === "error") {
+        lastHydratedAt = 0;
         void get().fetchDbData().catch((error) => {
           console.error("No se pudo refrescar la data del launcher tras cambiar el estado.", error);
         });

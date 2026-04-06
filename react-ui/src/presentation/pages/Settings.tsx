@@ -17,8 +17,16 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 export function Settings() {
-  const { config, setConfig, profile, logo, setLogo, language, setLanguage, logoutMicrosoft } = useAppStore();
-  const { addNotification } = useNotificationStore();
+  const config = useAppStore((state) => state.config);
+  const setConfig = useAppStore((state) => state.setConfig);
+  const profile = useAppStore((state) => state.profile);
+  const logo = useAppStore((state) => state.logo);
+  const setLogo = useAppStore((state) => state.setLogo);
+  const language = useAppStore((state) => state.language);
+  const setLanguage = useAppStore((state) => state.setLanguage);
+  const logoutMicrosoft = useAppStore((state) => state.logoutMicrosoft);
+  const clearAll = useAppStore((state) => state.clearAll);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -39,8 +47,6 @@ export function Settings() {
     useNotificationStore.getState().addNotification(t("settings.settings_saved"), t("settings.settings_saved_desc"), "success");
     setTimeout(() => setIsSaved(false), 2000);
   };
-
-  const { clearAll } = useAppStore();
 
   const handleClearCache = async () => {
     if (window.api) {

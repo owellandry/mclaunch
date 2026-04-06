@@ -34,15 +34,21 @@ function timeAgo(timestamp: number, t: any) {
 }
 
 export function Topbar() {
-  const { profile, searchQuery, setSearchQuery } = useAppStore();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotificationStore();
+  const profile = useAppStore((state) => state.profile);
+  const searchQuery = useAppStore((state) => state.searchQuery);
+  const setSearchQuery = useAppStore((state) => state.setSearchQuery);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const markAsRead = useNotificationStore((state) => state.markAsRead);
+  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
+  const clearAll = useNotificationStore((state) => state.clearAll);
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
   
   const displayName = profile?.username || t("topbar.player");
-  const count = unreadCount();
+  const count = unreadCount;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

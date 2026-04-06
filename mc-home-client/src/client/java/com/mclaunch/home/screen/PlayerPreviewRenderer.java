@@ -7,8 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
@@ -22,19 +20,8 @@ import org.joml.Vector3f;
  * Renders a 3-D player model in the custom home screen.
  *
  * <h3>Approach</h3>
- * <p>We render via two paths, tried in order:
- * <ol>
- *   <li><b>EntityRenderDispatcher path</b> – used when a {@code ClientWorld} exists
- *       (e.g., when the screen is opened in-game).  A lightweight fake
- *       {@link FakeClientPlayer} is constructed once and passed to
- *       {@code EntityRenderDispatcher.render()}, which produces the same result as
- *       {@code InventoryScreen.drawEntity()}.
- *   <li><b>Direct model path</b> – used when the world is {@code null} (title screen
- *       before any world has loaded).  We drive {@code PlayerEntityModel.render()}
- *       ourselves with the exact transform chain that vanilla {@code drawEntity} uses
- *       internally, including the shader-light setup extracted from
- *       {@code DiffuseLighting.method_34742()}.
- * </ol>
+ * <p>We render through a direct {@link PlayerEntityModel} path so the preview works
+ * consistently from the title screen and in-game without depending on a loaded world.
  *
  * <h3>Transform maths (direct path)</h3>
  * <pre>
@@ -67,7 +54,6 @@ public final class PlayerPreviewRenderer {
      * inventory rendering behaves like a model roughly two units tall.
      */
     private static final float MODEL_HEIGHT_UNITS = 2.0f;
-
     // Viewer-directed lights: strong -Z (toward viewer in GUI space), Y=0.
     //
     // Verified against the actual MC 1.20.1 shader (light.glsl):
@@ -94,6 +80,7 @@ public final class PlayerPreviewRenderer {
     // -----------------------------------------------------------------------
 
     private final MinecraftClient client;
+    private final Quaternionf rotation = new Quaternionf();
 
     /** Cached classic-arms model (4-pixel arms). */
     private PlayerEntityModel<?> classicModel;
@@ -107,6 +94,15 @@ public final class PlayerPreviewRenderer {
 
     public PlayerPreviewRenderer(MinecraftClient client) {
         this.client = client;
+    }
+
+    public void prewarmModels() {
+        if (disabled) {
+            return;
+        }
+
+        getOrCreateModel(false);
+        getOrCreateModel(true);
     }
 
     // -----------------------------------------------------------------------
@@ -175,7 +171,7 @@ public final class PlayerPreviewRenderer {
         float timeSeconds = (float)(Util.getMeasuringTimeMs() / 1000.0) + delta * 0.05f;
         float lookX = MathHelper.clamp((mouseX - (x + width * 0.5f)) / (width * 0.5f), -1.0f, 1.0f);
         float lookY = MathHelper.clamp((mouseY - (y + height * 0.34f)) / (height * 0.5f), -1.0f, 1.0f);
-        prepareModelPose(model, timeSeconds, lookX, lookY);
+        AnimationPlayer.apply(model, timeSeconds, lookX, lookY);
 
         // IDLE SWAY REDUCED DRASTICALLY → almost no left-right movement and very small tilt.
         // This was the main cause of continuous lighting flicker.
@@ -191,9 +187,9 @@ public final class PlayerPreviewRenderer {
         matrices.translate(anchorX, anchorY, anchorZ);
         matrices.scale(size, size, -size);
 
-        Quaternionf rotation = new Quaternionf()
-            .rotateY(swayYaw   * (float)(Math.PI / 180.0))
-            .rotateX(swayPitch * (float)(Math.PI / 180.0));
+        rotation.identity()
+            .rotateY(swayYaw * MathHelper.RADIANS_PER_DEGREE)
+            .rotateX(swayPitch * MathHelper.RADIANS_PER_DEGREE);
         matrices.multiply(rotation);
 
         // ------------------------------------------------------------------
@@ -245,160 +241,30 @@ public final class PlayerPreviewRenderer {
         if (client == null || client.getEntityModelLoader() == null) {
             return null;
         }
-        if (slimArms) {
-            if (slimModel == null) {
-                slimModel = new PlayerEntityModel<>(
-                    client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_SLIM),
-                    true
+
+        try {
+            if (slimArms) {
+                if (slimModel == null) {
+                    slimModel = new PlayerEntityModel<>(
+                        client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_SLIM),
+                        true
+                    );
+                }
+                return slimModel;
+            }
+
+            if (classicModel == null) {
+                classicModel = new PlayerEntityModel<>(
+                    client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER),
+                    false
                 );
             }
-            return slimModel;
-        }
-        if (classicModel == null) {
-            classicModel = new PlayerEntityModel<>(
-                client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER),
-                false
-            );
-        }
-        return classicModel;
-    }
-
-    // -----------------------------------------------------------------------
-    // Idle animation pose (movimientos de brazos/piernas y breathing también reducidos)
-    // -----------------------------------------------------------------------
-
-    private void prepareModelPose(PlayerEntityModel<?> model, float t, float lookX, float lookY) {
-        resetPart(model.head);
-        resetPart(model.hat);
-        resetPart(model.body);
-        resetPart(model.leftArm);
-        resetPart(model.rightArm);
-        resetPart(model.leftLeg);
-        resetPart(model.rightLeg);
-        resetPart(model.jacket);
-        resetPart(model.leftSleeve);
-        resetPart(model.rightSleeve);
-        resetPart(model.leftPants);
-        resetPart(model.rightPants);
-
-        model.setVisible(true);
-        model.child   = false;
-        model.riding  = false;
-        model.sneaking = false;
-        model.handSwingProgress = 0.0f;
-
-        model.hat.visible         = true;
-        model.jacket.visible      = true;
-        model.leftSleeve.visible  = true;
-        model.rightSleeve.visible = true;
-        model.leftPants.visible   = true;
-        model.rightPants.visible  = true;
-
-        // Breathing and torso movements reduced to almost nothing
-        float breathBob  = MathHelper.sin(t * 1.7f) * 0.008f;   // was 0.015f
-        float torsoYaw   = MathHelper.sin(t * 0.48f) * 0.04f;   // was 0.10f
-
-        // Head follow mouse – clamped harder so it doesn't tilt too far up
-        float headYaw    = MathHelper.sin(t * 0.82f) * 0.06f - lookX * 0.35f;
-        float headPitch  = -0.12f + MathHelper.sin(t * 0.63f) * 0.02f + lookY * 0.11f;
-
-        // Arm and leg movement almost removed
-        float armSwing   = MathHelper.sin(t * 1.12f) * 0.03f;   // was 0.08f
-
-        model.body.yaw    = torsoYaw;
-        model.body.pivotY += breathBob * 6.0f;
-
-        model.head.yaw    = MathHelper.clamp(headYaw - torsoYaw, -0.85f, 0.85f);
-        model.head.pitch  = MathHelper.clamp(headPitch, -0.45f, 0.45f);
-        model.head.pivotY += breathBob * 4.0f;
-
-        model.rightArm.pitch = armSwing  + breathBob;
-        model.leftArm.pitch  = -armSwing + breathBob;
-        model.rightArm.roll  =  0.04f;
-        model.leftArm.roll   = -0.04f;
-        model.rightArm.yaw   = torsoYaw * 0.35f;
-        model.leftArm.yaw    = torsoYaw * 0.35f;
-
-        model.rightLeg.pitch = -breathBob * 1.0f;   // was 1.5f
-        model.leftLeg.pitch  =  breathBob * 1.0f;
-
-        model.hat.copyTransform(model.head);
-        model.jacket.copyTransform(model.body);
-        model.leftSleeve.copyTransform(model.leftArm);
-        model.rightSleeve.copyTransform(model.rightArm);
-        model.leftPants.copyTransform(model.leftLeg);
-        model.rightPants.copyTransform(model.rightLeg);
-    }
-
-    private static void resetPart(net.minecraft.client.model.ModelPart part) {
-        if (part == null) return;
-        part.visible = true;
-        part.hidden  = false;
-        part.resetTransform();
-    }
-
-    // -----------------------------------------------------------------------
-    // EntityRenderDispatcher path (sin cambios)
-    // -----------------------------------------------------------------------
-
-    @SuppressWarnings("unused")
-    private static void renderViaDispatcher(DrawContext context, int x, int y,
-                                            int size, net.minecraft.entity.LivingEntity entity) {
-        MatrixStack matrices = context.getMatrices();
-        matrices.push();
-        matrices.translate(x, y, 50.0);
-        matrices.multiplyPositionMatrix(new org.joml.Matrix4f().scaling(size, size, -size));
-        matrices.multiply(new Quaternionf().rotateZ((float) Math.PI));
-
-        RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
-
-        EntityRenderDispatcher dispatcher = MinecraftClient.getInstance().getEntityRenderDispatcher();
-        dispatcher.setRenderShadows(false);
-
-        VertexConsumerProvider.Immediate buffers =
-            MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-
-        RenderSystem.runAsFancy(() ->
-            dispatcher.render(entity, 0, 0, 0, 0, 1, matrices, buffers,
-                LightmapTextureManager.MAX_LIGHT_COORDINATE));
-
-        context.draw();
-        dispatcher.setRenderShadows(true);
-        matrices.pop();
-        DiffuseLighting.enableGuiDepthLighting();
-    }
-
-    // -----------------------------------------------------------------------
-    // FakeClientPlayer helper (sin cambios)
-    // -----------------------------------------------------------------------
-
-    public static final class FakeClientPlayer
-            extends net.minecraft.client.network.AbstractClientPlayerEntity {
-
-        private Identifier skinId;
-        private boolean slim;
-
-        public FakeClientPlayer(MinecraftClient client,
-                                com.mojang.authlib.GameProfile profile,
-                                Identifier skinId,
-                                boolean slim) {
-            super(client.world, profile);
-            this.skinId = skinId;
-            this.slim   = slim;
-        }
-
-        @Override public boolean hasSkinTexture()  { return skinId != null; }
-        @Override public Identifier getSkinTexture() {
-            return skinId != null ? skinId : super.getSkinTexture();
-        }
-        @Override public String getModel() {
-            return slim ? "slim" : "default";
-        }
-        @Override public boolean isPartVisible(PlayerModelPart part) { return true; }
-        @Override protected net.minecraft.client.network.PlayerListEntry getPlayerListEntry() {
+            return classicModel;
+        } catch (IllegalArgumentException ignored) {
+            // During very early bootstrap the player model layers may not exist yet.
+            // Returning null lets the warmup fail softly and the real render retry later.
             return null;
         }
-        @Override public boolean isSpectator() { return false; }
-        @Override public boolean isCreative()  { return false; }
     }
+
 }

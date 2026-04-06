@@ -1,5 +1,5 @@
 /* @refresh reload */
-import { useEffect, useState } from 'react'
+import { startTransition, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -20,15 +20,37 @@ const preloadInitialRoute = async (isAuthenticated: boolean): Promise<void> => {
     await Promise.all([
       import('./presentation/components/templates/MainLayout'),
       import('./presentation/pages/Dashboard'),
-      import('./presentation/pages/Library'),
-      import('./presentation/pages/Servers'),
-      import('./presentation/pages/Settings'),
-      import('./presentation/pages/SkinStudio'),
     ])
     return
   }
 
   await import('./presentation/pages/Onboarding')
+}
+
+const preloadSecondaryPrivateRoutes = async (): Promise<void> => {
+  await Promise.all([
+    import('./presentation/pages/Library'),
+    import('./presentation/pages/Servers'),
+    import('./presentation/pages/Settings'),
+    import('./presentation/pages/SkinStudio'),
+  ])
+}
+
+const scheduleBackgroundWarmup = (task: () => Promise<void>): void => {
+  const win = window as Window & {
+    requestIdleCallback?: (callback: () => void) => number
+  }
+
+  if (typeof win.requestIdleCallback === 'function') {
+    win.requestIdleCallback(() => {
+      void task()
+    })
+    return
+  }
+
+  window.setTimeout(() => {
+    void task()
+  }, 250)
 }
 
 const applyThemeClass = (logo: string): void => {
@@ -150,7 +172,13 @@ function AppRoot() {
         await preloadInitialRoute(Boolean(profile?.isOnboardingCompleted))
 
         if (!isDisposed) {
-          setBootstrapState({ status: 'ready' })
+          startTransition(() => {
+            setBootstrapState({ status: 'ready' })
+          })
+        }
+
+        if (profile?.isOnboardingCompleted) {
+          scheduleBackgroundWarmup(preloadSecondaryPrivateRoutes)
         }
       } catch (error) {
         console.error('Fallo durante la inicialización de la app.', error)

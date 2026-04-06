@@ -12,7 +12,7 @@
 // - Mejor manejo de errores y logs
 // - Uso de child_process.spawn para compilación no bloqueante
 
-import { BrowserWindow, ipcMain, app, screen } from "electron";
+import { BrowserWindow, ipcMain, app } from "electron";
 import { spawn, SpawnOptions } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -540,10 +540,11 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
           min: "1024M",
         },
         overrides: { detached: false },
-        window: (() => {
-          const { width, height } = screen.getPrimaryDisplay().bounds;
-          return { width, height, fullscreen: false };
-        })(),
+        window: {
+          width: 1280,
+          height: 720,
+          fullscreen: false,
+        },
       };
 
       emitLog(window, `Lanzando ${payload.version} con ${payload.memoryMb}MB RAM...`);
