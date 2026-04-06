@@ -10,6 +10,7 @@ interface LauncherState {
   progress: { type: string; task: number; total: number; percentage: number } | null;
   availableVersions: MinecraftVersion[];
   downloadedVersions: string[];
+  launchedVersionWasDownloaded: boolean;
   weeklyActivity: number[];
   statistics: { win_rate: number; kda: number };
   setStatus: (status: LauncherStatus) => void;
@@ -17,6 +18,7 @@ interface LauncherState {
   clearLogs: () => void;
   fetchVersions: () => Promise<void>;
   fetchDbData: () => Promise<void>;
+  hydrateDashboard: () => Promise<void>;
   launch: () => void;
   initListeners: () => () => void;
 }
@@ -29,6 +31,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   progress: null,
   availableVersions: [],
   downloadedVersions: [],
+  launchedVersionWasDownloaded: false,
   weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
   statistics: { win_rate: 0, kda: 0 },
   setStatus: (status) => set({ status }),
@@ -40,37 +43,47 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       set({ availableVersions: versions });
     } catch (e) {
       console.error(e);
+      throw e;
     }
   },
   fetchDbData: async () => {
     try {
-      const weeklyActivity = await launcherAdapter.getWeeklyActivity();
-      const statistics = await launcherAdapter.getStatistics();
-      const downloadedVersions = await launcherAdapter.getDownloadedVersions();
+      const { config } = useAppStore.getState();
+      const [weeklyActivity, statistics, downloadedVersions] = await Promise.all([
+        launcherAdapter.getWeeklyActivity(),
+        launcherAdapter.getStatistics(),
+        launcherAdapter.syncDownloadedVersions(config.gameDir),
+      ]);
       set({ weeklyActivity, statistics, downloadedVersions });
     } catch (e) {
       console.error(e);
+      throw e;
     }
+  },
+  hydrateDashboard: async () => {
+    await Promise.all([get().fetchVersions(), get().fetchDbData()]);
   },
 
   launch: () => {
     const { profile, config } = useAppStore.getState();
-    const { status, addLog, setStatus } = get();
+    const { status, addLog, setStatus, downloadedVersions } = get();
 
     if (!profile || profile.username.trim().length < 3 || status === "running") {
       return;
     }
 
+    const version = config.version || "1.20.1";
+    const wasDownloaded = downloadedVersions.includes(version);
+
     addLog(`[launcher] Perfil cargado: ${profile.username.trim()}`);
     addLog(`[launcher] Memoria reservada: ${config.memoryMb} MB`);
     setStatus("running");
-    set({ progress: null });
+    set({ progress: null, launchedVersionWasDownloaded: wasDownloaded });
 
     launcherAdapter.launch(config, profile.username.trim());
   },
 
   initListeners: () => {
-    get().fetchDbData();
     const unsubLog = launcherAdapter.onLog((message) => {
       get().addLog(message);
       
@@ -111,7 +124,9 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       }
 
       if (status === "done" || status === "idle" || status === "error") {
-        get().fetchDbData();
+        void get().fetchDbData().catch((error) => {
+          console.error("No se pudo refrescar la data del launcher tras cambiar el estado.", error);
+        });
         // Reset to idle so the button is re-enabled for the next launch
         setTimeout(() => get().setStatus("idle"), 500);
       }

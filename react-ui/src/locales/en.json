@@ -21,6 +21,17 @@
     "ago_h": "{{count}}h ago",
     "ago_d": "{{count}}d ago"
   },
+  "boot": {
+    "eyebrow": "BOOT SEQUENCE",
+    "title": "Preparing launcher",
+    "subtitle": "We are loading the session, visual theme, and initial data. This screen will stay visible until everything is ready.",
+    "error_title": "We could not finish loading",
+    "error_subtitle": "Initialization did not complete successfully. Retry to prepare the launcher again.",
+    "status_label": "Status",
+    "status_loading": "Loading",
+    "status_error": "Error",
+    "retry": "Retry"
+  },
   "dashboard": {
     "play": "PLAY",
     "download": "DOWNLOAD",
@@ -133,8 +144,8 @@
     "confirm_start": "Confirm and Start",
     "welcome": "Welcome to Launcher",
     "subtitle": "Login to begin your adventure",
-    "premium_only": "Premium Players Only",
-    "premium_desc": "For now, we only allow official Minecraft accounts.",
+    "premium_only": "Sign in with Microsoft",
+    "premium_desc": "Connect your Minecraft account to access the launcher.",
     "login_microsoft": "SIGN IN",
     "logging_in": "CONNECTING...",
     "advanced_settings": "Advanced Settings",

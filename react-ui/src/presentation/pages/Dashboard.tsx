@@ -6,24 +6,27 @@ import { useNotificationStore } from "../../application/store/useNotificationSto
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
 import { useTranslation } from "react-i18next";
+import heroImage from "../../assets/hero.png";
 
 export function Dashboard() {
   const { t } = useTranslation();
-  const { status, launch, availableVersions, downloadedVersions, weeklyActivity, statistics, fetchVersions, progress } = useLauncherStore();
+  const { status, launch, availableVersions, downloadedVersions, launchedVersionWasDownloaded, weeklyActivity, statistics, hydrateDashboard, progress } = useLauncherStore();
   const { config, setConfig, searchQuery } = useAppStore();
   const isRunning = status === "running";
   const isPlaying = status === "playing";
 
   useEffect(() => {
-    fetchVersions();
-  }, [fetchVersions]);
+    void hydrateDashboard().catch((error) => {
+      console.error("No se pudo hidratar el dashboard al entrar.", error);
+    });
+  }, [hydrateDashboard]);
 
   const selectedVersion = config.version || "1.20.1";
   const isDownloaded = downloadedVersions.includes(selectedVersion);
   
   let buttonText = isDownloaded ? t("dashboard.play") : t("dashboard.download");
   if (isRunning) {
-    if (!isDownloaded && progress) {
+    if (!launchedVersionWasDownloaded && progress) {
       buttonText = t("dashboard.downloading", { percent: progress.percentage });
     } else {
       buttonText = t("dashboard.starting");
@@ -50,7 +53,7 @@ export function Dashboard() {
         {/* Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
-          style={{ backgroundImage: `url('/src/assets/hero.png')` }}
+          style={{ backgroundImage: `url(${heroImage})` }}
         />
         {/* Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />

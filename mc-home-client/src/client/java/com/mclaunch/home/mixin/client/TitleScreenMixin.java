@@ -1,5 +1,6 @@
 package com.mclaunch.home.mixin.client;
 
+import com.mclaunch.home.McLaunchHomeClient;
 import com.mclaunch.home.screen.McLaunchHomePreviewScreen;
 import com.mclaunch.home.ui.McLaunchText;
 import net.minecraft.client.gui.DrawContext;
@@ -20,6 +21,8 @@ public abstract class TitleScreenMixin extends Screen {
 
     @Inject(method = "init", at = @At("TAIL"))
     private void mclaunch$addPreviewButton(CallbackInfo ci) {
+        McLaunchHomeClient.ensureFullscreenOnce(this.client);
+
         int buttonWidth = 132;
         int buttonHeight = 20;
         int buttonX = this.width - buttonWidth - 16;
