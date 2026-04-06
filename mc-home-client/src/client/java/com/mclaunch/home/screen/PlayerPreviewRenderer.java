@@ -54,9 +54,6 @@ public final class PlayerPreviewRenderer {
      * inventory rendering behaves like a model roughly two units tall.
      */
     private static final float MODEL_HEIGHT_UNITS = 2.0f;
-    private static final float WAVE_INTERVAL_SECONDS = 11.0f;
-    private static final float WAVE_DURATION_SECONDS = 2.2f;
-
     // Viewer-directed lights: strong -Z (toward viewer in GUI space), Y=0.
     //
     // Verified against the actual MC 1.20.1 shader (light.glsl):
@@ -174,7 +171,7 @@ public final class PlayerPreviewRenderer {
         float timeSeconds = (float)(Util.getMeasuringTimeMs() / 1000.0) + delta * 0.05f;
         float lookX = MathHelper.clamp((mouseX - (x + width * 0.5f)) / (width * 0.5f), -1.0f, 1.0f);
         float lookY = MathHelper.clamp((mouseY - (y + height * 0.34f)) / (height * 0.5f), -1.0f, 1.0f);
-        prepareModelPose(model, timeSeconds, lookX, lookY);
+        AnimationPlayer.apply(model, timeSeconds, lookX, lookY);
 
         // IDLE SWAY REDUCED DRASTICALLY → almost no left-right movement and very small tilt.
         // This was the main cause of continuous lighting flicker.
@@ -268,102 +265,6 @@ public final class PlayerPreviewRenderer {
             // Returning null lets the warmup fail softly and the real render retry later.
             return null;
         }
-    }
-
-    // -----------------------------------------------------------------------
-    // Idle animation pose (movimientos de brazos/piernas y breathing también reducidos)
-    // -----------------------------------------------------------------------
-
-    private void prepareModelPose(PlayerEntityModel<?> model, float t, float lookX, float lookY) {
-        resetPart(model.head);
-        resetPart(model.hat);
-        resetPart(model.body);
-        resetPart(model.leftArm);
-        resetPart(model.rightArm);
-        resetPart(model.leftLeg);
-        resetPart(model.rightLeg);
-        resetPart(model.jacket);
-        resetPart(model.leftSleeve);
-        resetPart(model.rightSleeve);
-        resetPart(model.leftPants);
-        resetPart(model.rightPants);
-
-        model.setVisible(true);
-        model.child   = false;
-        model.riding  = false;
-        model.sneaking = false;
-        model.handSwingProgress = 0.0f;
-
-        model.hat.visible         = true;
-        model.jacket.visible      = true;
-        model.leftSleeve.visible  = true;
-        model.rightSleeve.visible = true;
-        model.leftPants.visible   = true;
-        model.rightPants.visible  = true;
-
-        // Breathing and torso movements reduced to almost nothing
-        float breathBob  = MathHelper.sin(t * 1.7f) * 0.008f;   // was 0.015f
-        float torsoYaw   = MathHelper.sin(t * 0.48f) * 0.04f;   // was 0.10f
-
-        // Head follow mouse – clamped harder so it doesn't tilt too far up
-        float headYaw    = MathHelper.sin(t * 0.82f) * 0.06f - lookX * 0.35f;
-        float headPitch  = -0.12f + MathHelper.sin(t * 0.63f) * 0.02f + lookY * 0.11f;
-
-        // Arm and leg movement almost removed
-        float armSwing   = MathHelper.sin(t * 1.12f) * 0.03f;   // was 0.08f
-
-        model.body.yaw    = torsoYaw;
-        model.body.pivotY += breathBob * 6.0f;
-
-        model.head.yaw    = MathHelper.clamp(headYaw - torsoYaw, -0.85f, 0.85f);
-        model.head.pitch  = MathHelper.clamp(headPitch, -0.45f, 0.45f);
-        model.head.pivotY += breathBob * 4.0f;
-
-        float waveAmount = getWaveAmount(t);
-        float waveSwing = MathHelper.sin(t * 12.0f) * waveAmount;
-
-        model.rightArm.pitch = armSwing + breathBob - waveAmount * 1.95f + waveSwing * 0.12f;
-        model.leftArm.pitch  = -armSwing + breathBob;
-        model.rightArm.roll  =  0.04f - waveAmount * 0.22f + waveSwing * 0.18f;
-        model.leftArm.roll   = -0.04f;
-        model.rightArm.yaw   = torsoYaw * 0.35f - waveAmount * 0.18f;
-        model.leftArm.yaw    = torsoYaw * 0.35f;
-
-        model.rightLeg.pitch = -breathBob * 1.0f;   // was 1.5f
-        model.leftLeg.pitch  =  breathBob * 1.0f;
-
-        model.hat.copyTransform(model.head);
-        model.jacket.copyTransform(model.body);
-        model.leftSleeve.copyTransform(model.leftArm);
-        model.rightSleeve.copyTransform(model.rightArm);
-        model.leftPants.copyTransform(model.leftLeg);
-        model.rightPants.copyTransform(model.rightLeg);
-    }
-
-    private static void resetPart(net.minecraft.client.model.ModelPart part) {
-        if (part == null) return;
-        part.visible = true;
-        part.hidden  = false;
-        part.resetTransform();
-    }
-
-    private static float getWaveAmount(float t) {
-        float cycleTime = t % WAVE_INTERVAL_SECONDS;
-        if (cycleTime < 0.0f || cycleTime > WAVE_DURATION_SECONDS) {
-            return 0.0f;
-        }
-
-        float progress = cycleTime / WAVE_DURATION_SECONDS;
-        float envelope = progress < 0.5f
-            ? smoothstep(progress * 2.0f)
-            : smoothstep((1.0f - progress) * 2.0f);
-
-        return envelope * 0.9f;
-    }
-
-    private static float smoothstep(float value) {
-        float clamped = MathHelper.clamp(value, 0.0f, 1.0f);
-        return clamped * clamped * (3.0f - 2.0f * clamped);
     }
 
 }
