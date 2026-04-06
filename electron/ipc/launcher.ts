@@ -1,10 +1,8 @@
 import { BrowserWindow, ipcMain, app } from "electron";
-import { Client, Authenticator } from "minecraft-launcher-core";
 import { execSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
-import { Auth } from "msmc";
 
 function isJavaInstalled(): boolean {
   try {
@@ -72,19 +70,33 @@ const CHANNELS = {
   getProfile: "auth:getProfile"
 } as const;
 
-const emitLog = (window: BrowserWindow, message: string): void => {
+type WindowProvider = () => BrowserWindow | null;
+
+const emitLog = (window: BrowserWindow | null, message: string): void => {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
   window.webContents.send(CHANNELS.log, message);
 };
 
-const emitStatus = (window: BrowserWindow, status: "idle" | "running" | "playing" | "done" | "error"): void => {
+const emitStatus = (window: BrowserWindow | null, status: "idle" | "running" | "playing" | "done" | "error"): void => {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
   window.webContents.send(CHANNELS.status, status);
 };
 
-const emitProgress = (window: BrowserWindow, progress: { type: string; task: number; total: number }): void => {
+const emitProgress = (window: BrowserWindow | null, progress: { type: string; task: number; total: number }): void => {
+  if (!window || window.isDestroyed()) {
+    return;
+  }
+
   window.webContents.send(CHANNELS.progress, progress);
 };
 
-const emitGradleOutput = (window: BrowserWindow, output: string | null | undefined): void => {
+const emitGradleOutput = (window: BrowserWindow | null, output: string | null | undefined): void => {
   if (!output) {
     return;
   }
@@ -159,7 +171,7 @@ const resolveLatestHomeClientJar = (projectDir: string): string | null => {
   return jars[0]?.fullPath ?? null;
 };
 
-const buildHomeClientWorkspace = (window: BrowserWindow, projectDir: string): string | null => {
+const buildHomeClientWorkspace = (window: BrowserWindow | null, projectDir: string): string | null => {
   const wrapperPath = process.platform === "win32"
     ? path.join(projectDir, "gradlew.bat")
     : path.join(projectDir, "gradlew");
@@ -191,7 +203,7 @@ const buildHomeClientWorkspace = (window: BrowserWindow, projectDir: string): st
   return resolveLatestHomeClientJar(projectDir);
 };
 
-const resolveHomeClientArtifact = (window: BrowserWindow): string | null => {
+const resolveHomeClientArtifact = (window: BrowserWindow | null): string | null => {
   const projectDir = resolveMcHomeClientProjectDir();
   if (!projectDir) {
     emitLog(window, "[mc-home-client] No se encontró el subproyecto mc-home-client. El launcher seguirá en modo vanilla.");
@@ -207,7 +219,7 @@ const resolveHomeClientArtifact = (window: BrowserWindow): string | null => {
   return jarPath;
 };
 
-const ensureFabricProfile = async (window: BrowserWindow, gameDir: string, minecraftVersion: string): Promise<FabricVersionProfile | null> => {
+const ensureFabricProfile = async (window: BrowserWindow | null, gameDir: string, minecraftVersion: string): Promise<FabricVersionProfile | null> => {
   if (minecraftVersion !== MC_HOME_CLIENT.supportedVersion) {
     emitLog(
       window,
@@ -244,7 +256,7 @@ const ensureFabricProfile = async (window: BrowserWindow, gameDir: string, minec
   }
 };
 
-const installHomeClientMod = (window: BrowserWindow, gameDir: string, jarPath: string): string => {
+const installHomeClientMod = (window: BrowserWindow | null, gameDir: string, jarPath: string): string => {
   const modsDir = path.join(gameDir, "mods");
   const destination = path.join(modsDir, `${MC_HOME_CLIENT.modId}.jar`);
 
@@ -267,7 +279,7 @@ const installHomeClientMod = (window: BrowserWindow, gameDir: string, jarPath: s
 };
 
 const prepareHomeClientRuntime = async (
-  window: BrowserWindow,
+  window: BrowserWindow | null,
   payload: LaunchPayload
 ): Promise<{ enabled: boolean; customVersionId?: string }> => {
   const profile = await ensureFabricProfile(window, payload.gameDir, payload.version);
@@ -364,6 +376,7 @@ const resolveSkinUrl = (profile: {
 };
 
 const loginWithMicrosoftPopup = async (parentWindow: BrowserWindow): Promise<any> => {
+  const { Auth } = await import("msmc");
   const auth = new Auth("select_account");
   const redirectUri = auth.token.redirect;
   const authWindow = new BrowserWindow({
@@ -465,7 +478,7 @@ const loginWithMicrosoftPopup = async (parentWindow: BrowserWindow): Promise<any
   return auth.login(authCode);
 };
 
-export const registerLauncherIpc = (window: BrowserWindow): void => {
+export const registerLauncherIpc = (getWindow: WindowProvider): void => {
   initDb();
 
   ipcMain.handle(CHANNELS.getWeeklyActivity, async () => {
@@ -498,7 +511,12 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
 
   ipcMain.handle(CHANNELS.loginMicrosoft, async () => {
     try {
-      const xbox = await loginWithMicrosoftPopup(window);
+      const parentWindow = getWindow();
+      if (!parentWindow) {
+        throw new Error("La ventana principal no est\u00e1 disponible.");
+      }
+
+      const xbox = await loginWithMicrosoftPopup(parentWindow);
       const mc = await xbox.getMinecraft();
       
       const msmcToken = xbox.save();
@@ -573,6 +591,7 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
   });
 
   ipcMain.on(CHANNELS.launch, async (_event: unknown, payload: LaunchPayload) => {
+    const window = getWindow();
     emitStatus(window, "running");
     emitLog(window, `Preparando lanzamiento para ${payload.username}...`);
 
@@ -584,6 +603,8 @@ export const registerLauncherIpc = (window: BrowserWindow): void => {
     }
 
     try {
+      const { Client, Authenticator } = await import("minecraft-launcher-core");
+
       // Ensure game directory exists
       fs.mkdirSync(payload.gameDir, { recursive: true });
       const homeClientRuntime = await prepareHomeClientRuntime(window, payload);

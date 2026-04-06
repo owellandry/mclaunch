@@ -9,7 +9,7 @@
     "predev": "node scripts/predev.cjs",
     "dev:ui": "pnpm --dir react-ui dev",
     "dev:electron": "wait-on tcp:5173 && pnpm build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 node scripts/run-electron.cjs .",
-    "dev": "concurrently -k \"pnpm dev:ui\" \"pnpm dev:electron\"",
+    "dev": "node scripts/dev.mjs",
     "build:ui": "pnpm --dir react-ui build",
     "build:electron": "tsc -p electron/tsconfig.json",
     "build": "pnpm build:ui && pnpm build:electron",
@@ -45,6 +45,7 @@
     "cross-env": "^10.1.0",
     "electron": "36.9.5",
     "electron-builder": "^26.8.1",
+    "esbuild": "^0.27.0",
     "typescript": "^5.9.3",
     "wait-on": "^9.0.4"
   },

@@ -17,6 +17,7 @@ interface LauncherState {
   clearLogs: () => void;
   fetchVersions: () => Promise<void>;
   fetchDbData: () => Promise<void>;
+  hydrateDashboard: () => Promise<void>;
   launch: () => void;
   initListeners: () => () => void;
 }
@@ -40,17 +41,24 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       set({ availableVersions: versions });
     } catch (e) {
       console.error(e);
+      throw e;
     }
   },
   fetchDbData: async () => {
     try {
-      const weeklyActivity = await launcherAdapter.getWeeklyActivity();
-      const statistics = await launcherAdapter.getStatistics();
-      const downloadedVersions = await launcherAdapter.getDownloadedVersions();
+      const [weeklyActivity, statistics, downloadedVersions] = await Promise.all([
+        launcherAdapter.getWeeklyActivity(),
+        launcherAdapter.getStatistics(),
+        launcherAdapter.getDownloadedVersions(),
+      ]);
       set({ weeklyActivity, statistics, downloadedVersions });
     } catch (e) {
       console.error(e);
+      throw e;
     }
+  },
+  hydrateDashboard: async () => {
+    await Promise.all([get().fetchVersions(), get().fetchDbData()]);
   },
 
   launch: () => {
@@ -70,7 +78,6 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   },
 
   initListeners: () => {
-    get().fetchDbData();
     const unsubLog = launcherAdapter.onLog((message) => {
       get().addLog(message);
       
@@ -111,7 +118,9 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       }
 
       if (status === "done" || status === "idle" || status === "error") {
-        get().fetchDbData();
+        void get().fetchDbData().catch((error) => {
+          console.error("No se pudo refrescar la data del launcher tras cambiar el estado.", error);
+        });
         // Reset to idle so the button is re-enabled for the next launch
         setTimeout(() => get().setStatus("idle"), 500);
       }
