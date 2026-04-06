@@ -1,10 +1,4 @@
-/**
- * @file MinecraftAvatar.tsx
- * @description Componente atómico MinecraftAvatar. Muestra el rostro 2D de una skin de Minecraft basado en el nombre de usuario.
- * 
- * Patrón: Atomic Design
- */
-import { useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 
 type MinecraftAvatarProps = {
   username: string;
@@ -14,6 +8,8 @@ type MinecraftAvatarProps = {
   className?: string;
   transitionName?: string;
 };
+
+const avatarAvailabilityCache = new Map<string, boolean>();
 
 function getInitial(username: string): string {
   return username.trim().slice(0, 1).toUpperCase() || "?";
@@ -35,7 +31,7 @@ function getAvatarUrl(uuid?: string, skinUrl?: string | null, size = 32): string
   return normalizeSkinUrl(skinUrl);
 }
 
-export function MinecraftAvatar({
+export const MinecraftAvatar = memo(function MinecraftAvatar({
   username,
   uuid,
   skinUrl,
@@ -43,8 +39,10 @@ export function MinecraftAvatar({
   className = "",
   transitionName,
 }: MinecraftAvatarProps) {
-  const avatarUrl = getAvatarUrl(uuid, skinUrl, size);
-  const [hasValidSkin, setHasValidSkin] = useState(Boolean(avatarUrl));
+  const avatarUrl = useMemo(() => getAvatarUrl(uuid, skinUrl, size), [size, skinUrl, uuid]);
+  const [hasValidSkin, setHasValidSkin] = useState(() =>
+    avatarUrl ? avatarAvailabilityCache.get(avatarUrl) ?? true : false
+  );
   const transitionStyle = transitionName ? { viewTransitionName: transitionName } : undefined;
 
   useEffect(() => {
@@ -53,21 +51,30 @@ export function MinecraftAvatar({
       return;
     }
 
+    const cachedAvailability = avatarAvailabilityCache.get(avatarUrl);
+    if (cachedAvailability !== undefined) {
+      setHasValidSkin(cachedAvailability);
+      return;
+    }
+
     let isCancelled = false;
     const image = new Image();
 
     image.onload = () => {
+      avatarAvailabilityCache.set(avatarUrl, true);
       if (!isCancelled) {
         setHasValidSkin(true);
       }
     };
 
     image.onerror = () => {
+      avatarAvailabilityCache.set(avatarUrl, false);
       if (!isCancelled) {
         setHasValidSkin(false);
       }
     };
 
+    image.decoding = "async";
     image.src = avatarUrl;
 
     return () => {
@@ -93,7 +100,12 @@ export function MinecraftAvatar({
       title={username}
       className={`bg-surfaceLight mc-cutout-small ${className}`}
       style={{ width: size, height: size, imageRendering: "pixelated", ...transitionStyle }}
-      onError={() => setHasValidSkin(false)}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        avatarAvailabilityCache.set(avatarUrl, false);
+        setHasValidSkin(false);
+      }}
     />
   );
-}
+});

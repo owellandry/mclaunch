@@ -4,7 +4,7 @@
  * 
  * Patrón: Atomic Design
  */
-import { useEffect } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { FiPlay } from "react-icons/fi";
 import { useLauncherStore } from "../../application/store/useLauncherStore";
 import { useAppStore } from "../../application/store/useAppStore";
@@ -16,16 +16,20 @@ import heroImage from "../../assets/hero.png";
 
 export function Dashboard() {
   const { t } = useTranslation();
-  const { status, launch, availableVersions, downloadedVersions, launchedVersionWasDownloaded, weeklyActivity, statistics, hydrateDashboard, progress } = useLauncherStore();
-  const { config, setConfig, searchQuery } = useAppStore();
+  const status = useLauncherStore((state) => state.status);
+  const launch = useLauncherStore((state) => state.launch);
+  const availableVersions = useLauncherStore((state) => state.availableVersions);
+  const downloadedVersions = useLauncherStore((state) => state.downloadedVersions);
+  const launchedVersionWasDownloaded = useLauncherStore((state) => state.launchedVersionWasDownloaded);
+  const weeklyActivity = useLauncherStore((state) => state.weeklyActivity);
+  const statistics = useLauncherStore((state) => state.statistics);
+  const progress = useLauncherStore((state) => state.progress);
+  const config = useAppStore((state) => state.config);
+  const setConfig = useAppStore((state) => state.setConfig);
+  const searchQuery = useAppStore((state) => state.searchQuery);
   const isRunning = status === "running";
   const isPlaying = status === "playing";
-
-  useEffect(() => {
-    void hydrateDashboard().catch((error) => {
-      console.error("No se pudo hidratar el dashboard al entrar.", error);
-    });
-  }, [hydrateDashboard]);
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   const selectedVersion = config.version || "1.20.1";
   const isDownloaded = downloadedVersions.includes(selectedVersion);
@@ -41,9 +45,10 @@ export function Dashboard() {
     buttonText = t("dashboard.playing");
   }
 
-  const filteredVersions = availableVersions.filter(v => 
-    v.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredVersions = useMemo(() => {
+    const normalizedQuery = deferredSearchQuery.toLowerCase();
+    return availableVersions.filter((version) => version.id.toLowerCase().includes(normalizedQuery));
+  }, [availableVersions, deferredSearchQuery]);
 
   const handleMainAction = () => {
     if (!isDownloaded) {

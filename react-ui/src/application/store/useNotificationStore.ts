@@ -19,18 +19,19 @@ export interface NotificationItem {
 
 export interface NotificationStore {
   notifications: NotificationItem[];
+  unreadCount: number;
   addNotification: (title: string, message: string, type?: NotificationType) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
-  unreadCount: () => number;
 }
 
-export const useNotificationStore = create<NotificationStore>((set, get) => ({
+export const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: [],
+  unreadCount: 0,
   addNotification: (title, message, type = "info") => {
     const newNotification: NotificationItem = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 11),
       title,
       message,
       type,
@@ -39,24 +40,25 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
     };
     set((state) => ({
       notifications: [newNotification, ...state.notifications],
+      unreadCount: state.unreadCount + 1,
     }));
   },
   markAsRead: (id) => {
     set((state) => ({
-      notifications: state.notifications.map((n) =>
-        n.id === id ? { ...n, read: true } : n
+      notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      unreadCount: state.notifications.reduce(
+        (count, notification) => count + (notification.id === id || notification.read ? 0 : 1),
+        0
       ),
     }));
   },
   markAllAsRead: () => {
     set((state) => ({
       notifications: state.notifications.map((n) => ({ ...n, read: true })),
+      unreadCount: 0,
     }));
   },
   clearAll: () => {
-    set({ notifications: [] });
-  },
-  unreadCount: () => {
-    return get().notifications.filter((n) => !n.read).length;
+    set({ notifications: [], unreadCount: 0 });
   },
 }));

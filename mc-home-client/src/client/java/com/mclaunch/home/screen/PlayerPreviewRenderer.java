@@ -94,6 +94,7 @@ public final class PlayerPreviewRenderer {
     // -----------------------------------------------------------------------
 
     private final MinecraftClient client;
+    private final Quaternionf rotation = new Quaternionf();
 
     /** Cached classic-arms model (4-pixel arms). */
     private PlayerEntityModel<?> classicModel;
@@ -107,6 +108,15 @@ public final class PlayerPreviewRenderer {
 
     public PlayerPreviewRenderer(MinecraftClient client) {
         this.client = client;
+    }
+
+    public void prewarmModels() {
+        if (disabled) {
+            return;
+        }
+
+        getOrCreateModel(false);
+        getOrCreateModel(true);
     }
 
     // -----------------------------------------------------------------------
@@ -191,9 +201,9 @@ public final class PlayerPreviewRenderer {
         matrices.translate(anchorX, anchorY, anchorZ);
         matrices.scale(size, size, -size);
 
-        Quaternionf rotation = new Quaternionf()
-            .rotateY(swayYaw   * (float)(Math.PI / 180.0))
-            .rotateX(swayPitch * (float)(Math.PI / 180.0));
+        rotation.identity()
+            .rotateY(swayYaw * MathHelper.RADIANS_PER_DEGREE)
+            .rotateX(swayPitch * MathHelper.RADIANS_PER_DEGREE);
         matrices.multiply(rotation);
 
         // ------------------------------------------------------------------

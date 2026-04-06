@@ -14,8 +14,9 @@ import { useNotificationStore } from "../../application/store/useNotificationSto
 
 export function Onboarding() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { completeOnboarding, loginMicrosoft } = useAppStore();
-  const { addNotification } = useNotificationStore();
+  const completeOnboarding = useAppStore((state) => state.completeOnboarding);
+  const loginMicrosoft = useAppStore((state) => state.loginMicrosoft);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const memoryMb = 4096;

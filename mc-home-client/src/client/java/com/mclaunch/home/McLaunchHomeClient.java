@@ -27,16 +27,14 @@ public final class McLaunchHomeClient implements ClientModInitializer {
         }
 
         fullscreenChecked = true;
-        if (window.isFullscreen()) {
-            return;
-        }
-
         try {
-            LOGGER.info("Applying fullscreen fallback from title screen.");
-            window.toggleFullscreen();
-            client.options.getFullscreen().setValue(window.isFullscreen());
+            if (window.isFullscreen()) {
+                LOGGER.info("Disabling fullscreen for MC Launch home preview bootstrap.");
+                window.toggleFullscreen();
+            }
+            client.options.getFullscreen().setValue(false);
         } catch (RuntimeException error) {
-            LOGGER.warn("Unable to apply fullscreen fallback cleanly.", error);
+            LOGGER.warn("Unable to sync fullscreen state cleanly.", error);
         }
     }
 }

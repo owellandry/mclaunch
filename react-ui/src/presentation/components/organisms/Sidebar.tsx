@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 
 export function Sidebar() {
   const location = useLocation();
-  const { logo } = useAppStore();
+  const logo = useAppStore((state) => state.logo);
   const { t } = useTranslation();
 
   const NAV_ITEMS = [

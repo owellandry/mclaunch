@@ -4,7 +4,7 @@
  * 
  * Patrón: Atomic Design
  */
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 type MinecraftSkinFigureProps = {
   textureUrl?: string | null;
@@ -52,6 +52,8 @@ type LimbProps = {
   pixelSize: number;
   animationName: string;
 };
+
+const textureInfoCache = new Map<string, TextureInfo | null>();
 
 function toPixels(value: number, pixelSize: number): number {
   return value * pixelSize;
@@ -221,19 +223,34 @@ function Limb({
   );
 }
 
-export function MinecraftSkinFigure({
+export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   textureUrl,
   className = "",
   pixelSize = 8,
 }: MinecraftSkinFigureProps) {
-  const [textureInfo, setTextureInfo] = useState<TextureInfo | null>(null);
+  const deferredTextureUrl = useDeferredValue(textureUrl);
+  const [textureInfo, setTextureInfo] = useState<TextureInfo | null>(() =>
+    deferredTextureUrl ? textureInfoCache.get(deferredTextureUrl) ?? null : null
+  );
   const [rotation, setRotation] = useState({ x: -18, y: -32 });
   const [isDragging, setIsDragging] = useState(false);
   const dragState = useRef<{ x: number; y: number } | null>(null);
+  const rotationRef = useRef(rotation);
+  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!textureUrl) {
+    rotationRef.current = rotation;
+  }, [rotation]);
+
+  useEffect(() => {
+    if (!deferredTextureUrl) {
       setTextureInfo(null);
+      return;
+    }
+
+    const cachedTextureInfo = textureInfoCache.get(deferredTextureUrl);
+    if (cachedTextureInfo !== undefined) {
+      setTextureInfo(cachedTextureInfo);
       return;
     }
 
@@ -241,26 +258,30 @@ export function MinecraftSkinFigure({
     const image = new Image();
 
     image.onload = () => {
+      const nextTextureInfo = {
+        width: image.naturalWidth || 64,
+        height: image.naturalHeight || 64,
+      };
+      textureInfoCache.set(deferredTextureUrl, nextTextureInfo);
       if (!isCancelled) {
-        setTextureInfo({
-          width: image.naturalWidth || 64,
-          height: image.naturalHeight || 64,
-        });
+        setTextureInfo(nextTextureInfo);
       }
     };
 
     image.onerror = () => {
+      textureInfoCache.set(deferredTextureUrl, null);
       if (!isCancelled) {
         setTextureInfo(null);
       }
     };
 
-    image.src = textureUrl;
+    image.decoding = "async";
+    image.src = deferredTextureUrl;
 
     return () => {
       isCancelled = true;
     };
-  }, [textureUrl]);
+  }, [deferredTextureUrl]);
 
   useEffect(() => {
     if (!isDragging) {
@@ -276,15 +297,29 @@ export function MinecraftSkinFigure({
       const deltaY = event.clientY - dragState.current.y;
       dragState.current = { x: event.clientX, y: event.clientY };
 
-      setRotation((current) => ({
-        x: Math.max(-55, Math.min(35, current.x - deltaY * 0.35)),
-        y: current.y + deltaX * 0.5,
-      }));
+      const nextRotation = {
+        x: Math.max(-55, Math.min(35, rotationRef.current.x - deltaY * 0.35)),
+        y: rotationRef.current.y + deltaX * 0.5,
+      };
+      rotationRef.current = nextRotation;
+
+      if (frameRef.current !== null) {
+        return;
+      }
+
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = null;
+        setRotation(rotationRef.current);
+      });
     };
 
     const stopDragging = () => {
       setIsDragging(false);
       dragState.current = null;
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -295,6 +330,10 @@ export function MinecraftSkinFigure({
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerup", stopDragging);
       window.removeEventListener("pointercancel", stopDragging);
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
   }, [isDragging]);
 
@@ -304,12 +343,14 @@ export function MinecraftSkinFigure({
   };
 
   const resetView = () => {
-    setRotation({ x: -18, y: -32 });
+    const nextRotation = { x: -18, y: -32 };
+    rotationRef.current = nextRotation;
+    setRotation(nextRotation);
   };
 
   const skinMaps = useMemo(() => getSkinMaps(textureInfo?.height === 32), [textureInfo?.height]);
 
-  if (!textureUrl || !textureInfo) {
+  if (!deferredTextureUrl || !textureInfo) {
     return (
       <div
         className={`mc-cutout bg-surfaceLight/70 border border-black/5 flex items-center justify-center text-textMuted ${className}`}
@@ -361,14 +402,14 @@ export function MinecraftSkinFigure({
               <Cuboid
                 dimensions={{ width: 8, height: 8, depth: 8 }}
                 faces={skinMaps.head}
-                textureUrl={textureUrl}
+                textureUrl={deferredTextureUrl}
                 textureInfo={textureInfo}
                 pixelSize={pixelSize}
               />
               <Cuboid
                 dimensions={{ width: 8, height: 8, depth: 8 }}
                 faces={skinMaps.headOverlay}
-                textureUrl={textureUrl}
+                textureUrl={deferredTextureUrl}
                 textureInfo={textureInfo}
                 pixelSize={pixelSize}
                 inflate={0.75}
@@ -385,14 +426,14 @@ export function MinecraftSkinFigure({
               <Cuboid
                 dimensions={{ width: 8, height: 12, depth: 4 }}
                 faces={skinMaps.body}
-                textureUrl={textureUrl}
+                textureUrl={deferredTextureUrl}
                 textureInfo={textureInfo}
                 pixelSize={pixelSize}
               />
               <Cuboid
                 dimensions={{ width: 8, height: 12, depth: 4 }}
                 faces={skinMaps.bodyOverlay}
-                textureUrl={textureUrl}
+                textureUrl={deferredTextureUrl}
                 textureInfo={textureInfo}
                 pixelSize={pixelSize}
                 inflate={0.7}
@@ -404,7 +445,7 @@ export function MinecraftSkinFigure({
               dimensions={{ width: 4, height: 12, depth: 4 }}
               faces={skinMaps.rightArm}
               overlayFaces={skinMaps.rightArmOverlay}
-              textureUrl={textureUrl}
+              textureUrl={deferredTextureUrl}
               textureInfo={textureInfo}
               pixelSize={pixelSize}
               animationName="skin-3d-arm-right"
@@ -414,7 +455,7 @@ export function MinecraftSkinFigure({
               dimensions={{ width: 4, height: 12, depth: 4 }}
               faces={skinMaps.leftArm}
               overlayFaces={skinMaps.leftArmOverlay}
-              textureUrl={textureUrl}
+              textureUrl={deferredTextureUrl}
               textureInfo={textureInfo}
               pixelSize={pixelSize}
               animationName="skin-3d-arm-left"
@@ -424,7 +465,7 @@ export function MinecraftSkinFigure({
               dimensions={{ width: 4, height: 12, depth: 4 }}
               faces={skinMaps.rightLeg}
               overlayFaces={skinMaps.rightLegOverlay}
-              textureUrl={textureUrl}
+              textureUrl={deferredTextureUrl}
               textureInfo={textureInfo}
               pixelSize={pixelSize}
               animationName="skin-3d-leg-right"
@@ -434,7 +475,7 @@ export function MinecraftSkinFigure({
               dimensions={{ width: 4, height: 12, depth: 4 }}
               faces={skinMaps.leftLeg}
               overlayFaces={skinMaps.leftLegOverlay}
-              textureUrl={textureUrl}
+              textureUrl={deferredTextureUrl}
               textureInfo={textureInfo}
               pixelSize={pixelSize}
               animationName="skin-3d-leg-left"
@@ -443,4 +484,4 @@ export function MinecraftSkinFigure({
       </div>
     </div>
   );
-}
+});
