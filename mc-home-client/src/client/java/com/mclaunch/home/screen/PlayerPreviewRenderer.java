@@ -7,8 +7,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.DiffuseLighting;
 import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
-import net.minecraft.client.render.entity.PlayerModelPart;
 import net.minecraft.client.render.entity.model.EntityModelLayers;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
@@ -22,19 +20,8 @@ import org.joml.Vector3f;
  * Renders a 3-D player model in the custom home screen.
  *
  * <h3>Approach</h3>
- * <p>We render via two paths, tried in order:
- * <ol>
- *   <li><b>EntityRenderDispatcher path</b> – used when a {@code ClientWorld} exists
- *       (e.g., when the screen is opened in-game).  A lightweight fake
- *       {@link FakeClientPlayer} is constructed once and passed to
- *       {@code EntityRenderDispatcher.render()}, which produces the same result as
- *       {@code InventoryScreen.drawEntity()}.
- *   <li><b>Direct model path</b> – used when the world is {@code null} (title screen
- *       before any world has loaded).  We drive {@code PlayerEntityModel.render()}
- *       ourselves with the exact transform chain that vanilla {@code drawEntity} uses
- *       internally, including the shader-light setup extracted from
- *       {@code DiffuseLighting.method_34742()}.
- * </ol>
+ * <p>We render through a direct {@link PlayerEntityModel} path so the preview works
+ * consistently from the title screen and in-game without depending on a loaded world.
  *
  * <h3>Transform maths (direct path)</h3>
  * <pre>
@@ -67,6 +54,8 @@ public final class PlayerPreviewRenderer {
      * inventory rendering behaves like a model roughly two units tall.
      */
     private static final float MODEL_HEIGHT_UNITS = 2.0f;
+    private static final float WAVE_INTERVAL_SECONDS = 11.0f;
+    private static final float WAVE_DURATION_SECONDS = 2.2f;
 
     // Viewer-directed lights: strong -Z (toward viewer in GUI space), Y=0.
     //
@@ -255,22 +244,30 @@ public final class PlayerPreviewRenderer {
         if (client == null || client.getEntityModelLoader() == null) {
             return null;
         }
-        if (slimArms) {
-            if (slimModel == null) {
-                slimModel = new PlayerEntityModel<>(
-                    client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_SLIM),
-                    true
+
+        try {
+            if (slimArms) {
+                if (slimModel == null) {
+                    slimModel = new PlayerEntityModel<>(
+                        client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER_SLIM),
+                        true
+                    );
+                }
+                return slimModel;
+            }
+
+            if (classicModel == null) {
+                classicModel = new PlayerEntityModel<>(
+                    client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER),
+                    false
                 );
             }
-            return slimModel;
+            return classicModel;
+        } catch (IllegalArgumentException ignored) {
+            // During very early bootstrap the player model layers may not exist yet.
+            // Returning null lets the warmup fail softly and the real render retry later.
+            return null;
         }
-        if (classicModel == null) {
-            classicModel = new PlayerEntityModel<>(
-                client.getEntityModelLoader().getModelPart(EntityModelLayers.PLAYER),
-                false
-            );
-        }
-        return classicModel;
     }
 
     // -----------------------------------------------------------------------
@@ -322,11 +319,14 @@ public final class PlayerPreviewRenderer {
         model.head.pitch  = MathHelper.clamp(headPitch, -0.45f, 0.45f);
         model.head.pivotY += breathBob * 4.0f;
 
-        model.rightArm.pitch = armSwing  + breathBob;
+        float waveAmount = getWaveAmount(t);
+        float waveSwing = MathHelper.sin(t * 12.0f) * waveAmount;
+
+        model.rightArm.pitch = armSwing + breathBob - waveAmount * 1.95f + waveSwing * 0.12f;
         model.leftArm.pitch  = -armSwing + breathBob;
-        model.rightArm.roll  =  0.04f;
+        model.rightArm.roll  =  0.04f - waveAmount * 0.22f + waveSwing * 0.18f;
         model.leftArm.roll   = -0.04f;
-        model.rightArm.yaw   = torsoYaw * 0.35f;
+        model.rightArm.yaw   = torsoYaw * 0.35f - waveAmount * 0.18f;
         model.leftArm.yaw    = torsoYaw * 0.35f;
 
         model.rightLeg.pitch = -breathBob * 1.0f;   // was 1.5f
@@ -347,68 +347,23 @@ public final class PlayerPreviewRenderer {
         part.resetTransform();
     }
 
-    // -----------------------------------------------------------------------
-    // EntityRenderDispatcher path (sin cambios)
-    // -----------------------------------------------------------------------
+    private static float getWaveAmount(float t) {
+        float cycleTime = t % WAVE_INTERVAL_SECONDS;
+        if (cycleTime < 0.0f || cycleTime > WAVE_DURATION_SECONDS) {
+            return 0.0f;
+        }
 
-    @SuppressWarnings("unused")
-    private static void renderViaDispatcher(DrawContext context, int x, int y,
-                                            int size, net.minecraft.entity.LivingEntity entity) {
-        MatrixStack matrices = context.getMatrices();
-        matrices.push();
-        matrices.translate(x, y, 50.0);
-        matrices.multiplyPositionMatrix(new org.joml.Matrix4f().scaling(size, size, -size));
-        matrices.multiply(new Quaternionf().rotateZ((float) Math.PI));
+        float progress = cycleTime / WAVE_DURATION_SECONDS;
+        float envelope = progress < 0.5f
+            ? smoothstep(progress * 2.0f)
+            : smoothstep((1.0f - progress) * 2.0f);
 
-        RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
-
-        EntityRenderDispatcher dispatcher = MinecraftClient.getInstance().getEntityRenderDispatcher();
-        dispatcher.setRenderShadows(false);
-
-        VertexConsumerProvider.Immediate buffers =
-            MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
-
-        RenderSystem.runAsFancy(() ->
-            dispatcher.render(entity, 0, 0, 0, 0, 1, matrices, buffers,
-                LightmapTextureManager.MAX_LIGHT_COORDINATE));
-
-        context.draw();
-        dispatcher.setRenderShadows(true);
-        matrices.pop();
-        DiffuseLighting.enableGuiDepthLighting();
+        return envelope * 0.9f;
     }
 
-    // -----------------------------------------------------------------------
-    // FakeClientPlayer helper (sin cambios)
-    // -----------------------------------------------------------------------
-
-    public static final class FakeClientPlayer
-            extends net.minecraft.client.network.AbstractClientPlayerEntity {
-
-        private Identifier skinId;
-        private boolean slim;
-
-        public FakeClientPlayer(MinecraftClient client,
-                                com.mojang.authlib.GameProfile profile,
-                                Identifier skinId,
-                                boolean slim) {
-            super(client.world, profile);
-            this.skinId = skinId;
-            this.slim   = slim;
-        }
-
-        @Override public boolean hasSkinTexture()  { return skinId != null; }
-        @Override public Identifier getSkinTexture() {
-            return skinId != null ? skinId : super.getSkinTexture();
-        }
-        @Override public String getModel() {
-            return slim ? "slim" : "default";
-        }
-        @Override public boolean isPartVisible(PlayerModelPart part) { return true; }
-        @Override protected net.minecraft.client.network.PlayerListEntry getPlayerListEntry() {
-            return null;
-        }
-        @Override public boolean isSpectator() { return false; }
-        @Override public boolean isCreative()  { return false; }
+    private static float smoothstep(float value) {
+        float clamped = MathHelper.clamp(value, 0.0f, 1.0f);
+        return clamped * clamped * (3.0f - 2.0f * clamped);
     }
+
 }
