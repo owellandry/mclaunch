@@ -42,6 +42,8 @@ coverage/
 .tmp-gradle/
 .electron-runtime/
 .tmp-electron-runtime/
+.trae/
+.qodo/
 
 # IDE / OS / Editor
 .DS_Store
