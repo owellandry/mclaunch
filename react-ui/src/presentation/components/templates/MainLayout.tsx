@@ -1,6 +1,12 @@
+/**
+ * @file MainLayout.tsx
+ * @description Componente plantilla MainLayout. Estructura base de la aplicación (Sidebar a la izquierda, Topbar arriba y contenido al centro).
+ * 
+ * Patrón: Atomic Design
+ */
 import { Outlet } from "react-router-dom";
-import { Sidebar } from "./Sidebar";
-import { Topbar } from "./Topbar";
+import { Sidebar } from "../organisms/Sidebar";
+import { Topbar } from "../organisms/Topbar";
 
 export function MainLayout() {
   return (

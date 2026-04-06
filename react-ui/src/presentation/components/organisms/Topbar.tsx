@@ -1,10 +1,16 @@
+/**
+ * @file Topbar.tsx
+ * @description Componente organismo Topbar. Barra superior que incluye notificaciones, controles de ventana y buscador.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiSearch, FiBell, FiCheck, FiTrash2, FiInfo, FiCheckCircle, FiAlertTriangle, FiXCircle } from "react-icons/fi";
 import { useAppStore } from "../../../application/store/useAppStore";
 import { useNotificationStore } from "../../../application/store/useNotificationStore";
 import { useTranslation } from "react-i18next";
-import { MinecraftAvatar } from "../ui/MinecraftAvatar";
+import { MinecraftAvatar } from "../atoms/MinecraftAvatar";
 import { PLAYER_AVATAR_TRANSITION_NAME, PLAYER_PROFILE_CHIP_TRANSITION_NAME, startViewTransition } from "../../lib/viewTransition";
 
 function getNotificationIcon(type: string) {

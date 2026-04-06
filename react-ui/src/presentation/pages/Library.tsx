@@ -1,7 +1,13 @@
+/**
+ * @file Library.tsx
+ * @description Página de Biblioteca. Lista las instancias instaladas, versiones de Minecraft y colecciones curadas.
+ * 
+ * Patrón: Atomic Design
+ */
 import { FiCompass, FiDownloadCloud, FiLayers } from "react-icons/fi";
-import { Card } from "../components/ui/Card";
-import { SectionTitle } from "../components/ui/SectionTitle";
-import { Button } from "../components/ui/Button";
+import { Card } from "../components/atoms/Card";
+import { SectionTitle } from "../components/atoms/SectionTitle";
+import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
 
 export function Library() {

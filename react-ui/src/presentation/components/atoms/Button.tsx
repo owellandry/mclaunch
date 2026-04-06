@@ -1,3 +1,9 @@
+/**
+ * @file Button.tsx
+ * @description Componente atómico Button. Un botón estilizado y reutilizable que soporta múltiples variantes visuales y estados de deshabilitado.
+ * 
+ * Patrón: Atomic Design
+ */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

@@ -1,3 +1,9 @@
+/**
+ * @file Card.tsx
+ * @description Componente atómico Card. Un contenedor básico con estilo glassmorphism o bordes definidos para agrupar contenido relacionado.
+ * 
+ * Patrón: Atomic Design
+ */
 import type { ReactNode } from "react";
 
 interface CardProps {

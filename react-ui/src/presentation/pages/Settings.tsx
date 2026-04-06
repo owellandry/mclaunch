@@ -1,11 +1,17 @@
+/**
+ * @file Settings.tsx
+ * @description Página de Ajustes. Configuración de recursos (RAM), directorios, personalización visual e idioma.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useState } from "react";
 import { FiCpu, FiMonitor, FiSave, FiSliders, FiTrash2, FiLogOut } from "react-icons/fi";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
-import { Card } from "../components/ui/Card";
-import { SectionTitle } from "../components/ui/SectionTitle";
-import { Button } from "../components/ui/Button";
-import { MinecraftAvatar } from "../components/ui/MinecraftAvatar";
+import { Card } from "../components/atoms/Card";
+import { SectionTitle } from "../components/atoms/SectionTitle";
+import { Button } from "../components/atoms/Button";
+import { MinecraftAvatar } from "../components/atoms/MinecraftAvatar";
 import { useTranslation } from "react-i18next";
 
 import { useNavigate } from "react-router-dom";

@@ -1,3 +1,9 @@
+/**
+ * @file Onboarding.tsx
+ * @description Página de Onboarding/Login. Pantalla pública inicial donde el usuario autentica su cuenta premium vía Microsoft.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUnlock } from "react-icons/fi";

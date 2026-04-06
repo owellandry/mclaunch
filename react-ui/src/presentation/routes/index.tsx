@@ -1,9 +1,16 @@
+/**
+ * @file index.tsx
+ * @description Configuración central del enrutador de la aplicación usando react-router-dom.
+ * Define la jerarquía de rutas, separando las rutas públicas (Onboarding) de las rutas privadas
+ * que requieren autenticación (Dashboard, Library, etc.) protegidas por PrivateRoute.
+ */
 import { type ReactElement, Suspense, lazy } from "react";
-import { createHashRouter, Navigate, Outlet } from "react-router-dom";
-import { useAppStore } from "../../application/store/useAppStore";
+import { createHashRouter, Navigate } from "react-router-dom";
+import { PrivateRoute } from "./PrivateRoute";
+import { PublicRoute } from "./PublicRoute";
 
 const MainLayout = lazy(() =>
-  import("../components/layout/MainLayout").then((module) => ({ default: module.MainLayout }))
+  import("../components/templates/MainLayout").then((module) => ({ default: module.MainLayout }))
 );
 const Onboarding = lazy(() =>
   import("../pages/Onboarding").then((module) => ({ default: module.Onboarding }))
@@ -34,23 +41,18 @@ const withSuspense = (element: ReactElement) => (
   </Suspense>
 );
 
-function AuthGuard() {
-  const profile = useAppStore((state) => state.profile);
-
-  if (!profile || !profile.isOnboardingCompleted) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return <Outlet />;
-}
-
 export const router = createHashRouter([
   {
-    path: "/onboarding",
-    element: withSuspense(<Onboarding />),
+    element: <PublicRoute />,
+    children: [
+      {
+        path: "/onboarding",
+        element: withSuspense(<Onboarding />),
+      }
+    ]
   },
   {
-    element: <AuthGuard />,
+    element: <PrivateRoute />,
     children: [
       {
         path: "/",

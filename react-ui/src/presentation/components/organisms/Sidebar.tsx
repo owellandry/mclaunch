@@ -1,3 +1,9 @@
+/**
+ * @file Sidebar.tsx
+ * @description Componente organismo Sidebar. Menú de navegación lateral principal de la aplicación.
+ * 
+ * Patrón: Atomic Design
+ */
 import { Link, useLocation } from "react-router-dom";
 import { FiGrid, FiLayers, FiServer, FiSettings } from "react-icons/fi";
 import { useAppStore } from "../../../application/store/useAppStore";

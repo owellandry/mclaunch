@@ -1,3 +1,9 @@
+/**
+ * @file useAppStore.ts
+ * @description Store global de la aplicación. Maneja estado de configuración (RAM, dir), perfil, personalización (logo, idioma) y auth de MSMC.
+ * 
+ * Patrón: Atomic Design
+ */
 import { create } from "zustand";
 import type { UserProfile } from "../../core/domain/profile";
 import type { LauncherConfig } from "../../core/domain/launcher";

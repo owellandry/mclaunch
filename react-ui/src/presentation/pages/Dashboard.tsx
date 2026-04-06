@@ -1,10 +1,16 @@
+/**
+ * @file Dashboard.tsx
+ * @description Página principal Dashboard. Punto de entrada post-login, muestra actividad, progreso de descarga y botón principal de Jugar.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useEffect } from "react";
 import { FiPlay } from "react-icons/fi";
 import { useLauncherStore } from "../../application/store/useLauncherStore";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
-import { Card } from "../components/ui/Card";
-import { Button } from "../components/ui/Button";
+import { Card } from "../components/atoms/Card";
+import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
 import heroImage from "../../assets/hero.png";
 

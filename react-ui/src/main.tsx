@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { router } from './presentation/router'
+import { router } from './presentation/routes'
 import { useLauncherStore } from './application/store/useLauncherStore'
 import { useAppStore } from './application/store/useAppStore'
 import './index.css'
@@ -18,7 +18,7 @@ type BootstrapState =
 const preloadInitialRoute = async (isAuthenticated: boolean): Promise<void> => {
   if (isAuthenticated) {
     await Promise.all([
-      import('./presentation/components/layout/MainLayout'),
+      import('./presentation/components/templates/MainLayout'),
       import('./presentation/pages/Dashboard'),
       import('./presentation/pages/Library'),
       import('./presentation/pages/Servers'),

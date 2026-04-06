@@ -1,3 +1,9 @@
+/**
+ * @file MinecraftAvatar.tsx
+ * @description Componente atómico MinecraftAvatar. Muestra el rostro 2D de una skin de Minecraft basado en el nombre de usuario.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useEffect, useState } from "react";
 
 type MinecraftAvatarProps = {
