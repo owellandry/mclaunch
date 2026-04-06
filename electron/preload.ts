@@ -40,6 +40,9 @@ const api = {
   getDownloadedVersions: (): Promise<string[]> => {
     return ipcRenderer.invoke(CHANNELS.getDownloadedVersions);
   },
+  syncDownloadedVersions: (gameDir: string): Promise<string[]> => {
+    return ipcRenderer.invoke("db:syncVersions", gameDir);
+  },
   getLogo: (): Promise<string> => {
     return ipcRenderer.invoke(CHANNELS.getLogo);
   },

@@ -191,7 +191,7 @@ public final class McLaunchHomePreviewScreen extends Screen {
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         ctx.fillGradient(0, 0, this.width, this.height, BG_TOP, BG_BOTTOM);
         renderBackgroundDecorations(ctx);
-        renderSkinPreview(ctx);
+        renderSkinPreview(ctx, mouseX, mouseY);
 
         int panelW = 320;
         if (this.width < 500) {
@@ -261,7 +261,7 @@ public final class McLaunchHomePreviewScreen extends Screen {
         ctx.getMatrices().pop();
     }
 
-    private void renderSkinPreview(DrawContext ctx) {
+    private void renderSkinPreview(DrawContext ctx, int mouseX, int mouseY) {
         if (this.client == null) {
             return;
         }
@@ -278,13 +278,13 @@ public final class McLaunchHomePreviewScreen extends Screen {
 
         Identifier skin = cachedSkin != null ? cachedSkin : getDefaultSkin();
         boolean slimArms = usesSlimArms();
-        int previewWidth = Math.min(rightSpace - 40, 260);
-        int previewHeight = Math.min(this.height - 100, 300);
-        int previewX = panelW + (rightSpace - previewWidth) / 2;
-        int previewY = Math.max(36, this.height / 2 - previewHeight / 2 - 18);
+        int previewWidth = rightSpace - 10;
+        int previewHeight = this.height - 20;
+        int previewX = panelW + 5;
+        int previewY = 10;
 
         if (this.playerPreviewRenderer != null
-                && this.playerPreviewRenderer.render(ctx, previewX, previewY, previewWidth, previewHeight, skin, slimArms, this.client.getTickDelta())) {
+                && this.playerPreviewRenderer.render(ctx, previewX, previewY, previewWidth, previewHeight, skin, slimArms, this.client.getTickDelta(), mouseX, mouseY)) {
             return;
         }
 
@@ -292,14 +292,14 @@ public final class McLaunchHomePreviewScreen extends Screen {
         int spriteWidthUnits = 8 + armWidth * 2;
         int spriteHeightUnits = 32;
 
-        int maxHeight = Math.min(this.height - 120, 220);
+        int maxHeight = Math.max(220, Math.min(previewHeight - 40, (int) (previewHeight * 0.88f)));
         int scale = Math.max(3, maxHeight / spriteHeightUnits);
         int totalWidth = spriteWidthUnits * scale;
         int totalHeight = spriteHeightUnits * scale;
 
         int centerX = panelW + rightSpace / 2;
         int startX = centerX - totalWidth / 2;
-        int startY = Math.max(50, this.height / 2 - totalHeight / 2 - 30);
+        int startY = Math.max(4, this.height / 2 - totalHeight / 2 - 146);
 
         int headX = startX + armWidth * scale;
         int headY = startY;

@@ -10,7 +10,7 @@ import heroImage from "../../assets/hero.png";
 
 export function Dashboard() {
   const { t } = useTranslation();
-  const { status, launch, availableVersions, downloadedVersions, weeklyActivity, statistics, hydrateDashboard, progress } = useLauncherStore();
+  const { status, launch, availableVersions, downloadedVersions, launchedVersionWasDownloaded, weeklyActivity, statistics, hydrateDashboard, progress } = useLauncherStore();
   const { config, setConfig, searchQuery } = useAppStore();
   const isRunning = status === "running";
   const isPlaying = status === "playing";
@@ -26,7 +26,7 @@ export function Dashboard() {
   
   let buttonText = isDownloaded ? t("dashboard.play") : t("dashboard.download");
   if (isRunning) {
-    if (!isDownloaded && progress) {
+    if (!launchedVersionWasDownloaded && progress) {
       buttonText = t("dashboard.downloading", { percent: progress.percentage });
     } else {
       buttonText = t("dashboard.starting");

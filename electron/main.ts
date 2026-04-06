@@ -1,6 +1,8 @@
+import "dotenv/config";
 import { app, BrowserWindow, Menu, session, ipcMain } from "electron";
 import path from "node:path";
 import { registerLauncherIpc } from "./ipc/launcher";
+import { discordPresence } from "./services/discordPresence";
 
 // ── Startup performance flags ──────────────────────────────────────────────
 // Disable GPU shader disk cache: avoids "Access denied" on Windows when the
@@ -116,6 +118,7 @@ const createWindow = async (): Promise<void> => {
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
+  discordPresence.start();
 
   if (!hasRegisteredIpc) {
     registerWindowControls();
@@ -146,6 +149,10 @@ app.whenReady().then(async () => {
       await createWindow();
     }
   });
+});
+
+app.on("before-quit", () => {
+  discordPresence.stop();
 });
 
 app.on("window-all-closed", () => {

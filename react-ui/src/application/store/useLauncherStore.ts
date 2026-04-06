@@ -10,6 +10,7 @@ interface LauncherState {
   progress: { type: string; task: number; total: number; percentage: number } | null;
   availableVersions: MinecraftVersion[];
   downloadedVersions: string[];
+  launchedVersionWasDownloaded: boolean;
   weeklyActivity: number[];
   statistics: { win_rate: number; kda: number };
   setStatus: (status: LauncherStatus) => void;
@@ -30,6 +31,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   progress: null,
   availableVersions: [],
   downloadedVersions: [],
+  launchedVersionWasDownloaded: false,
   weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
   statistics: { win_rate: 0, kda: 0 },
   setStatus: (status) => set({ status }),
@@ -46,10 +48,11 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   },
   fetchDbData: async () => {
     try {
+      const { config } = useAppStore.getState();
       const [weeklyActivity, statistics, downloadedVersions] = await Promise.all([
         launcherAdapter.getWeeklyActivity(),
         launcherAdapter.getStatistics(),
-        launcherAdapter.getDownloadedVersions(),
+        launcherAdapter.syncDownloadedVersions(config.gameDir),
       ]);
       set({ weeklyActivity, statistics, downloadedVersions });
     } catch (e) {
@@ -63,16 +66,19 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
 
   launch: () => {
     const { profile, config } = useAppStore.getState();
-    const { status, addLog, setStatus } = get();
+    const { status, addLog, setStatus, downloadedVersions } = get();
 
     if (!profile || profile.username.trim().length < 3 || status === "running") {
       return;
     }
 
+    const version = config.version || "1.20.1";
+    const wasDownloaded = downloadedVersions.includes(version);
+
     addLog(`[launcher] Perfil cargado: ${profile.username.trim()}`);
     addLog(`[launcher] Memoria reservada: ${config.memoryMb} MB`);
     setStatus("running");
-    set({ progress: null });
+    set({ progress: null, launchedVersionWasDownloaded: wasDownloaded });
 
     launcherAdapter.launch(config, profile.username.trim());
   },

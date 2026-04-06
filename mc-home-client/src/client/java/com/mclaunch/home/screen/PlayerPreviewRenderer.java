@@ -59,15 +59,21 @@ public final class PlayerPreviewRenderer {
     // -----------------------------------------------------------------------
 
     /**
-     * Total height of the player model in model-space units.
-     * Head top is at y = -8 (above pivot), feet bottom at y = +24 → span = 32.
+     * Effective model height for the direct-render path.
+     *
+     * <p>{@link PlayerEntityModel#render} ultimately renders in entity/model space,
+     * not raw skin-pixel space, so using the 32px skin span here makes the preview
+     * drastically undersized on screen. Empirically, a value close to vanilla
+     * inventory rendering behaves like a model roughly two units tall.
      */
-    private static final float MODEL_HEIGHT_UNITS = 32.0f;
+    private static final float MODEL_HEIGHT_UNITS = 2.0f;
 
-    // Shader lights used by vanilla drawEntity (extracted from DiffuseLighting.method_34742).
-    // These point "towards the viewer" when the entity is Z-scaled negatively.
-    private static final Vector3f LIGHT_0 = new Vector3f( 0.2f, -1.0f, -1.0f).normalize();
-    private static final Vector3f LIGHT_1 = new Vector3f(-0.2f, -1.0f,  0.0f).normalize();
+    // Shader lights matching DiffuseLighting.method_34742() exactly (vanilla inventory lighting).
+    // NOTE: Y must be +1.0f to match vanilla — using -1.0f causes exaggerated brightness
+    // fluctuation as model parts rotate, because the dot-product with part normals swings
+    // in the wrong direction relative to the Z-negated transform.
+    private static final Vector3f LIGHT_0 = new Vector3f( 0.2f,  1.0f,  1.0f).normalize();
+    private static final Vector3f LIGHT_1 = new Vector3f(-0.2f,  1.0f,  0.0f).normalize();
 
     // -----------------------------------------------------------------------
     // State
@@ -109,13 +115,14 @@ public final class PlayerPreviewRenderer {
      *         (caller should fall back to a 2-D flat skin render)
      */
     public boolean render(DrawContext context, int x, int y, int width, int height,
-                          Identifier skin, boolean slimArms, float delta) {
+                          Identifier skin, boolean slimArms, float delta,
+                          int mouseX, int mouseY) {
         if (disabled || width <= 0 || height <= 0) {
             return false;
         }
 
         try {
-            return renderDirect(context, x, y, width, height, skin, slimArms, delta);
+            return renderDirect(context, x, y, width, height, skin, slimArms, delta, mouseX, mouseY);
         } catch (RuntimeException error) {
             disabled = true;
             McLaunchHomeClient.LOGGER.warn(
@@ -151,7 +158,8 @@ public final class PlayerPreviewRenderer {
      * and the world is {@code null} before any world has been joined.
      */
     private boolean renderDirect(DrawContext context, int x, int y, int width, int height,
-                                 Identifier skin, boolean slimArms, float delta) {
+                                 Identifier skin, boolean slimArms, float delta,
+                                 int mouseX, int mouseY) {
         PlayerEntityModel<?> model = getOrCreateModel(slimArms);
         if (model == null) {
             return false;
@@ -161,16 +169,14 @@ public final class PlayerPreviewRenderer {
         // 1. Compute layout
         // ------------------------------------------------------------------
         // "size" maps model-space units to screen pixels.
-        // Model spans 32 units: head top at y=-8, feet bottom at y=+24.
-        // Limit by both width (16 units wide) and height (32 units tall).
-        float size = Math.min(width / 16.0f, height / MODEL_HEIGHT_UNITS) * 0.90f;
+        // Drive size from the available height and let the player occupy most of
+        // the stage. The old 32-unit assumption made the character absurdly small.
+        float size = (height / MODEL_HEIGHT_UNITS) * 0.46f;
 
-        // The model's y=0 pivot is at the neck/shoulder junction.
-        // Head (8 units) is above it, body+legs (24 units) below.
-        // Anchor so the head starts 5% from the box top:
-        //   anchorY - 8*size = y + 0.05*height  →  anchorY = y + 0.05*height + 8*size
+        // Keep the body visually centered with a slight bias downward so the feet
+        // sit closer to the lower edge of the panel, similar to a launcher hero pose.
         float anchorX = x + width  * 0.5f;
-        float anchorY = y + height * 0.05f + 8.0f * size;
+        float anchorY = y + height * 0.53f;
 
         // Z depth – 100 keeps the model in front of most GUI elements without
         // clipping against the far plane (vanilla uses 50 for drawEntity).
@@ -180,7 +186,9 @@ public final class PlayerPreviewRenderer {
         // 2. Animation
         // ------------------------------------------------------------------
         float timeSeconds = (float)(Util.getMeasuringTimeMs() / 1000.0) + delta * 0.05f;
-        prepareModelPose(model, timeSeconds);
+        float lookX = MathHelper.clamp((mouseX - (x + width * 0.5f)) / (width * 0.5f), -1.0f, 1.0f);
+        float lookY = MathHelper.clamp((mouseY - (y + height * 0.34f)) / (height * 0.5f), -1.0f, 1.0f);
+        prepareModelPose(model, timeSeconds, lookX, lookY);
 
         // Idle sway: gentle yaw oscillation ± 10°, slight forward tilt 6°.
         float swayYaw   = MathHelper.sin(timeSeconds * 0.38f) * 10.0f;
@@ -199,10 +207,11 @@ public final class PlayerPreviewRenderer {
         //   Here we skip the entity renderer entirely, so we must NOT include rotateZ(π) —
         //   doing so would negate Y and render the player upside-down.
         //
-        // WHY rotateY(π)?
-        //   scale(s, s, -s) mirrors the Z axis.  The player model's face points in -Z, so
-        //   after the Z-negation it would point in +Z (away from camera).  A 180° Y-rotation
-        //   before the Z-scale makes the face end up pointing toward the camera.
+        // WHY no rotateY(π)?
+        //   Steve's face texture is on the +Z face of the head cube.  scale(s, s, -s) maps
+        //   model +Z → screen -Z = towards the viewer, so the front is already visible.
+        //   Adding rotateY(π) would move the face to -Z, then scale would put it at +Z
+        //   (away from viewer) — that's what causes the "showing back" bug.
         // ------------------------------------------------------------------
         MatrixStack matrices = context.getMatrices();
         matrices.push();
@@ -210,9 +219,10 @@ public final class PlayerPreviewRenderer {
         matrices.translate(anchorX, anchorY, anchorZ);
         matrices.scale(size, size, -size);
 
-        // Apply idle sway first, then base 180° flip so sway is in model-local space.
+        // In Minecraft's GUI, Z+ points INTO the screen (away from viewer).
+        // scale(s, s, -s) negates Z, so model's +Z face (Steve's front/face texture)
+        // maps to screen -Z = towards viewer → front is already visible, no Y-flip needed.
         Quaternionf rotation = new Quaternionf()
-            .rotateY((float) Math.PI)                             // face camera
             .rotateY(swayYaw   * (float)(Math.PI / 180.0))       // idle yaw sway
             .rotateX(swayPitch * (float)(Math.PI / 180.0));      // slight forward tilt
         matrices.multiply(rotation);
@@ -222,6 +232,7 @@ public final class PlayerPreviewRenderer {
         // ------------------------------------------------------------------
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
+        RenderSystem.disableCull();
         // Shader lights from DiffuseLighting.method_34742() – these point "towards
         // the viewer" when Z is negated, matching the inventory screen appearance.
         RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
@@ -233,9 +244,10 @@ public final class PlayerPreviewRenderer {
         VertexConsumerProvider.Immediate buffers =
             client.getBufferBuilders().getEntityVertexConsumers();
 
-        // Use the player-entity render layer (translucent for second-layer skin).
+        // Skins are cutout textures, not true translucency. Using a cutout layer
+        // avoids random depth-sorting shimmer on certain skin pixels.
         net.minecraft.client.render.RenderLayer renderLayer =
-            net.minecraft.client.render.RenderLayer.getEntityTranslucent(skin);
+            net.minecraft.client.render.RenderLayer.getEntityCutoutNoCull(skin);
 
         model.render(
             matrices,
@@ -252,6 +264,7 @@ public final class PlayerPreviewRenderer {
         // 6. Restore GL state
         // ------------------------------------------------------------------
         DiffuseLighting.enableGuiDepthLighting();
+        RenderSystem.enableCull();
         RenderSystem.disableBlend();
         matrices.pop();
 
@@ -295,7 +308,7 @@ public final class PlayerPreviewRenderer {
      * @param model       the model to animate
      * @param t           time in seconds (use {@code Util.getMeasuringTimeMs() / 1000.0})
      */
-    private void prepareModelPose(PlayerEntityModel<?> model, float t) {
+    private void prepareModelPose(PlayerEntityModel<?> model, float t, float lookX, float lookY) {
         // Reset all parts first so nothing is left in a previous frame's state.
         resetPart(model.head);
         resetPart(model.hat);
@@ -330,16 +343,16 @@ public final class PlayerPreviewRenderer {
         // Torso yaw sway.
         float torsoYaw   = MathHelper.sin(t * 0.48f) * 0.10f;
         // Head look-around.
-        float headYaw    = MathHelper.sin(t * 0.82f) * 0.20f;
-        float headPitch  = -0.08f + MathHelper.sin(t * 0.63f) * 0.04f;
+        float headYaw    = MathHelper.sin(t * 0.82f) * 0.12f - lookX * 0.35f;
+        float headPitch  = -0.08f + MathHelper.sin(t * 0.63f) * 0.03f + lookY * 0.14f;
         // Arm pendulum.
         float armSwing   = MathHelper.sin(t * 1.12f) * 0.08f;
 
         model.body.yaw    = torsoYaw;
         model.body.pivotY += breathBob * 6.0f;
 
-        model.head.yaw    = headYaw - torsoYaw;
-        model.head.pitch  = headPitch;
+        model.head.yaw    = MathHelper.clamp(headYaw - torsoYaw, -0.85f, 0.85f);
+        model.head.pitch  = MathHelper.clamp(headPitch, -0.45f, 0.45f);
         model.head.pivotY += breathBob * 4.0f;
 
         model.rightArm.pitch = armSwing  + breathBob;

@@ -84,6 +84,23 @@ export function addDownloadedVersion(version: string) {
   db.prepare('INSERT OR IGNORE INTO downloaded_versions (version, installed_at) VALUES (?, ?)').run(version, new Date().toISOString());
 }
 
+export function syncDownloadedVersions(gameDir: string): string[] {
+  const versionsDir = path.join(gameDir, "versions");
+  if (fs.existsSync(versionsDir)) {
+    try {
+      for (const entry of fs.readdirSync(versionsDir, { withFileTypes: true })) {
+        if (entry.isDirectory()) {
+          const jarPath = path.join(versionsDir, entry.name, `${entry.name}.jar`);
+          if (fs.existsSync(jarPath)) {
+            addDownloadedVersion(entry.name);
+          }
+        }
+      }
+    } catch {}
+  }
+  return getDownloadedVersions();
+}
+
 export function getLogo(): string {
   const row = db.prepare("SELECT value FROM app_settings WHERE key = 'logo'").get() as any;
   return row ? row.value : 'logo_gren.svg';

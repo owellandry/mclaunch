@@ -1,8 +1,9 @@
-import { BrowserWindow, ipcMain, app } from "electron";
+import { BrowserWindow, ipcMain, app, screen } from "electron";
 import { execSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
+import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, syncDownloadedVersions, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
+import { discordPresence } from "../services/discordPresence";
 
 function isJavaInstalled(): boolean {
   try {
@@ -493,6 +494,10 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     return getDownloadedVersions();
   });
 
+  ipcMain.handle("db:syncVersions", async (_event, gameDir: string) => {
+    return syncDownloadedVersions(gameDir);
+  });
+
   ipcMain.handle(CHANNELS.getLogo, async () => {
     return getLogo();
   });
@@ -594,11 +599,13 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     const window = getWindow();
     emitStatus(window, "running");
     emitLog(window, `Preparando lanzamiento para ${payload.username}...`);
+    discordPresence.setLaunchingPresence(payload);
 
     // Check Java before doing anything
     if (!isJavaInstalled()) {
       emitLog(window, "Error: Java no está instalado. Instala Java 17 o superior desde https://adoptium.net y reinicia el launcher.");
       emitStatus(window, "error");
+      discordPresence.setLauncherPresence();
       return;
     }
 
@@ -625,9 +632,11 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       });
       launcher.on("close", (code) => {
         emitLog(window, `Minecraft cerrado (código: ${code})`);
-        if (code === 0) {
+        const jarPath = path.join(payload.gameDir, "versions", payload.version, `${payload.version}.jar`);
+        if (fs.existsSync(jarPath)) {
           addDownloadedVersion(payload.version);
         }
+        discordPresence.setLauncherPresence();
         emitStatus(window, "done");
       });
 
@@ -662,9 +671,10 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
         overrides: {
           detached: false,
         },
-        window: {
-          fullscreen: true,
-        },
+        window: (() => {
+          const { width, height } = screen.getPrimaryDisplay().bounds;
+          return { width, height, fullscreen: false };
+        })(),
       };
 
       emitLog(window, `Descargando/iniciando versión ${payload.version} con ${payload.memoryMb}MB de RAM...`);
@@ -678,10 +688,12 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
         throw new Error("El proceso de Minecraft no pudo iniciarse.");
       }
       emitLog(window, "Proceso de Minecraft en ejecución.");
+      discordPresence.setPlayingPresence(payload);
       emitStatus(window, "playing");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
       emitLog(window, `Error en lanzamiento: ${message}`);
+      discordPresence.setLauncherPresence();
       emitStatus(window, "error");
     }
   });
