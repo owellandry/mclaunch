@@ -257,3 +257,15 @@
     filter: blur(4px);
   }
 }
+
+@keyframes boot-loader {
+  0% {
+    transform: translateX(-115%);
+  }
+  55% {
+    transform: translateX(20%);
+  }
+  100% {
+    transform: translateX(160%);
+  }
+}

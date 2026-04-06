@@ -38,7 +38,34 @@ export function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4 relative overflow-hidden bg-grid-pattern">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Window drag bar + controls — shown here because MainLayout/Topbar is not mounted on this route */}
+      <div
+        className="fixed top-0 left-0 right-0 h-10 z-50 flex items-center justify-end pr-1"
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      >
+        <div className="flex items-center gap-1" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+          <button
+            onClick={() => window.api?.minimizeWindow?.()}
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-white/8 transition-colors mc-cutout-small"
+          >
+            <span className="block w-3 h-[2px] bg-current mt-1" />
+          </button>
+          <button
+            onClick={() => window.api?.maximizeWindow?.()}
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-white/8 transition-colors mc-cutout-small"
+          >
+            <span className="block w-3 h-3 border-2 border-current" style={{ clipPath: "polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)" }} />
+          </button>
+          <button
+            onClick={() => window.api?.closeWindow?.()}
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-white hover:bg-red-500 transition-colors mc-cutout-small font-bold text-sm"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary-shadow)_0%,transparent_70%)] opacity-30" />
       <div className="max-w-4xl w-full grid grid-cols-2 gap-12 relative z-10">
         <div className="flex flex-col justify-center">

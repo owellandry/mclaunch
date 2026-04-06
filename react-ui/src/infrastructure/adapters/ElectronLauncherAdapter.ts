@@ -38,6 +38,10 @@ export class ElectronLauncherAdapter implements ILauncherPort {
     return window.api.getDownloadedVersions();
   }
 
+  syncDownloadedVersions(gameDir: string): Promise<string[]> {
+    return window.api.syncDownloadedVersions(gameDir);
+  }
+
   onLog(callback: (message: string) => void): () => void {
     if (window.api && window.api.onLauncherLog) {
       return window.api.onLauncherLog(callback);

@@ -83,7 +83,11 @@ export const useAppStore = create<AppState>((set, get) => {
           };
           storage.saveProfile(profile);
           set({ profile });
+          return;
         }
+
+        storage.clearAll?.();
+        set({ profile: null });
       }
     },
     setConfig: (config) => {

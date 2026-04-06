@@ -21,6 +21,7 @@ export type ElectronApi = {
   getWeeklyActivity: () => Promise<number[]>;
   getStatistics: () => Promise<{win_rate: number, kda: number}>;
   getDownloadedVersions: () => Promise<string[]>;
+  syncDownloadedVersions: (gameDir: string) => Promise<string[]>;
   getLogo: () => Promise<string>;
   setLogo: (logo: string) => void;
   getLanguage: () => Promise<string>;

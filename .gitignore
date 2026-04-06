@@ -40,6 +40,8 @@ pnpm-debug.log*
 coverage/
 .claude
 .tmp-gradle/
+.electron-runtime/
+.tmp-electron-runtime/
 
 # IDE / OS / Editor
 .DS_Store
