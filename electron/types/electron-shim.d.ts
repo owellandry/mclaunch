@@ -1,3 +1,8 @@
+// ========================================================
+// ELECTRON.D.TS - Declaraciones de tipos extendidas
+// ========================================================
+// Mantiene la compatibilidad y tipado fuerte para Electron en el proyecto.
+
 declare module "electron" {
   export interface ElectronEvent {
     preventDefault(): void;
@@ -49,15 +54,11 @@ declare module "electron" {
     exit(exitCode?: number): never;
     getAppPath(): string;
     getPath(name: string): string;
-    commandLine: {
-      appendSwitch(name: string, value?: string): void;
-    };
+    isPackaged: boolean;
+    commandLine: { appendSwitch(name: string, value?: string): void };
   };
 
-  export const Menu: {
-    setApplicationMenu(menu: unknown | null): void;
-  };
-
+  export const Menu: { setApplicationMenu(menu: unknown | null): void };
   export const session: {
     defaultSession: {
       webRequest: {

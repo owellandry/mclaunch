@@ -1,7 +1,6 @@
+import { randomUUID } from "node:crypto";
 import net from "node:net";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
-import { app } from "electron";
 
 type PresenceMode = "launcher" | "launching" | "playing";
 
@@ -19,6 +18,13 @@ const OPCODE_PING = 3;
 const OPCODE_PONG = 4;
 const MAX_PIPE_INDEX = 10;
 const RECONNECT_DELAY_MS = 15_000;
+const shouldLogDebug = process.env.DEBUG_DISCORD_PRESENCE === "1";
+
+const logDebug = (message: string): void => {
+  if (shouldLogDebug) {
+    console.info(`[Discord] ${message}`);
+  }
+};
 
 const createDefaultPresence = (): PresenceContext => ({
   mode: "launcher",
@@ -36,11 +42,9 @@ class DiscordPresenceService {
 
   start(): void {
     if (!this.clientId) {
-      console.warn("[Discord] MCLAUNCH_DISCORD_CLIENT_ID no está definido — Rich Presence desactivado.");
       return;
     }
 
-    console.log(`[Discord] Iniciando Rich Presence con clientId=${this.clientId}`);
     this.setLauncherPresence();
     void this.connect();
   }
@@ -48,16 +52,12 @@ class DiscordPresenceService {
   stop(): void {
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
     }
 
     if (this.socket && this.isReady) {
       this.sendFrame(OPCODE_FRAME, {
         cmd: "SET_ACTIVITY",
-        args: {
-          pid: process.pid,
-          activity: null,
-        },
+        args: { pid: process.pid, activity: null },
         nonce: randomUUID(),
       });
     }
@@ -70,33 +70,17 @@ class DiscordPresenceService {
   }
 
   setLauncherPresence(): void {
-    this.currentPresence = {
-      mode: "launcher",
-      startedAt: Date.now(),
-    };
-
+    this.currentPresence = { mode: "launcher", startedAt: Date.now() };
     this.flushPresence();
   }
 
   setLaunchingPresence(payload: { username?: string; version?: string }): void {
-    this.currentPresence = {
-      mode: "launching",
-      startedAt: Date.now(),
-      username: payload.username,
-      version: payload.version,
-    };
-
+    this.currentPresence = { mode: "launching", startedAt: Date.now(), ...payload };
     this.flushPresence();
   }
 
   setPlayingPresence(payload: { username?: string; version?: string }): void {
-    this.currentPresence = {
-      mode: "playing",
-      startedAt: Date.now(),
-      username: payload.username,
-      version: payload.version,
-    };
-
+    this.currentPresence = { mode: "playing", startedAt: Date.now(), ...payload };
     this.flushPresence();
   }
 
@@ -110,19 +94,16 @@ class DiscordPresenceService {
     for (const ipcPath of this.getIpcPaths()) {
       try {
         const socket = await this.connectToPath(ipcPath);
-        console.log(`[Discord] Conectado al pipe: ${ipcPath}`);
+        logDebug(`Conectado al pipe ${ipcPath}`);
         this.attachSocket(socket);
-        this.sendFrame(OPCODE_HANDSHAKE, {
-          v: 1,
-          client_id: this.clientId,
-        });
+        this.sendFrame(OPCODE_HANDSHAKE, { v: 1, client_id: this.clientId });
         return;
       } catch {
         continue;
       }
     }
 
-    console.warn("[Discord] No se encontró ningún pipe de Discord. ¿Está Discord abierto?");
+    logDebug("Discord no esta disponible todavia; se reintentara.");
     this.isConnecting = false;
     this.scheduleReconnect();
   }
@@ -141,7 +122,7 @@ class DiscordPresenceService {
       process.env.TEMP,
       process.env.TMP,
       "/tmp",
-    ].filter((value): value is string => Boolean(value));
+    ].filter(Boolean) as string[];
 
     return runtimeDirs.flatMap((dir) =>
       Array.from({ length: MAX_PIPE_INDEX }, (_, index) => path.join(dir, `discord-ipc-${index}`))
@@ -151,21 +132,13 @@ class DiscordPresenceService {
   private connectToPath(ipcPath: string): Promise<net.Socket> {
     return new Promise((resolve, reject) => {
       const socket = net.createConnection(ipcPath);
-
-      const handleError = (error: Error): void => {
-        cleanup();
+      const handleError = (error: Error) => {
         socket.destroy();
         reject(error);
       };
-
-      const handleConnect = (): void => {
-        cleanup();
-        resolve(socket);
-      };
-
-      const cleanup = (): void => {
+      const handleConnect = () => {
         socket.off("error", handleError);
-        socket.off("connect", handleConnect);
+        resolve(socket);
       };
 
       socket.once("error", handleError);
@@ -178,17 +151,9 @@ class DiscordPresenceService {
     this.isConnecting = false;
     this.inboundBuffer = Buffer.alloc(0);
 
-    socket.on("data", (chunk: Buffer) => {
-      this.handleData(chunk);
-    });
-
-    socket.on("error", () => {
-      this.handleDisconnect(socket);
-    });
-
-    socket.on("close", () => {
-      this.handleDisconnect(socket);
-    });
+    socket.on("data", (chunk) => this.handleData(chunk));
+    socket.on("error", () => this.handleDisconnect(socket));
+    socket.on("close", () => this.handleDisconnect(socket));
   }
 
   private handleDisconnect(socket: net.Socket): void {
@@ -247,55 +212,36 @@ class DiscordPresenceService {
         return;
       }
 
-      if (opcode === OPCODE_FRAME) {
-        if (payload.evt === "READY") {
-          console.log("[Discord] READY recibido — enviando presencia.");
-          this.isReady = true;
-          this.flushPresence();
-        } else if (payload.evt === "ERROR") {
-          const data = payload.data as Record<string, unknown> | undefined;
-          console.error(
-            `[Discord] ERROR del servidor: código=${data?.code} mensaje="${data?.message}"\n` +
-            `  → Verifica que el Client ID "${this.clientId}" existe en discord.com/developers/applications`
-          );
-        }
+      if (opcode === OPCODE_FRAME && payload.evt === "READY") {
+        this.isReady = true;
+        this.flushPresence();
       }
     }
   }
 
   private flushPresence(): void {
-    if (!this.clientId) {
-      return;
-    }
-
-    if (!this.socket || !this.isReady) {
+    if (!this.clientId || !this.socket || !this.isReady) {
       void this.connect();
       return;
     }
 
-    console.log(`[Discord] Enviando actividad (modo=${this.currentPresence.mode})`);
     this.sendFrame(OPCODE_FRAME, {
       cmd: "SET_ACTIVITY",
-      args: {
-        pid: process.pid,
-        activity: this.buildActivity(),
-      },
+      args: { pid: process.pid, activity: this.buildActivity() },
       nonce: randomUUID(),
     });
   }
 
   private buildActivity(): Record<string, unknown> {
     const { mode, startedAt, username, version } = this.currentPresence;
-    const baseActivity = {
-      timestamps: {
-        start: Math.floor(startedAt / 1000),
-      },
+    const base = {
+      timestamps: { start: Math.floor(startedAt / 1000) },
       instance: false,
     };
 
     if (mode === "launching") {
       return {
-        ...baseActivity,
+        ...base,
         details: "Preparando Minecraft",
         state: version
           ? `${username ?? "Jugador"} | ${version}`
@@ -305,7 +251,7 @@ class DiscordPresenceService {
 
     if (mode === "playing") {
       return {
-        ...baseActivity,
+        ...base,
         details: "Jugando con MC Launch",
         state: version
           ? `${username ?? "Jugador"} | Minecraft ${version}`
@@ -314,22 +260,22 @@ class DiscordPresenceService {
     }
 
     return {
-      ...baseActivity,
+      ...base,
       details: "Usando MC Launch",
       state: "Explorando el launcher",
     };
   }
 
   private sendFrame(opcode: number, payload: Record<string, unknown>): void {
-    if (!this.socket || !this.socket.writable) {
+    if (!this.socket?.writable) {
       return;
     }
 
     const payloadBuffer = Buffer.from(JSON.stringify(payload), "utf8");
-    const headerBuffer = Buffer.alloc(8);
-    headerBuffer.writeInt32LE(opcode, 0);
-    headerBuffer.writeInt32LE(payloadBuffer.length, 4);
-    this.socket.write(Buffer.concat([headerBuffer, payloadBuffer]));
+    const header = Buffer.alloc(8);
+    header.writeInt32LE(opcode, 0);
+    header.writeInt32LE(payloadBuffer.length, 4);
+    this.socket.write(Buffer.concat([header, payloadBuffer]));
   }
 }
 

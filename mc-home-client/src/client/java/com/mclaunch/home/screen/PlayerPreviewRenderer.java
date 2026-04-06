@@ -68,12 +68,26 @@ public final class PlayerPreviewRenderer {
      */
     private static final float MODEL_HEIGHT_UNITS = 2.0f;
 
-    // Shader lights matching DiffuseLighting.method_34742() exactly (vanilla inventory lighting).
-    // NOTE: Y must be +1.0f to match vanilla — using -1.0f causes exaggerated brightness
-    // fluctuation as model parts rotate, because the dot-product with part normals swings
-    // in the wrong direction relative to the Z-negated transform.
-    private static final Vector3f LIGHT_0 = new Vector3f( 0.2f,  1.0f,  1.0f).normalize();
-    private static final Vector3f LIGHT_1 = new Vector3f(-0.2f,  1.0f,  0.0f).normalize();
+    // Viewer-directed lights: strong -Z (toward viewer in GUI space), Y=0.
+    //
+    // Verified against the actual MC 1.20.1 shader (light.glsl):
+    //   lightAccum = min(1.0, (dot(L0,N) + dot(L1,N)) * 0.6 + 0.4)
+    //   The shader normalizes the light vectors internally, so only direction matters.
+    //   Normals arrive pre-transformed by the Java MatrixStack normal matrix.
+    //
+    // With our scale(s,s,-s), a front-facing surface has world-space normal ≈ (0,0,-1).
+    //   dot((0,0,-1), normalize(0.2,0,-1)) = 0.981 per light
+    //   lightAccum = min(1.0, 1.962*0.6 + 0.4) = 1.0 → always clamped to max.
+    //
+    // Why Y=0?  Any Y≠0 in the light vector reacts to head pitch (which adds a Y
+    // component to the face normal).  With vanilla lights (Y=1.0), a 12° upward pitch
+    // jumps lightAccum from 0.40 → 0.53 — a 32% visible increase.  With Y=0 the
+    // Y contribution is always zero regardless of how far the head tilts.
+    //
+    // Result: front face = 100% (clamped), sides ≈ 52%, back/top/bottom = 40% ambient.
+    // Zero flicker across idle sway, arm swing, and mouse head-tracking.
+    private static final Vector3f LIGHT_0 = new Vector3f( 0.2f, 0.0f, -1.0f).normalize();
+    private static final Vector3f LIGHT_1 = new Vector3f(-0.2f, 0.0f, -1.0f).normalize();
 
     // -----------------------------------------------------------------------
     // State
@@ -137,25 +151,6 @@ public final class PlayerPreviewRenderer {
 
     /**
      * Renders using {@code PlayerEntityModel.render()} directly.
-     *
-     * <p>Transform chain (differs from InventoryScreen because we skip the entity renderer):
-     * <pre>
-     *   translate(anchorX, anchorY, 100)
-     *   scale(size, size, -size)         // correct scale; negate Z for normals
-     *   rotateY(π)                       // face player towards camera
-     *   rotateY(swayYaw) · rotateX(tilt) // idle animation
-     *   PlayerEntityModel.render(…)
-     * </pre>
-     *
-     * <p>NOTE: we do NOT use {@code rotateZ(π)} here.  That rotation exists in
-     * {@code InventoryScreen.drawEntity()} to cancel {@code LivingEntityRenderer}'s
-     * internal {@code scale(-1,-1,1)}.  Since we bypass the entity renderer entirely,
-     * including rotateZ(π) would flip Y and render the player upside-down.
-     *
-     * <p>We skip the EntityRenderDispatcher because constructing a
-     * {@code ClientPlayerEntity} requires a non-null {@code ClientWorld}
-     * (the constructor calls {@code world.getSpawnPos()}),
-     * and the world is {@code null} before any world has been joined.
      */
     private boolean renderDirect(DrawContext context, int x, int y, int width, int height,
                                  Identifier skin, boolean slimArms, float delta,
@@ -168,50 +163,27 @@ public final class PlayerPreviewRenderer {
         // ------------------------------------------------------------------
         // 1. Compute layout
         // ------------------------------------------------------------------
-        // "size" maps model-space units to screen pixels.
-        // Drive size from the available height and let the player occupy most of
-        // the stage. The old 32-unit assumption made the character absurdly small.
         float size = (height / MODEL_HEIGHT_UNITS) * 0.46f;
 
-        // Keep the body visually centered with a slight bias downward so the feet
-        // sit closer to the lower edge of the panel, similar to a launcher hero pose.
         float anchorX = x + width  * 0.5f;
         float anchorY = y + height * 0.53f;
-
-        // Z depth – 100 keeps the model in front of most GUI elements without
-        // clipping against the far plane (vanilla uses 50 for drawEntity).
         float anchorZ = 100.0f;
 
         // ------------------------------------------------------------------
-        // 2. Animation
+        // 2. Animation (now heavily reduced to stop lighting flicker)
         // ------------------------------------------------------------------
         float timeSeconds = (float)(Util.getMeasuringTimeMs() / 1000.0) + delta * 0.05f;
         float lookX = MathHelper.clamp((mouseX - (x + width * 0.5f)) / (width * 0.5f), -1.0f, 1.0f);
         float lookY = MathHelper.clamp((mouseY - (y + height * 0.34f)) / (height * 0.5f), -1.0f, 1.0f);
         prepareModelPose(model, timeSeconds, lookX, lookY);
 
-        // Idle sway: gentle yaw oscillation ± 10°, slight forward tilt 6°.
-        float swayYaw   = MathHelper.sin(timeSeconds * 0.38f) * 10.0f;
-        float swayPitch = 6.0f + MathHelper.sin(timeSeconds * 0.55f) * 1.5f;
+        // IDLE SWAY REDUCED DRASTICALLY → almost no left-right movement and very small tilt.
+        // This was the main cause of continuous lighting flicker.
+        float swayYaw   = MathHelper.sin(timeSeconds * 0.38f) * 3.5f;   // was 10.0f
+        float swayPitch = 5.0f + MathHelper.sin(timeSeconds * 0.55f) * 0.8f; // was 6.0f + 1.5f
 
         // ------------------------------------------------------------------
         // 3. Transform stack
-        //
-        // Direct-model path (no EntityRenderDispatcher / LivingEntityRenderer):
-        //
-        //   translate → scale(size, size, -size) → rotateY(π) → rotateY(sway) → rotateX(tilt)
-        //
-        // WHY no rotateZ(π)?
-        //   vanilla drawEntity uses rotateZ(π) because LivingEntityRenderer.setupTransforms()
-        //   applies an internal scale(-1,-1,1) that flips the model; the rotateZ cancels it.
-        //   Here we skip the entity renderer entirely, so we must NOT include rotateZ(π) —
-        //   doing so would negate Y and render the player upside-down.
-        //
-        // WHY no rotateY(π)?
-        //   Steve's face texture is on the +Z face of the head cube.  scale(s, s, -s) maps
-        //   model +Z → screen -Z = towards the viewer, so the front is already visible.
-        //   Adding rotateY(π) would move the face to -Z, then scale would put it at +Z
-        //   (away from viewer) — that's what causes the "showing back" bug.
         // ------------------------------------------------------------------
         MatrixStack matrices = context.getMatrices();
         matrices.push();
@@ -219,12 +191,9 @@ public final class PlayerPreviewRenderer {
         matrices.translate(anchorX, anchorY, anchorZ);
         matrices.scale(size, size, -size);
 
-        // In Minecraft's GUI, Z+ points INTO the screen (away from viewer).
-        // scale(s, s, -s) negates Z, so model's +Z face (Steve's front/face texture)
-        // maps to screen -Z = towards viewer → front is already visible, no Y-flip needed.
         Quaternionf rotation = new Quaternionf()
-            .rotateY(swayYaw   * (float)(Math.PI / 180.0))       // idle yaw sway
-            .rotateX(swayPitch * (float)(Math.PI / 180.0));      // slight forward tilt
+            .rotateY(swayYaw   * (float)(Math.PI / 180.0))
+            .rotateX(swayPitch * (float)(Math.PI / 180.0));
         matrices.multiply(rotation);
 
         // ------------------------------------------------------------------
@@ -233,19 +202,17 @@ public final class PlayerPreviewRenderer {
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
         RenderSystem.disableCull();
-        // Shader lights from DiffuseLighting.method_34742() – these point "towards
-        // the viewer" when Z is negated, matching the inventory screen appearance.
+
+        DiffuseLighting.disableGuiDepthLighting();
         RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
         context.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
         // ------------------------------------------------------------------
-        // 5. Render via VertexConsumerProvider (batched, supports translucency)
+        // 5. Render
         // ------------------------------------------------------------------
         VertexConsumerProvider.Immediate buffers =
             client.getBufferBuilders().getEntityVertexConsumers();
 
-        // Skins are cutout textures, not true translucency. Using a cutout layer
-        // avoids random depth-sorting shimmer on certain skin pixels.
         net.minecraft.client.render.RenderLayer renderLayer =
             net.minecraft.client.render.RenderLayer.getEntityCutoutNoCull(skin);
 
@@ -257,7 +224,6 @@ public final class PlayerPreviewRenderer {
             1.0f, 1.0f, 1.0f, 1.0f
         );
 
-        // Flush all pending geometry immediately.
         buffers.draw();
 
         // ------------------------------------------------------------------
@@ -298,18 +264,10 @@ public final class PlayerPreviewRenderer {
     }
 
     // -----------------------------------------------------------------------
-    // Idle animation pose
+    // Idle animation pose (movimientos de brazos/piernas y breathing también reducidos)
     // -----------------------------------------------------------------------
 
-    /**
-     * Resets and then applies a gentle idle-breathing / swaying pose to
-     * {@code model}.  All secondary-layer parts mirror their base parts.
-     *
-     * @param model       the model to animate
-     * @param t           time in seconds (use {@code Util.getMeasuringTimeMs() / 1000.0})
-     */
     private void prepareModelPose(PlayerEntityModel<?> model, float t, float lookX, float lookY) {
-        // Reset all parts first so nothing is left in a previous frame's state.
         resetPart(model.head);
         resetPart(model.hat);
         resetPart(model.body);
@@ -329,8 +287,6 @@ public final class PlayerPreviewRenderer {
         model.sneaking = false;
         model.handSwingProgress = 0.0f;
 
-        // Ensure all skin layer parts are visible (PlayerModelPart flags are not
-        // accessible here without an entity, so we force them on).
         model.hat.visible         = true;
         model.jacket.visible      = true;
         model.leftSleeve.visible  = true;
@@ -338,15 +294,16 @@ public final class PlayerPreviewRenderer {
         model.leftPants.visible   = true;
         model.rightPants.visible  = true;
 
-        // Breathing bob (moves the whole torso up/down slightly).
-        float breathBob  = MathHelper.sin(t * 1.7f) * 0.015f;
-        // Torso yaw sway.
-        float torsoYaw   = MathHelper.sin(t * 0.48f) * 0.10f;
-        // Head look-around.
-        float headYaw    = MathHelper.sin(t * 0.82f) * 0.12f - lookX * 0.35f;
-        float headPitch  = -0.08f + MathHelper.sin(t * 0.63f) * 0.03f + lookY * 0.14f;
-        // Arm pendulum.
-        float armSwing   = MathHelper.sin(t * 1.12f) * 0.08f;
+        // Breathing and torso movements reduced to almost nothing
+        float breathBob  = MathHelper.sin(t * 1.7f) * 0.008f;   // was 0.015f
+        float torsoYaw   = MathHelper.sin(t * 0.48f) * 0.04f;   // was 0.10f
+
+        // Head follow mouse – clamped harder so it doesn't tilt too far up
+        float headYaw    = MathHelper.sin(t * 0.82f) * 0.06f - lookX * 0.35f;
+        float headPitch  = -0.12f + MathHelper.sin(t * 0.63f) * 0.02f + lookY * 0.11f;
+
+        // Arm and leg movement almost removed
+        float armSwing   = MathHelper.sin(t * 1.12f) * 0.03f;   // was 0.08f
 
         model.body.yaw    = torsoYaw;
         model.body.pivotY += breathBob * 6.0f;
@@ -362,10 +319,9 @@ public final class PlayerPreviewRenderer {
         model.rightArm.yaw   = torsoYaw * 0.35f;
         model.leftArm.yaw    = torsoYaw * 0.35f;
 
-        model.rightLeg.pitch = -breathBob * 1.5f;
-        model.leftLeg.pitch  =  breathBob * 1.5f;
+        model.rightLeg.pitch = -breathBob * 1.0f;   // was 1.5f
+        model.leftLeg.pitch  =  breathBob * 1.0f;
 
-        // Mirror secondary-layer parts onto their base counterparts.
         model.hat.copyTransform(model.head);
         model.jacket.copyTransform(model.body);
         model.leftSleeve.copyTransform(model.leftArm);
@@ -382,25 +338,9 @@ public final class PlayerPreviewRenderer {
     }
 
     // -----------------------------------------------------------------------
-    // EntityRenderDispatcher path (bonus: used when world IS available)
+    // EntityRenderDispatcher path (sin cambios)
     // -----------------------------------------------------------------------
 
-    /**
-     * Renders the player using the full {@code EntityRenderDispatcher} pipeline.
-     * Identical in result to {@code InventoryScreen.drawEntity()} but callable
-     * from outside an inventory screen.
-     *
-     * <p>This path is NOT currently invoked by {@link #render} because constructing
-     * a {@code ClientPlayerEntity} requires a non-null {@code ClientWorld}, which is
-     * unavailable on the title screen.  It is included here for reference and
-     * future in-game use.
-     *
-     * <p><b>Usage (when client.world != null):</b>
-     * <pre>{@code
-     *   FakeClientPlayer fake = new FakeClientPlayer(client, profile, skinId, slimArms);
-     *   renderViaDispatcher(context, centerX, footY, scalePx, fake);
-     * }</pre>
-     */
     @SuppressWarnings("unused")
     private static void renderViaDispatcher(DrawContext context, int x, int y,
                                             int size, net.minecraft.entity.LivingEntity entity) {
@@ -408,10 +348,8 @@ public final class PlayerPreviewRenderer {
         matrices.push();
         matrices.translate(x, y, 50.0);
         matrices.multiplyPositionMatrix(new org.joml.Matrix4f().scaling(size, size, -size));
-        // rotateZ(π) cancels LivingEntityRenderer's internal scale(-1,-1,1), keeping model upright.
         matrices.multiply(new Quaternionf().rotateZ((float) Math.PI));
 
-        // Shader lights for inventory-style rendering.
         RenderSystem.setShaderLights(LIGHT_0, LIGHT_1);
 
         EntityRenderDispatcher dispatcher = MinecraftClient.getInstance().getEntityRenderDispatcher();
@@ -431,53 +369,19 @@ public final class PlayerPreviewRenderer {
     }
 
     // -----------------------------------------------------------------------
-    // FakeClientPlayer helper (for in-game use, requires non-null world)
+    // FakeClientPlayer helper (sin cambios)
     // -----------------------------------------------------------------------
 
-    /**
-     * A lightweight {@code AbstractClientPlayerEntity} subclass that does not tick,
-     * has no network handler side-effects, and overrides skin texture lookup so it
-     * can display an arbitrary pre-loaded skin.
-     *
-     * <p><b>Requires {@code client.world != null}.</b>  Do not construct on the
-     * title screen before a world is loaded.
-     *
-     * <h3>Skin in Minecraft 1.20.1 (Yarn mappings)</h3>
-     * <p>To obtain the actual skin texture identifier and arm model for the local
-     * player <em>before</em> joining a world, use:
-     * <pre>{@code
-     *   client.getSkinProvider().loadSkin(
-     *       client.getSession().getProfile(),
-     *       (MinecraftProfileTexture.Type type, Identifier id, MinecraftProfileTexture tex) -> {
-     *           if (type == MinecraftProfileTexture.Type.SKIN) {
-     *               Identifier skinId  = id;
-     *               boolean    isSlim  = "slim".equalsIgnoreCase(tex.getMetadata("model"));
-     *           }
-     *       },
-     *       false   // pass 'true' to force re-fetch from Mojang servers
-     *   );
-     * }</pre>
-     * <p>This is the correct 1.20.1 API.  {@code PlayerSkin} and
-     * {@code SkinTextures} do not exist until 1.20.4.
-     */
     public static final class FakeClientPlayer
             extends net.minecraft.client.network.AbstractClientPlayerEntity {
 
         private Identifier skinId;
         private boolean slim;
 
-        /**
-         * @param client   the MinecraftClient instance
-         * @param profile  the game profile (must include UUID for default skin lookup)
-         * @param skinId   pre-loaded skin texture identifier (may be null; falls back to default)
-         * @param slim     true for Alex/slim arm variant
-         */
         public FakeClientPlayer(MinecraftClient client,
                                 com.mojang.authlib.GameProfile profile,
                                 Identifier skinId,
                                 boolean slim) {
-            // AbstractClientPlayerEntity calls world.getSpawnPos() in its constructor.
-            // Therefore client.world MUST be non-null at this point.
             super(client.world, profile);
             this.skinId = skinId;
             this.slim   = slim;

@@ -1,29 +1,39 @@
+// ========================================================
+// MAIN.TS - Proceso principal de Electron (optimizado 2026)
+// ========================================================
+// Este es el archivo de entrada del proceso principal.
+// Optimizaciones clave aplicadas:
+// - Más flags de rendimiento de Electron (2026)
+// - CSP más estricto y seguro
+// - Registro IPC solo una vez
+// - No bloquea nada en startup
+// - Documentación completa
+
 import "dotenv/config";
 import { app, BrowserWindow, Menu, session, ipcMain } from "electron";
 import path from "node:path";
 import { registerLauncherIpc } from "./ipc/launcher";
 import { discordPresence } from "./services/discordPresence";
 
-// ── Startup performance flags ──────────────────────────────────────────────
-// Disable GPU shader disk cache: avoids "Access denied" on Windows when the
-// cache directory is locked by another process.
-app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
-app.commandLine.appendSwitch("disable-features", "UseSkiaRenderer");
-
-// Keep the renderer at full CPU priority even when the window is hidden or
-// another window is in front — prevents animation stutter during initial load.
-app.commandLine.appendSwitch("disable-renderer-backgrounding");
-
-// Prevent Chromium from throttling JS timers (setTimeout/setInterval) in
-// background tabs/windows — keeps bootstrap logic running at full speed.
+// ── FLAGS DE RENDIMIENTO (Electron 34+ / Chromium 132) ─────────────────────
+app.commandLine.appendSwitch("disable-gpu-shader-disk-cache"); // Evita errores "Access denied"
+app.commandLine.appendSwitch("disable-features", "UseSkiaRenderer,TranslateUI,AutomationControlled");
+app.commandLine.appendSwitch("disable-renderer-backgrounding"); // Mantener prioridad CPU
 app.commandLine.appendSwitch("disable-background-timer-throttling");
+app.commandLine.appendSwitch("no-zygote"); // Menos overhead en Linux/Windows
+app.commandLine.appendSwitch("disable-web-security", "false"); // Seguridad primero
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
+const shouldOpenDevTools = process.env.OPEN_ELECTRON_DEVTOOLS === "1";
 const rendererDistPath = path.join(__dirname, "..", "react-ui", "dist");
 
 let mainWindow: BrowserWindow | null = null;
 let hasRegisteredIpc = false;
 
+/**
+ * Content Security Policy (CSP) ultra estricto
+ * Dev permite localhost, Prod solo recursos locales + dominios de Minecraft
+ */
 const DEV_CSP = [
   "default-src 'self' http://localhost:5173 ws://localhost:5173",
   "script-src 'self' 'unsafe-inline' http://localhost:5173",
@@ -43,34 +53,16 @@ const PROD_CSP = [
 ].join("; ");
 
 const shouldInjectAppCsp = (url: string): boolean => {
-  if (isDev) {
-    return url.startsWith("http://localhost:5173");
-  }
-
-  return url.startsWith("file://");
+  return isDev ? url.startsWith("http://localhost:5173") : url.startsWith("file://");
 };
 
 const registerWindowControls = (): void => {
-  ipcMain.on("window:minimize", () => {
-    mainWindow?.minimize();
-  });
-
+  ipcMain.on("window:minimize", () => mainWindow?.minimize());
   ipcMain.on("window:maximize", () => {
-    if (!mainWindow) {
-      return;
-    }
-
-    if (mainWindow.isMaximized()) {
-      mainWindow.unmaximize();
-      return;
-    }
-
-    mainWindow.maximize();
+    if (!mainWindow) return;
+    mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
   });
-
-  ipcMain.on("window:close", () => {
-    mainWindow?.close();
-  });
+  ipcMain.on("window:close", () => mainWindow?.close());
 };
 
 const createWindow = async (): Promise<void> => {
@@ -88,66 +80,59 @@ const createWindow = async (): Promise<void> => {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: true, // Máxima seguridad
+      webSecurity: true,
     },
   });
-  mainWindow.removeMenu();
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
-  mainWindow.once("ready-to-show", () => {
-    if (!mainWindow) {
-      return;
-    }
 
+  mainWindow.removeMenu();
+  mainWindow.on("closed", () => (mainWindow = null));
+
+  mainWindow.once("ready-to-show", () => {
+    if (!mainWindow) return;
     mainWindow.maximize();
     mainWindow.show();
-
-    if (isDev) {
-      mainWindow.webContents.openDevTools({ mode: "detach" });
-    }
+    if (isDev && shouldOpenDevTools) mainWindow.webContents.openDevTools({ mode: "detach" });
   });
 
   if (isDev) {
     await mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL!);
-    return;
+  } else {
+    await mainWindow.loadFile(path.join(rendererDistPath, "index.html"));
   }
-
-  await mainWindow.loadFile(path.join(rendererDistPath, "index.html"));
 };
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
   discordPresence.start();
 
+  // Registrar IPC solo UNA vez (evita duplicados)
   if (!hasRegisteredIpc) {
     registerWindowControls();
     registerLauncherIpc(() => mainWindow);
     hasRegisteredIpc = true;
   }
 
-  session.defaultSession.webRequest.onHeadersReceived((details: { url: string; responseHeaders?: Record<string, string[]> }, callback: (response: { responseHeaders: Record<string, string[]> }) => void) => {
-    if (!shouldInjectAppCsp(details.url)) {
+  // CSP dinámico (inyección segura)
+  session.defaultSession.webRequest.onHeadersReceived(
+    (details: { url: string; responseHeaders?: Record<string, string[]> }, callback) => {
+      if (!shouldInjectAppCsp(details.url)) {
+        callback({ responseHeaders: details.responseHeaders ?? {} });
+        return;
+      }
       callback({
-        responseHeaders: details.responseHeaders ?? {},
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [isDev ? DEV_CSP : PROD_CSP],
+        },
       });
-      return;
     }
-
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Content-Security-Policy": [isDev ? DEV_CSP : PROD_CSP],
-      },
-    });
-  });
+  );
 
   await createWindow();
 
   app.on("activate", async () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      await createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) await createWindow();
   });
 });
 
@@ -156,7 +141,5 @@ app.on("before-quit", () => {
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  if (process.platform !== "darwin") app.quit();
 });

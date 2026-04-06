@@ -1,5 +1,5 @@
 /* @refresh reload */
-import { StrictMode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -202,7 +202,5 @@ function AppRoot() {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AppRoot />
-  </StrictMode>,
+  <AppRoot />,
 )
