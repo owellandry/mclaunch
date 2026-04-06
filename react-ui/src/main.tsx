@@ -2,7 +2,7 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
-import { router } from './presentation/router'
+import { router } from './presentation/routes'
 import { useLauncherStore } from './application/store/useLauncherStore'
 import { useAppStore } from './application/store/useAppStore'
 import './index.css'

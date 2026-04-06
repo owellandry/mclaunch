@@ -1,12 +1,18 @@
+/**
+ * @file SkinStudio.tsx
+ * @description Página de SkinStudio. Área de personalización y visualización del perfil del usuario.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiDownload, FiImage, FiRefreshCw, FiUpload } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import { Card } from "../components/ui/Card";
-import { SectionTitle } from "../components/ui/SectionTitle";
-import { Button } from "../components/ui/Button";
-import { MinecraftAvatar } from "../components/ui/MinecraftAvatar";
-import { MinecraftSkinFigure } from "../components/ui/MinecraftSkinFigure";
+import { Card } from "../components/atoms/Card";
+import { SectionTitle } from "../components/atoms/SectionTitle";
+import { Button } from "../components/atoms/Button";
+import { MinecraftAvatar } from "../components/atoms/MinecraftAvatar";
+import { MinecraftSkinFigure } from "../components/atoms/MinecraftSkinFigure";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { PLAYER_AVATAR_TRANSITION_NAME, PLAYER_PROFILE_CHIP_TRANSITION_NAME, startViewTransition } from "../lib/viewTransition";

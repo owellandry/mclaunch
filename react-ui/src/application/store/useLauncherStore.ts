@@ -1,3 +1,9 @@
+/**
+ * @file useLauncherStore.ts
+ * @description Store del motor del launcher. Interactúa con IPC para descargar, lanzar Minecraft y reportar progreso.
+ * 
+ * Patrón: Atomic Design
+ */
 import { create } from "zustand";
 import type { LauncherStatus, MinecraftVersion } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";

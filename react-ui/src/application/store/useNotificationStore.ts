@@ -1,3 +1,9 @@
+/**
+ * @file useNotificationStore.ts
+ * @description Store de notificaciones. Sistema centralizado para despachar y gestionar alertas o mensajes (info, error, success).
+ * 
+ * Patrón: Atomic Design
+ */
 import { create } from "zustand";
 
 export type NotificationType = "info" | "success" | "warning" | "error";

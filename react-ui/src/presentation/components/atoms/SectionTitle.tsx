@@ -1,3 +1,9 @@
+/**
+ * @file SectionTitle.tsx
+ * @description Componente atómico SectionTitle. Encabezado estandarizado para secciones de la interfaz, con subtítulo e icono opcional.
+ * 
+ * Patrón: Atomic Design
+ */
 import type { ReactNode } from "react";
 
 interface SectionTitleProps {

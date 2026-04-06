@@ -1,3 +1,9 @@
+/**
+ * @file MinecraftSkinFigure.tsx
+ * @description Componente atómico MinecraftSkinFigure. Renderiza el cuerpo completo 2D de una skin de Minecraft.
+ * 
+ * Patrón: Atomic Design
+ */
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 type MinecraftSkinFigureProps = {

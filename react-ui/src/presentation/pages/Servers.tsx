@@ -1,7 +1,13 @@
+/**
+ * @file Servers.tsx
+ * @description Página de Servidores. Lounge multijugador y lista de servidores sugeridos.
+ * 
+ * Patrón: Atomic Design
+ */
 import { FiRadio, FiServer, FiUser, FiZap, FiGlobe, FiUsers } from "react-icons/fi";
-import { Card } from "../components/ui/Card";
-import { SectionTitle } from "../components/ui/SectionTitle";
-import { Button } from "../components/ui/Button";
+import { Card } from "../components/atoms/Card";
+import { SectionTitle } from "../components/atoms/SectionTitle";
+import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
 
 export function Servers() {

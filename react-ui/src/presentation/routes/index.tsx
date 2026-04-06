@@ -1,30 +1,32 @@
-import { createHashRouter, Navigate, Outlet } from "react-router-dom";
-import { MainLayout } from "../components/layout/MainLayout";
+/**
+ * @file index.tsx
+ * @description Configuración central del enrutador de la aplicación usando react-router-dom.
+ * Define la jerarquía de rutas, separando las rutas públicas (Onboarding) de las rutas privadas
+ * que requieren autenticación (Dashboard, Library, etc.) protegidas por PrivateRoute.
+ */
+import { createHashRouter, Navigate } from "react-router-dom";
+import { MainLayout } from "../components/templates/MainLayout";
 import { Onboarding } from "../pages/Onboarding";
 import { Dashboard } from "../pages/Dashboard";
 import { Library } from "../pages/Library";
 import { Servers } from "../pages/Servers";
 import { Settings } from "../pages/Settings";
 import { SkinStudio } from "../pages/SkinStudio";
-import { useAppStore } from "../../application/store/useAppStore";
-
-function AuthGuard() {
-  const profile = useAppStore((state) => state.profile);
-
-  if (!profile || !profile.isOnboardingCompleted) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  return <Outlet />;
-}
+import { PrivateRoute } from "./PrivateRoute";
+import { PublicRoute } from "./PublicRoute";
 
 export const router = createHashRouter([
   {
-    path: "/onboarding",
-    element: <Onboarding />,
+    element: <PublicRoute />,
+    children: [
+      {
+        path: "/onboarding",
+        element: <Onboarding />,
+      }
+    ]
   },
   {
-    element: <AuthGuard />,
+    element: <PrivateRoute />,
     children: [
       {
         path: "/",
