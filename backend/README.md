@@ -111,6 +111,7 @@ Este canal se usa para:
 Requieren `Authorization: Bearer <token>`
 
 - `POST /api/v1/login/logout`
+- `GET /api/v1/logs`
 - `GET /api/v1/accounts`
 - `GET /api/v1/accounts/me`
 - `GET /api/v1/banners/admin`

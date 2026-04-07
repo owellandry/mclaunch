@@ -4,6 +4,7 @@ import type { AccountsService, StoredAccount } from "../accounts/accounts.servic
 import type { TokenService } from "../../core/security/token-service";
 import type { RedisCache } from "../../infrastructure/redis/cache";
 import type { BackendEnv } from "../../config/env";
+import type { LogsService } from "../logs/logs.service";
 
 type LoginStatus = "pending" | "completed" | "error" | "expired";
 
@@ -104,6 +105,7 @@ export class LoginService {
     private readonly accountsService: AccountsService,
     private readonly tokenService: TokenService,
     private readonly cache: RedisCache,
+    private readonly logsService: LogsService,
   ) {}
 
   async start(prompt = "select_account"): Promise<Pick<LoginSession, "id" | "redirectUri" | "authorizeUrl" | "expiresAt">> {
@@ -130,6 +132,12 @@ export class LoginService {
     };
 
     await this.cache.setJson(getSessionKey(id), session, Math.ceil(LOGIN_TTL_MS / 1000));
+    this.logsService.info("login", "Sesion de login creada.", {
+      sessionId: id,
+      prompt,
+      redirectUri,
+      expiresAt,
+    });
 
     return {
       id,
@@ -140,12 +148,26 @@ export class LoginService {
   }
 
   async getStatus(id: string): Promise<LoginSession | null> {
-    return this.cache.getJson<LoginSession>(getSessionKey(id));
+    const session = await this.cache.getJson<LoginSession>(getSessionKey(id));
+    this.logsService.debug("login", "Consulta de estado de login.", {
+      sessionId: id,
+      found: Boolean(session),
+      status: session?.status ?? null,
+    });
+    return session;
   }
 
   async complete(id: string, code: string): Promise<LoginSession> {
+    this.logsService.info("login", "Intentando completar login OAuth.", {
+      sessionId: id,
+      codeLength: code.length,
+    });
+
     const session = await this.getStatus(id);
     if (!session) {
+      this.logsService.warn("login", "No se encontro la sesion de login al completar OAuth.", {
+        sessionId: id,
+      });
       throw new Error("Sesion de login no encontrada o expirada.");
     }
 
@@ -156,6 +178,10 @@ export class LoginService {
         error: "La sesion de login expiro.",
       };
       await this.cache.setJson(getSessionKey(id), expired, 60);
+      this.logsService.warn("login", "La sesion de login expiro antes de completar OAuth.", {
+        sessionId: id,
+        expiresAt: session.expiresAt,
+      });
       return expired;
     }
 
@@ -193,10 +219,22 @@ export class LoginService {
       };
 
       await this.cache.setJson(getSessionKey(id), completed, 60 * 30);
+      this.logsService.info("login", "Login completado correctamente.", {
+        sessionId: id,
+        accountId: account.id,
+        displayName: account.displayName,
+        provider: account.provider,
+      });
       return completed;
     } catch (error) {
       const errorMessage = await resolveLoginErrorMessage(error);
       console.error("[login] Error completando login Microsoft", {
+        sessionId: id,
+        redirectUri: session.redirectUri,
+        message: errorMessage,
+        rawError: error,
+      });
+      this.logsService.error("login", "Error completando login Microsoft.", {
         sessionId: id,
         redirectUri: session.redirectUri,
         message: errorMessage,
@@ -215,13 +253,23 @@ export class LoginService {
 
   async fail(id: string, errorMessage: string): Promise<LoginSession | null> {
     const session = await this.getStatus(id);
-    if (!session) return null;
+    if (!session) {
+      this.logsService.warn("login", "Se intento marcar como fallida una sesion inexistente.", {
+        sessionId: id,
+        errorMessage,
+      });
+      return null;
+    }
     const failed: LoginSession = {
       ...session,
       status: "error",
       error: errorMessage,
     };
     await this.cache.setJson(getSessionKey(id), failed, 60 * 10);
+    this.logsService.warn("login", "Sesion de login marcada como error.", {
+      sessionId: id,
+      errorMessage,
+    });
     return failed;
   }
 

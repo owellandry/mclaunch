@@ -7,6 +7,7 @@ import type { DownloadsService } from "../../modules/downloads/downloads.service
 import type { HotupdatesService } from "../../modules/hotupdates/hotupdates.service";
 import type { BannersService } from "../../modules/banners/banners.service";
 import type { LauncherActivityService } from "../../modules/launcher-socket/launcher-activity.service";
+import type { LogsService } from "../../modules/logs/logs.service";
 import type { PostgresDatabase } from "../../infrastructure/postgres/database";
 import type { RedisCache } from "../../infrastructure/redis/cache";
 
@@ -19,6 +20,7 @@ export type RouteServices = {
   hotupdatesService: HotupdatesService;
   bannersService: BannersService;
   launcherActivityService: LauncherActivityService;
+  logsService: LogsService;
   postgres: PostgresDatabase;
   redis: RedisCache;
   startedAt: number;

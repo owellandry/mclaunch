@@ -39,6 +39,7 @@ export const registerLoginRoutes = (router: Router): void => {
     async ({ query, services }) => {
       try {
         const prompt = query.get("prompt") || "select_account";
+        services.logsService.info("login-route", "Solicitud de inicio de login recibida.", { prompt });
         const session = await services.loginService.start(prompt);
 
         return json({
@@ -76,6 +77,9 @@ export const registerLoginRoutes = (router: Router): void => {
     async ({ params, services }) => {
       const session = await services.loginService.getStatus(params.sessionId);
       if (!session) {
+        services.logsService.warn("login-route", "Sesion de login consultada no encontrada.", {
+          sessionId: params.sessionId,
+        });
         return json(
           {
             ok: false,
@@ -105,8 +109,17 @@ export const registerLoginRoutes = (router: Router): void => {
       const code = query.get("code");
       const oauthError = query.get("error");
       const oauthDescription = query.get("error_description");
+      services.logsService.info("login-route", "Callback OAuth recibido.", {
+        sessionId: sessionId ?? null,
+        hasCode: Boolean(code),
+        oauthError: oauthError ?? null,
+        hasState: Boolean(state),
+      });
 
       if (!sessionId) {
+        services.logsService.warn("login-route", "Callback OAuth sin sessionId/state.", {
+          query: Object.fromEntries(query.entries()),
+        });
         return html(
           callbackPage(
             "Sesion invalida",
@@ -117,6 +130,11 @@ export const registerLoginRoutes = (router: Router): void => {
 
       if (oauthError) {
         await services.loginService.fail(sessionId, oauthDescription || oauthError);
+        services.logsService.warn("login-route", "Microsoft devolvio un error OAuth.", {
+          sessionId,
+          oauthError,
+          oauthDescription: oauthDescription ?? null,
+        });
         return html(
           callbackPage("Inicio de sesion cancelado", "La autenticacion fue cancelada o rechazada. Puedes volver al launcher."),
         );
@@ -124,6 +142,7 @@ export const registerLoginRoutes = (router: Router): void => {
 
       if (!code) {
         await services.loginService.fail(sessionId, "No se recibio ningun codigo OAuth.");
+        services.logsService.warn("login-route", "Callback OAuth recibido sin code.", { sessionId });
         return html(callbackPage("Codigo invalido", "No se recibio un codigo valido para continuar el login."));
       }
 
@@ -157,9 +176,19 @@ export const registerLoginRoutes = (router: Router): void => {
       const code = query.get("code");
       const oauthError = query.get("error");
       const oauthDescription = query.get("error_description");
+      services.logsService.info("login-route", "Callback OAuth legacy recibido.", {
+        sessionId: params.sessionId,
+        hasCode: Boolean(code),
+        oauthError: oauthError ?? null,
+      });
 
       if (oauthError) {
         await services.loginService.fail(params.sessionId, oauthDescription || oauthError);
+        services.logsService.warn("login-route", "Microsoft devolvio un error OAuth en callback legacy.", {
+          sessionId: params.sessionId,
+          oauthError,
+          oauthDescription: oauthDescription ?? null,
+        });
         return html(
           callbackPage("Inicio de sesion cancelado", "La autenticacion fue cancelada o rechazada. Puedes volver al launcher."),
         );
@@ -167,6 +196,9 @@ export const registerLoginRoutes = (router: Router): void => {
 
       if (!code) {
         await services.loginService.fail(params.sessionId, "No se recibio ningun codigo OAuth.");
+        services.logsService.warn("login-route", "Callback OAuth legacy sin code.", {
+          sessionId: params.sessionId,
+        });
         return html(callbackPage("Codigo invalido", "No se recibio un codigo valido para continuar el login."));
       }
 

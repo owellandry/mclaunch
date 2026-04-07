@@ -17,6 +17,8 @@ import { HotupdatesService } from "./modules/hotupdates/hotupdates.service";
 import { registerHotupdateRoutes } from "./modules/hotupdates/hotupdates.routes";
 import { LoginService } from "./modules/login/login.service";
 import { registerLoginRoutes } from "./modules/login/login.routes";
+import { LogsService } from "./modules/logs/logs.service";
+import { registerLogsRoutes } from "./modules/logs/logs.routes";
 import { registerPublicConfigRoutes } from "./modules/public-config/public-config.routes";
 import { LauncherActivityService } from "./modules/launcher-socket/launcher-activity.service";
 import { PostgresDatabase } from "./infrastructure/postgres/database";
@@ -54,6 +56,7 @@ const bootstrap = async (): Promise<void> => {
   await redis.connect();
 
   const services = {} as RouteServices;
+  services.logsService = new LogsService();
   services.env = env;
   services.postgres = postgres;
   services.redis = redis;
@@ -71,7 +74,7 @@ const bootstrap = async (): Promise<void> => {
     redis,
     env.hotupdatePackagesDir,
   );
-  services.loginService = new LoginService(env, services.accountsService, services.tokenService, redis);
+  services.loginService = new LoginService(env, services.accountsService, services.tokenService, redis, services.logsService);
   services.startedAt = Date.now();
 
   const router = new Router();
@@ -132,6 +135,7 @@ const bootstrap = async (): Promise<void> => {
   registerHealthRoutes(router);
   registerPublicConfigRoutes(router);
   registerLoginRoutes(router);
+  registerLogsRoutes(router);
   registerAccountRoutes(router);
   registerBannerRoutes(router);
   registerDownloadRoutes(router);
@@ -168,16 +172,22 @@ const bootstrap = async (): Promise<void> => {
       return router.handle(request, services);
     },
     error: (error) =>
-      json(
-        {
-          ok: false,
-          error: {
-            code: "INTERNAL_SERVER_ERROR",
-            message: error.message,
+      {
+        services.logsService.error("http", "Error interno no controlado en Bun.serve", {
+          message: error.message,
+          stack: error.stack,
+        });
+        return json(
+          {
+            ok: false,
+            error: {
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+            },
           },
-        },
-        { status: 500 },
-      ),
+          { status: 500 },
+        );
+      },
     websocket: {
       open: async (ws) => {
         await services.launcherActivityService.registerConnection(ws.data.sessionId);
@@ -203,8 +213,13 @@ const bootstrap = async (): Promise<void> => {
   console.log(`[api] Descargas installer: ${env.installerDownloadsDir}`);
   console.log(`[api] Hotupdates: ${env.hotupdatePackagesDir}`);
   console.log(`[api] WebSocket launcher: ${env.publicBaseUrl.replace(/^http/i, "ws")}/ws/v1/launcher`);
+  services.logsService.info("bootstrap", "Backend iniciado correctamente.", {
+    baseUrl: env.publicBaseUrl,
+    wsUrl: env.publicBaseUrl.replace(/^http/i, "ws") + "/ws/v1/launcher",
+  });
 
   process.on("SIGINT", async () => {
+    services.logsService.info("bootstrap", "Cierre solicitado por SIGINT.");
     server.stop(true);
     await Promise.allSettled([redis.close(), postgres.close()]);
     process.exit(0);
