@@ -43,8 +43,8 @@ if ($current -gt 0) {
 # --- Descarga ---
 try {
     Write-Status "downloading" "Descargando Eclipse Temurin 21 para Windows x64..."
-    $progressPreference = 'SilentlyContinue'
-    Invoke-WebRequest -Uri $JAVA_URL -OutFile $TEMP_MSI -UseBasicParsing
+    $ProgressPreference = 'SilentlyContinue'
+    Invoke-WebRequest -Uri $JAVA_URL -OutFile $TEMP_MSI
 } catch {
     Write-Status "error" "Fallo la descarga: $($_.Exception.Message)"
     exit 1
@@ -53,19 +53,28 @@ try {
 # --- Instalacion silenciosa ---
 try {
     Write-Status "installing" "Instalando Java 21 en silencio..."
-    $args = @(
-        "/i", "`"$TEMP_MSI`"",
-        "/quiet", "/norestart",
+
+    $msiArgs = @(
+        "/i"
+        "`"$TEMP_MSI`""
+        "/quiet"
+        "/norestart"
         "ADDLOCAL=FeatureMain,FeatureEnvironment,FeatureJarFileRunWith,FeatureJavaHome"
     )
-    $proc = Start-Process msiexec.exe -ArgumentList $args -Wait -PassThru -NoNewWindow
-    if ($proc.ExitCode -ne 0) { throw "msiexec termino con codigo $($proc.ExitCode)" }
+
+    $proc = Start-Process "msiexec.exe" -ArgumentList $msiArgs -Wait -PassThru -NoNewWindow
+
+    if ($proc.ExitCode -ne 0) {
+        throw "msiexec termino con codigo $($proc.ExitCode)"
+    }
+
 } catch {
     Write-Status "error" "Fallo la instalacion: $($_.Exception.Message)"
     Remove-Item $TEMP_MSI -Force -ErrorAction SilentlyContinue
     exit 1
 }
 
+# --- Limpieza ---
 Remove-Item $TEMP_MSI -Force -ErrorAction SilentlyContinue
 
 # --- Refrescar PATH y verificar ---
@@ -73,10 +82,11 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";
             [System.Environment]::GetEnvironmentVariable("Path", "User")
 
 $installed = Get-JavaMajorVersion
+
 if ($installed -ge $MIN_JAVA) {
     Write-Status "done" "Java $installed instalado correctamente." @{ version = $installed }
     exit 0
 } else {
-    Write-Status "error" "La instalacion finalizo pero Java no fue detectado. Reinicia el instalador."
+    Write-Status "error" "La instalacion finalizo pero Java no fue detectado. Reinicia el sistema o la sesion."
     exit 1
 }
