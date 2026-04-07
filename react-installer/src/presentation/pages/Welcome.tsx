@@ -1,24 +1,27 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/atoms/Button";
 import { Card } from "../components/atoms/Card";
+import { SlimeAnimationMob } from "../components/atoms/SlimeAnimationMob";
 
 export function Welcome() {
   const navigate = useNavigate();
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
-      <div className="w-full max-w-2xl flex gap-8">
-        {/* Lado izquierdo - Texto */}
-        <div className="flex-1 flex flex-col justify-center">
+      <div className="w-full max-w-4xl grid grid-cols-[minmax(0,1fr)_360px] gap-5 items-center installer-welcome-grid">
+        <div className="flex flex-col justify-center">
           <p className="text-primary font-bold tracking-[0.3em] uppercase text-xs mb-2">Instalador Oficial</p>
-          <h1 className="text-4xl font-black uppercase tracking-tight text-textMain mb-4">
-            Preparando<br/>MC Launch
+          <h1 className="text-4xl font-black uppercase tracking-tight text-textMain mb-4 leading-none">
+            Preparando
+            <br />
+            MC Launch
           </h1>
-          <p className="text-textMuted text-sm leading-relaxed mb-8">
-            Instala el launcher moderno de Minecraft con una interfaz atómica, integración oficial de Microsoft y mods inyectables.
+          <p className="text-textMuted text-sm leading-relaxed mb-8 max-w-xl">
+            Instala el launcher moderno de Minecraft con una interfaz atomica, integracion oficial
+            de Microsoft y una experiencia visual lista para evolucionar en algo mucho mas completo.
           </p>
-          
-          <div className="flex gap-4">
+
+          <div className="flex gap-4 flex-wrap">
             <Button onClick={() => navigate("/install")} variant="primary" className="px-8 py-3 text-sm">
               Instalar Ahora
             </Button>
@@ -28,20 +31,13 @@ export function Welcome() {
           </div>
         </div>
 
-        {/* Lado derecho - Feature Cards */}
-        <div className="flex-1 flex flex-col gap-4">
-          <Card className="p-4 border-l-4 border-l-primary/50">
-            <h3 className="font-bold text-textMain text-sm uppercase">Diseño Atómico</h3>
-            <p className="text-textMuted text-xs mt-1">Interfaz Glassmorphism ultra rápida con animaciones nativas.</p>
+        <div className="flex flex-col gap-4 h-full">
+          <Card className="p-5 relative overflow-hidden installer-slime-card h-full">
+            <div className="relative flex items-center justify-center h-full">
+              <SlimeAnimationMob size={192} />
+            </div>
           </Card>
-          <Card className="p-4 border-l-4 border-l-primary/50">
-            <h3 className="font-bold text-textMain text-sm uppercase">Cuentas Premium</h3>
-            <p className="text-textMuted text-xs mt-1">Soporte nativo y seguro usando MSMC para cuentas Microsoft.</p>
-          </Card>
-          <Card className="p-4 border-l-4 border-l-primary/50">
-            <h3 className="font-bold text-textMain text-sm uppercase">Mod Inyectable</h3>
-            <p className="text-textMuted text-xs mt-1">Menú principal de Java reimaginado por completo.</p>
-          </Card>
+
         </div>
       </div>
     </div>

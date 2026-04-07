@@ -10,10 +10,10 @@ let mainWindow: BrowserWindow | null = null
 
 const createWindow = async (): Promise<void> => {
   mainWindow = new BrowserWindow({
-    width: 1240,
-    height: 820,
-    minWidth: 1080,
-    minHeight: 720,
+    width: 860,
+    height: 560,
+    minWidth: 860,
+    minHeight: 560,
     title: 'MC Launch Installer',
     frame: false,
     titleBarStyle: 'hidden',
