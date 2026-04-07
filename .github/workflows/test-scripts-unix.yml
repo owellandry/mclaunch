@@ -1,0 +1,203 @@
+name: Test Install Scripts (Linux & macOS)
+
+on:
+  push:
+    branches: ["master", "main"]
+    paths:
+      - "react-installer/script/linux/**"
+      - "react-installer/script/macos/**"
+      - ".github/workflows/test-scripts-unix.yml"
+  pull_request:
+    branches: ["master", "main"]
+    paths:
+      - "react-installer/script/linux/**"
+      - "react-installer/script/macos/**"
+      - ".github/workflows/test-scripts-unix.yml"
+
+jobs:
+  # ─────────────────────────────────────────
+  # Linux x64
+  # ─────────────────────────────────────────
+  linux-x64:
+    name: Linux x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x react-installer/script/linux/x64/*.sh
+
+      - name: "[1/3] Deteccion del entorno"
+        id: detect
+        run: |
+          OUTPUT=$(bash react-installer/script/linux/x64/01-detect.sh)
+          echo "$OUTPUT"
+          # Validar que la salida sea JSON valido
+          echo "$OUTPUT" | python3 -m json.tool > /dev/null
+          LANG_VAL=$(echo "$OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['lang'])")
+          ARCH_VAL=$(echo "$OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['arch'])")
+          echo "lang=$LANG_VAL" >> $GITHUB_OUTPUT
+          echo "arch=$ARCH_VAL" >> $GITHUB_OUTPUT
+
+      - name: "[2/3] Verificacion e instalacion de Java"
+        run: |
+          # Forzar escenario de instalacion eliminando java del PATH del runner
+          # para probar que el script instala correctamente si Java < 21 o no existe
+          echo "Java actual en el runner:"
+          java -version 2>&1 || true
+
+          echo "---"
+          echo "Ejecutando check-java..."
+          bash react-installer/script/linux/x64/02-check-java.sh
+
+      - name: Verificar Java >= 21 disponible
+        run: |
+          MAJOR=$(java -version 2>&1 | head -1 | grep -oP '(?<=")\d+' | head -1)
+          echo "Java major version: $MAJOR"
+          if [ "$MAJOR" -lt 21 ]; then
+            echo "FAIL: Java $MAJOR < 21"
+            exit 1
+          fi
+          echo "OK: Java $MAJOR >= 21"
+
+      - name: "[3/3] Instalador principal (dry run)"
+        run: bash react-installer/script/linux/x64/03-install.sh
+
+  # ─────────────────────────────────────────
+  # Linux ARM64
+  # ─────────────────────────────────────────
+  linux-arm64:
+    name: Linux ARM64
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x react-installer/script/linux/arm64/*.sh
+
+      - name: "[1/3] Deteccion del entorno"
+        id: detect
+        run: |
+          OUTPUT=$(bash react-installer/script/linux/arm64/01-detect.sh)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | python3 -m json.tool > /dev/null
+          LANG_VAL=$(echo "$OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['lang'])")
+          ARCH_VAL=$(echo "$OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['arch'])")
+          echo "lang=$LANG_VAL" >> $GITHUB_OUTPUT
+          echo "arch=$ARCH_VAL" >> $GITHUB_OUTPUT
+
+      - name: "[2/3] Verificacion e instalacion de Java"
+        run: |
+          echo "Java actual en el runner:"
+          java -version 2>&1 || true
+          echo "---"
+          bash react-installer/script/linux/arm64/02-check-java.sh
+
+      - name: Verificar Java >= 21 disponible
+        run: |
+          MAJOR=$(java -version 2>&1 | head -1 | grep -oP '(?<=")\d+' | head -1)
+          echo "Java major version: $MAJOR"
+          if [ "$MAJOR" -lt 21 ]; then
+            echo "FAIL: Java $MAJOR < 21"
+            exit 1
+          fi
+          echo "OK: Java $MAJOR >= 21"
+
+      - name: "[3/3] Instalador principal (dry run)"
+        run: bash react-installer/script/linux/arm64/03-install.sh
+
+  # ─────────────────────────────────────────
+  # macOS x64 (Intel)
+  # ─────────────────────────────────────────
+  macos-x64:
+    name: macOS x64 (Intel)
+    runs-on: macos-13
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x react-installer/script/macos/x64/*.sh
+
+      - name: "[1/3] Deteccion del entorno"
+        id: detect
+        run: |
+          OUTPUT=$(bash react-installer/script/macos/x64/01-detect.sh)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | python3 -m json.tool > /dev/null
+          LANG_VAL=$(echo "$OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['lang'])")
+          echo "lang=$LANG_VAL" >> $GITHUB_OUTPUT
+
+      - name: "[2/3] Verificacion e instalacion de Java"
+        run: |
+          echo "Java actual en el runner:"
+          java -version 2>&1 || true
+          echo "---"
+          bash react-installer/script/macos/x64/02-check-java.sh
+
+      - name: Verificar Java >= 21 disponible
+        run: |
+          JAVA_HOME_BIN=$(/usr/libexec/java_home 2>/dev/null || echo "")
+          if [ -n "$JAVA_HOME_BIN" ]; then
+            MAJOR=$("$JAVA_HOME_BIN/bin/java" -version 2>&1 | head -1 | grep -oE '"[0-9]+' | tr -d '"' | head -1)
+          else
+            MAJOR=$(java -version 2>&1 | head -1 | grep -oE '"[0-9]+' | tr -d '"' | head -1)
+          fi
+          echo "Java major version: $MAJOR"
+          if [ "$MAJOR" -lt 21 ]; then
+            echo "FAIL: Java $MAJOR < 21"
+            exit 1
+          fi
+          echo "OK: Java $MAJOR >= 21"
+
+      - name: "[3/3] Instalador principal (dry run)"
+        run: bash react-installer/script/macos/x64/03-install.sh
+
+  # ─────────────────────────────────────────
+  # macOS ARM64 (Apple Silicon M1/M2/M3)
+  # ─────────────────────────────────────────
+  macos-arm64:
+    name: macOS ARM64 (Apple Silicon)
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x react-installer/script/macos/arm64/*.sh
+
+      - name: "[1/3] Deteccion del entorno"
+        id: detect
+        run: |
+          OUTPUT=$(bash react-installer/script/macos/arm64/01-detect.sh)
+          echo "$OUTPUT"
+          echo "$OUTPUT" | python3 -m json.tool > /dev/null
+          LANG_VAL=$(echo "$OUTPUT" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['lang'])")
+          echo "lang=$LANG_VAL" >> $GITHUB_OUTPUT
+
+      - name: "[2/3] Verificacion e instalacion de Java"
+        run: |
+          echo "Java actual en el runner:"
+          java -version 2>&1 || true
+          echo "---"
+          bash react-installer/script/macos/arm64/02-check-java.sh
+
+      - name: Verificar Java >= 21 disponible
+        run: |
+          JAVA_HOME_BIN=$(/usr/libexec/java_home 2>/dev/null || echo "")
+          if [ -n "$JAVA_HOME_BIN" ]; then
+            MAJOR=$("$JAVA_HOME_BIN/bin/java" -version 2>&1 | head -1 | grep -oE '"[0-9]+' | tr -d '"' | head -1)
+          else
+            MAJOR=$(java -version 2>&1 | head -1 | grep -oE '"[0-9]+' | tr -d '"' | head -1)
+          fi
+          echo "Java major version: $MAJOR"
+          if [ "$MAJOR" -lt 21 ]; then
+            echo "FAIL: Java $MAJOR < 21"
+            exit 1
+          fi
+          echo "OK: Java $MAJOR >= 21"
+
+      - name: "[3/3] Instalador principal (dry run)"
+        run: bash react-installer/script/macos/arm64/03-install.sh
