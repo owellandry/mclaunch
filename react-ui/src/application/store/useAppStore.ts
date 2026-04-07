@@ -81,9 +81,16 @@ export const useAppStore = create<AppState>((set, get) => {
       }
 
       const controller = new AbortController();
+      let popupClosedAt: number | null = null;
+      const GRACE_PERIOD_MS = 5_000;
+
       const popupClosedWatcher = window.setInterval(() => {
         if (popup.closed && !controller.signal.aborted) {
-          controller.abort();
+          if (popupClosedAt === null) {
+            popupClosedAt = Date.now();
+          } else if (Date.now() - popupClosedAt >= GRACE_PERIOD_MS) {
+            controller.abort();
+          }
         }
       }, 400);
 
