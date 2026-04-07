@@ -32,6 +32,7 @@ const CHANNELS = {
   getLanguage: "db:getLanguage",
   setLanguage: "db:setLanguage",
   loginMicrosoft: "auth:loginMicrosoft",
+  openBackendLoginPopup: "auth:openBackendLoginPopup",
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
   setBackendSession: "auth:setBackendSession",
@@ -100,6 +101,10 @@ const api = {
     return ipcRenderer.invoke(CHANNELS.loginMicrosoft);
   },
 
+  openBackendLoginPopup: (payload: { authorizeUrl: string; callbackUrl: string }): Promise<boolean> => {
+    return ipcRenderer.invoke(CHANNELS.openBackendLoginPopup, payload);
+  },
+
   setBackendAuthSession: (payload: {
     msmcToken: string;
     mclcAuth: unknown;
@@ -132,9 +137,7 @@ const api = {
     return process.env.MCLAUNCH_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
   },
 
-  openExternal: (url: string): Promise<void> => {
-    return shell.openExternal(url).then(() => undefined);
-  },
+  openExternal: (url: string): Promise<void> => shell.openExternal(url).then(() => undefined),
 
   // Controles de ventana (rápidos, fire-and-forget)
   minimizeWindow: (): void => ipcRenderer.send("window:minimize"),

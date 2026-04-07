@@ -12,7 +12,7 @@
 // - Mejor manejo de errores y logs
 // - Uso de child_process.spawn para compilación no bloqueante
 
-import { BrowserWindow, ipcMain, app } from "electron";
+import { BrowserView, BrowserWindow, ipcMain, app } from "electron";
 import { spawn, SpawnOptions } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -89,6 +89,7 @@ const CHANNELS = {
   getLanguage: "db:getLanguage",
   setLanguage: "db:setLanguage",
   loginMicrosoft: "auth:loginMicrosoft",
+  openBackendLoginPopup: "auth:openBackendLoginPopup",
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
   setBackendSession: "auth:setBackendSession",
@@ -96,6 +97,9 @@ const CHANNELS = {
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 type WindowProvider = () => BrowserWindow | null;
+let backendAuthWindow: BrowserWindow | null = null;
+let backendAuthView: BrowserView | null = null;
+let backendAuthViewOwner: BrowserWindow | null = null;
 
 /* ==================== EMITTERS ==================== */
 const emitLog = (window: BrowserWindow | null, message: string): void => {
@@ -400,6 +404,141 @@ const loginWithMicrosoftPopup = async (parentWindow: BrowserWindow): Promise<any
   return auth.login(authCode);
 };
 
+const openBackendLoginPopup = async (
+  parentWindow: BrowserWindow,
+  authorizeUrl: string,
+  callbackUrl: string,
+): Promise<void> => {
+  if (backendAuthWindow && !backendAuthWindow.isDestroyed()) {
+    backendAuthWindow.focus();
+    await backendAuthWindow.loadURL(authorizeUrl);
+    return;
+  }
+
+  const authWindow = new BrowserWindow({
+    parent: parentWindow,
+    modal: false,
+    width: 520,
+    height: 720,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    autoHideMenuBar: true,
+    show: false,
+    title: "Iniciar sesión con Microsoft",
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+  backendAuthWindow = authWindow;
+  authWindow.removeMenu();
+
+  const closeIfCallbackReached = (targetUrl: string): void => {
+    if (!targetUrl.startsWith(callbackUrl)) return;
+    if (!authWindow.isDestroyed()) authWindow.close();
+  };
+
+  authWindow.once("ready-to-show", () => authWindow.show());
+  authWindow.on("closed", () => {
+    if (backendAuthWindow === authWindow) backendAuthWindow = null;
+  });
+  authWindow.webContents.setWindowOpenHandler(({ url }) => {
+    void authWindow.loadURL(url);
+    return { action: "deny" };
+  });
+  authWindow.webContents.on("did-navigate", (_, url) => closeIfCallbackReached(url));
+  authWindow.webContents.on("did-redirect-navigation", (_, url) => closeIfCallbackReached(url));
+  authWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error("[auth-popup] El renderer del popup de login se cerrÃ³", details);
+  });
+  authWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
+    if (errorCode === -3) return;
+    console.error("[auth-popup] Error cargando autenticaciÃ³n", {
+      errorCode,
+      errorDescription,
+      validatedUrl,
+    });
+  });
+
+  await authWindow.loadURL(authorizeUrl);
+};
+void openBackendLoginPopup;
+
+const openBackendLoginInAppView = async (
+  parentWindow: BrowserWindow,
+  authorizeUrl: string,
+  callbackUrl: string,
+): Promise<void> => {
+  if (backendAuthViewOwner && backendAuthViewOwner !== parentWindow && backendAuthView) {
+    backendAuthViewOwner.setBrowserView(null);
+    backendAuthView.webContents.close({ waitForBeforeUnload: false });
+    backendAuthView = null;
+    backendAuthViewOwner = null;
+  }
+
+  const closeAuthView = (): void => {
+    if (!backendAuthView || !backendAuthViewOwner) return;
+    backendAuthView.webContents.removeAllListeners();
+    backendAuthViewOwner.setBrowserView(null);
+    backendAuthView.webContents.close({ waitForBeforeUnload: false });
+    backendAuthView = null;
+    backendAuthViewOwner = null;
+  };
+
+  const fitAuthView = (): void => {
+    if (!backendAuthView) return;
+    const [width, height] = parentWindow.getContentSize();
+    backendAuthView.setBounds({ x: 0, y: 0, width, height });
+    backendAuthView.setAutoResize({ width: true, height: true });
+  };
+
+  const view =
+    backendAuthView ??
+    new BrowserView({
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+      },
+    });
+
+  backendAuthView = view;
+  backendAuthViewOwner = parentWindow;
+  parentWindow.setBrowserView(view);
+  fitAuthView();
+  parentWindow.removeListener("resize", fitAuthView);
+  parentWindow.on("resize", fitAuthView);
+  parentWindow.once("closed", closeAuthView);
+
+  const closeIfCallbackReached = (targetUrl: string): void => {
+    if (!targetUrl.startsWith(callbackUrl)) return;
+    closeAuthView();
+  };
+
+  view.webContents.setWindowOpenHandler(({ url }) => {
+    void view.webContents.loadURL(url);
+    return { action: "deny" };
+  });
+  view.webContents.on("did-navigate", (_event, url) => closeIfCallbackReached(url));
+  view.webContents.on("did-redirect-navigation", (_event, url) => closeIfCallbackReached(url));
+  view.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
+    if (errorCode === -3) return;
+    console.error("[auth-inline] Error cargando autenticacion", {
+      errorCode,
+      errorDescription,
+      validatedUrl,
+    });
+  });
+  view.webContents.on("render-process-gone", (_event, details) => {
+    console.error("[auth-inline] El renderer del login integrado se cerro", details);
+    closeAuthView();
+  });
+
+  await view.webContents.loadURL(authorizeUrl);
+};
+
 /* ==================== REGISTRO PRINCIPAL IPC ==================== */
 export const registerLauncherIpc = (getWindow: WindowProvider): void => {
   initDb();
@@ -443,6 +582,13 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       if (message.includes("access_denied") || message.includes("error.gui.closed")) throw new Error("Inicio de sesión cancelado por el usuario");
       throw new Error(message);
     }
+  });
+
+  ipcMain.handle(CHANNELS.openBackendLoginPopup, async (_event, payload: { authorizeUrl: string; callbackUrl: string }) => {
+    const parentWindow = getWindow();
+    if (!parentWindow) throw new Error("Ventana principal no disponible");
+    await openBackendLoginInAppView(parentWindow, payload.authorizeUrl, payload.callbackUrl);
+    return true;
   });
 
   ipcMain.handle(CHANNELS.logoutMicrosoft, () => {

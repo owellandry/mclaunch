@@ -13,6 +13,16 @@ const callbackPage = (title: string, message: string): string => `<!doctype html
       h1 { margin: 0 0 12px; font-size: 1.8rem; }
       p { margin: 0; line-height: 1.6; color: #d0dbeb; }
     </style>
+    <script>
+      window.addEventListener("load", () => {
+        try {
+          window.opener?.postMessage({ source: "mclaunch-auth", status: "completed" }, "*");
+        } catch {}
+        window.setTimeout(() => {
+          window.close();
+        }, 900);
+      });
+    </script>
   </head>
   <body>
     <section class="card">

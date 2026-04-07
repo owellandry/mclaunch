@@ -65,11 +65,21 @@ export const useAppStore = create<AppState>((set, get) => {
     },
     loginMicrosoft: async () => {
       const session = await authApi.startMicrosoftLogin("select_account");
-      if (window.api?.openExternal) {
-        await window.api.openExternal(session.authorizeUrl);
-      } else {
-        window.open(session.authorizeUrl, "_blank", "noopener,noreferrer");
+      console.info("[Auth] Sesion de login creada", {
+        sessionId: session.sessionId,
+        callbackUrl: session.callbackUrl,
+      });
+
+      const popup = window.open(
+        session.authorizeUrl,
+        "mclaunch-ms-auth",
+        "popup=yes,width=520,height=720,resizable=no,scrollbars=yes"
+      );
+
+      if (!popup) {
+        throw new Error("No se pudo abrir la ventana de autenticacion.");
       }
+
       const status = await authApi.waitForLogin(session.sessionId);
 
       if (!status.result) {

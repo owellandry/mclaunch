@@ -10,7 +10,7 @@
 // - Documentación completa
 
 import "dotenv/config";
-import { app, BrowserWindow, Menu, session, ipcMain } from "electron";
+import { app, BrowserWindow, Menu, session, ipcMain, shell } from "electron";
 import path from "node:path";
 import { registerLauncherIpc } from "./ipc/launcher";
 import { discordPresence } from "./services/discordPresence";
@@ -39,6 +39,127 @@ const configuredApiWsOrigin = configuredApiOrigin.replace(/^http/i, "ws");
 
 let mainWindow: BrowserWindow | null = null;
 let hasRegisteredIpc = false;
+
+const MICROSOFT_AUTH_POPUP_NAME = "mclaunch-ms-auth";
+
+const getSafeUrl = (value: string): URL | null => {
+  try {
+    return new URL(value);
+  } catch {
+    return null;
+  }
+};
+
+const isMicrosoftAuthHost = (hostname: string): boolean => {
+  return (
+    hostname === "login.live.com" ||
+    hostname === "account.live.com" ||
+    hostname.endsWith(".live.com") ||
+    hostname.endsWith(".microsoftonline.com")
+  );
+};
+
+const isAllowedAuthPopupUrl = (value: string): boolean => {
+  const parsed = getSafeUrl(value);
+  if (!parsed) return false;
+  if (parsed.origin === configuredApiOrigin) return true;
+  return parsed.protocol === "https:" && isMicrosoftAuthHost(parsed.hostname);
+};
+
+const isBackendCallbackUrl = (value: string): boolean => {
+  const parsed = getSafeUrl(value);
+  if (!parsed) return false;
+  return parsed.origin === configuredApiOrigin && parsed.pathname === "/api/v1/login/callback";
+};
+
+const registerAuthPopupSupport = (window: BrowserWindow): void => {
+  window.webContents.setWindowOpenHandler(({ url, frameName }) => {
+    if (frameName !== MICROSOFT_AUTH_POPUP_NAME) {
+      return { action: "deny" };
+    }
+
+    if (!isAllowedAuthPopupUrl(url)) {
+      return { action: "deny" };
+    }
+
+    return {
+      action: "allow",
+      overrideBrowserWindowOptions: {
+        parent: window,
+        modal: false,
+        width: 520,
+        height: 720,
+        minWidth: 520,
+        minHeight: 720,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        autoHideMenuBar: true,
+        show: false,
+        title: "Iniciar sesión con Microsoft",
+        backgroundColor: "#0f1115",
+        webPreferences: {
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: true,
+          webSecurity: true,
+        },
+      },
+    };
+  });
+
+  window.webContents.on("did-create-window", (childWindow, details) => {
+    if (details.frameName !== MICROSOFT_AUTH_POPUP_NAME) {
+      childWindow.close();
+      return;
+    }
+
+    childWindow.removeMenu();
+    childWindow.once("ready-to-show", () => childWindow.show());
+
+    const handlePopupNavigation = (targetUrl: string): void => {
+      if (!isAllowedAuthPopupUrl(targetUrl)) {
+        void shell.openExternal(targetUrl);
+        if (!childWindow.isDestroyed()) childWindow.close();
+        return;
+      }
+
+      if (isBackendCallbackUrl(targetUrl)) {
+        setTimeout(() => {
+          if (!childWindow.isDestroyed()) childWindow.close();
+        }, 1200);
+      }
+    };
+
+    childWindow.webContents.setWindowOpenHandler(({ url }) => {
+      handlePopupNavigation(url);
+      if (!isBackendCallbackUrl(url) && isAllowedAuthPopupUrl(url) && !childWindow.isDestroyed()) {
+        void childWindow.loadURL(url);
+      }
+      return { action: "deny" };
+    });
+
+    childWindow.webContents.on("will-navigate", (event, targetUrl) => {
+      if (!isAllowedAuthPopupUrl(targetUrl)) {
+        event.preventDefault();
+        handlePopupNavigation(targetUrl);
+      }
+    });
+    childWindow.webContents.on("did-navigate", (_event, targetUrl) => handlePopupNavigation(targetUrl));
+    childWindow.webContents.on("did-redirect-navigation", (_event, targetUrl) => handlePopupNavigation(targetUrl));
+    childWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
+      if (errorCode === -3) return;
+      console.error("[auth-popup] Error cargando autenticación", {
+        errorCode,
+        errorDescription,
+        validatedUrl,
+      });
+    });
+    childWindow.webContents.on("render-process-gone", (_event, detailsGone) => {
+      console.error("[auth-popup] El renderer del popup se cerró", detailsGone);
+    });
+  });
+};
 
 /**
  * Content Security Policy (CSP) ultra estricto
@@ -97,6 +218,7 @@ const createWindow = async (): Promise<void> => {
 
   mainWindow.removeMenu();
   mainWindow.on("closed", () => (mainWindow = null));
+  registerAuthPopupSupport(mainWindow);
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;

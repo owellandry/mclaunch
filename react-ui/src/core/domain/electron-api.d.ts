@@ -27,6 +27,7 @@ export type ElectronApi = {
   getLanguage: () => Promise<string>;
   setLanguage: (lang: string) => void;
   loginMicrosoft: () => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean}>;
+  openBackendLoginPopup: (payload: { authorizeUrl: string; callbackUrl: string }) => Promise<boolean>;
   setBackendAuthSession: (payload: {
     msmcToken: string;
     mclcAuth: unknown;

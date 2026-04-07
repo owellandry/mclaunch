@@ -26,6 +26,7 @@ export const authApi = {
 
   async waitForLogin(sessionId: string, signal?: AbortSignal): Promise<BackendLoginStatus> {
     const startedAt = Date.now();
+    let lastStatus: BackendLoginStatus["status"] | null = null;
 
     while (true) {
       if (signal?.aborted) {
@@ -33,6 +34,14 @@ export const authApi = {
       }
 
       const status = await this.getLoginStatus(sessionId, signal);
+      if (status.status !== lastStatus) {
+        console.info("[Auth] Estado de login actualizado", {
+          sessionId,
+          status: status.status,
+          redirectUri: status.redirectUri,
+        });
+        lastStatus = status.status;
+      }
       if (status.status === "completed") return status;
       if (status.status === "error") {
         throw new Error(status.error || "No se pudo completar el inicio de sesion.");
