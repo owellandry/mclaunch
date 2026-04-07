@@ -6,6 +6,7 @@ import { Button } from "../atoms/Button";
 import { Card } from "../atoms/Card";
 import { DownloadOption } from "../../../domain/entities/OS";
 import { Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface DownloadCardProps {
   option: DownloadOption;
@@ -13,11 +14,13 @@ interface DownloadCardProps {
 }
 
 export function DownloadCard({ option, isRecommended }: DownloadCardProps) {
+  const { t } = useTranslation();
+
   return (
     <Card className={`relative flex flex-col p-8 transition-all hover:-translate-y-1 ${isRecommended ? 'border-primary/50 shadow-[0_0_30px_var(--color-primary-shadow)]' : 'border-white/5 opacity-80 hover:opacity-100'}`}>
       {isRecommended && (
         <div className="absolute -top-3 right-6 bg-primary text-background px-3 py-1 text-[10px] font-black uppercase tracking-widest mc-cutout-small">
-          Recomendado
+          {t("download.recommended")}
         </div>
       )}
       
