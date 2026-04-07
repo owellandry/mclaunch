@@ -27,19 +27,32 @@ export const registerLoginRoutes = (router: Router): void => {
     "GET",
     "/api/v1/login/start",
     async ({ query, services }) => {
-      const prompt = query.get("prompt") || "select_account";
-      const session = await services.loginService.start(prompt);
+      try {
+        const prompt = query.get("prompt") || "select_account";
+        const session = await services.loginService.start(prompt);
 
-      return json({
-        ok: true,
-        data: {
-          flow: "microsoft_oauth_authorization_code",
-          sessionId: session.id,
-          authorizeUrl: session.authorizeUrl,
-          callbackUrl: session.redirectUri,
-          expiresAt: new Date(session.expiresAt).toISOString(),
-        },
-      });
+        return json({
+          ok: true,
+          data: {
+            flow: "microsoft_oauth_authorization_code",
+            sessionId: session.id,
+            authorizeUrl: session.authorizeUrl,
+            callbackUrl: session.redirectUri,
+            expiresAt: new Date(session.expiresAt).toISOString(),
+          },
+        });
+      } catch (error) {
+        return json(
+          {
+            ok: false,
+            error: {
+              code: "LOGIN_NOT_CONFIGURED",
+              message: error instanceof Error ? error.message : "El login Microsoft no esta configurado.",
+            },
+          },
+          { status: 503 },
+        );
+      }
     },
     {
       module: "login",
@@ -70,6 +83,60 @@ export const registerLoginRoutes = (router: Router): void => {
     {
       module: "login",
       summary: "Consulta el estado de una sesion de login iniciada por el launcher.",
+    },
+  );
+
+  router.add(
+    "GET",
+    "/api/v1/login/callback",
+    async ({ query, services }) => {
+      const state = query.get("state")?.trim();
+      const sessionId = state || query.get("sessionId")?.trim();
+      const code = query.get("code");
+      const oauthError = query.get("error");
+      const oauthDescription = query.get("error_description");
+
+      if (!sessionId) {
+        return html(
+          callbackPage(
+            "Sesion invalida",
+            "No se recibio el parametro state esperado para vincular el login con una sesion activa.",
+          ),
+        );
+      }
+
+      if (oauthError) {
+        await services.loginService.fail(sessionId, oauthDescription || oauthError);
+        return html(
+          callbackPage("Inicio de sesion cancelado", "La autenticacion fue cancelada o rechazada. Puedes volver al launcher."),
+        );
+      }
+
+      if (!code) {
+        await services.loginService.fail(sessionId, "No se recibio ningun codigo OAuth.");
+        return html(callbackPage("Codigo invalido", "No se recibio un codigo valido para continuar el login."));
+      }
+
+      const session = await services.loginService.complete(sessionId, code);
+      if (session.status === "completed") {
+        return html(
+          callbackPage(
+            "Login completado",
+            "Tu cuenta ya fue autenticada. Puedes volver al launcher y continuar con la sesion.",
+          ),
+        );
+      }
+
+      return html(
+        callbackPage(
+          "No se pudo completar el login",
+          session.error || "Ocurrio un error al completar la autenticacion. Revisa el launcher para mas detalles.",
+        ),
+      );
+    },
+    {
+      module: "login",
+      summary: "Recibe el callback OAuth de Microsoft y completa el login del launcher.",
     },
   );
 
@@ -112,7 +179,7 @@ export const registerLoginRoutes = (router: Router): void => {
     },
     {
       module: "login",
-      summary: "Recibe el callback OAuth de Microsoft y completa el login del launcher.",
+      summary: "Compatibilidad temporal para callbacks antiguos con sessionId en la ruta.",
     },
   );
 

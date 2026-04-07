@@ -69,6 +69,9 @@ Las variables del backend deben vivir en `backend/.env`.
 - `MCLAUNCH_API_BASE_URL`
 - `MCLAUNCH_API_JWT_SECRET`
 - `MCLAUNCH_DISCORD_CLIENT_ID`
+- `MCLAUNCH_MICROSOFT_CLIENT_ID`
+- `MCLAUNCH_MICROSOFT_CLIENT_SECRET`
+- `MCLAUNCH_MICROSOFT_REDIRECT_URI`
 - `MCLAUNCH_POSTGRES_URL`
 - `MCLAUNCH_REDIS_URL`
 - `MCLAUNCH_DOWNLOADS_DIR`
@@ -123,7 +126,7 @@ Requieren `Authorization: Bearer <token>`
 1. El launcher llama `GET /api/v1/login/start`
 2. La API devuelve `authorizeUrl`, `sessionId` y `callbackUrl`
 3. El launcher abre esa URL en navegador o webview
-4. Microsoft redirige al callback local
+4. Microsoft redirige al callback fijo configurado en `MCLAUNCH_MICROSOFT_REDIRECT_URI`
 5. El launcher consulta `GET /api/v1/login/status/:sessionId`
 6. Cuando el estado es `completed`, la respuesta incluye:
    - token del backend
@@ -136,6 +139,7 @@ Requieren `Authorization: Bearer <token>`
 - Redis se usa para sesiones de login y cache del catalogo de downloads/hotupdates.
 - La metadata publica minima para clientes se expone desde `/api/v1/public-config`.
 - El `MCLAUNCH_DISCORD_CLIENT_ID` vive del lado del backend y Electron lo recibe al abrir el socket `/ws/v1/launcher`.
+- El login backend requiere una app propia registrada en Microsoft Entra ID. El `redirect_uri` debe coincidir exactamente con `MCLAUNCH_MICROSOFT_REDIRECT_URI`.
 - Los modulos de descargas y hotupdates exponen artefactos encontrados en disco; si no existen builds en los directorios configurados, responderan vacios.
 
 ## Despliegue al servidor

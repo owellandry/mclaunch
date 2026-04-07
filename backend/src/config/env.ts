@@ -6,6 +6,9 @@ export type BackendEnv = {
   publicBaseUrl: string;
   jwtSecret: string;
   discordClientId: string;
+  microsoftClientId: string;
+  microsoftClientSecret: string;
+  microsoftRedirectUri: string;
   postgresUrl: string;
   redisUrl: string;
   downloadsDir: string;
@@ -24,6 +27,8 @@ export const loadEnv = (): BackendEnv => {
   const port = resolveNumber(process.env.MCLAUNCH_API_PORT, 8787);
   const host = process.env.MCLAUNCH_API_HOST?.trim() || "127.0.0.1";
   const publicBaseUrl = process.env.MCLAUNCH_API_BASE_URL?.trim() || `http://${host}:${port}`;
+  const microsoftRedirectUri =
+    process.env.MCLAUNCH_MICROSOFT_REDIRECT_URI?.trim() || `${publicBaseUrl.replace(/\/+$/, "")}/api/v1/login/callback`;
 
   return {
     port,
@@ -31,6 +36,9 @@ export const loadEnv = (): BackendEnv => {
     publicBaseUrl,
     jwtSecret: process.env.MCLAUNCH_API_JWT_SECRET?.trim() || "mclaunch-dev-secret-change-me",
     discordClientId: process.env.MCLAUNCH_DISCORD_CLIENT_ID?.trim() || "",
+    microsoftClientId: process.env.MCLAUNCH_MICROSOFT_CLIENT_ID?.trim() || "",
+    microsoftClientSecret: process.env.MCLAUNCH_MICROSOFT_CLIENT_SECRET?.trim() || "",
+    microsoftRedirectUri,
     postgresUrl:
       process.env.MCLAUNCH_POSTGRES_URL?.trim() ||
       "postgres://postgres:postgres@127.0.0.1:5432/mclaunch",

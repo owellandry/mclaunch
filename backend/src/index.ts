@@ -71,7 +71,7 @@ const bootstrap = async (): Promise<void> => {
     redis,
     env.hotupdatePackagesDir,
   );
-  services.loginService = new LoginService(env.publicBaseUrl, services.accountsService, services.tokenService, redis);
+  services.loginService = new LoginService(env, services.accountsService, services.tokenService, redis);
   services.startedAt = Date.now();
 
   const router = new Router();

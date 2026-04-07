@@ -3,6 +3,7 @@ import { Auth } from "msmc";
 import type { AccountsService, StoredAccount } from "../accounts/accounts.service";
 import type { TokenService } from "../../core/security/token-service";
 import type { RedisCache } from "../../infrastructure/redis/cache";
+import type { BackendEnv } from "../../config/env";
 
 type LoginStatus = "pending" | "completed" | "error" | "expired";
 
@@ -40,17 +41,23 @@ const getSessionKey = (id: string): string => `mclaunch:login:session:${id}`;
 
 export class LoginService {
   constructor(
-    private readonly publicBaseUrl: string,
+    private readonly env: BackendEnv,
     private readonly accountsService: AccountsService,
     private readonly tokenService: TokenService,
     private readonly cache: RedisCache,
   ) {}
 
   async start(prompt = "select_account"): Promise<Pick<LoginSession, "id" | "redirectUri" | "authorizeUrl" | "expiresAt">> {
+    if (!this.env.microsoftClientId) {
+      throw new Error(
+        "El login backend requiere una app propia de Microsoft. Configura MCLAUNCH_MICROSOFT_CLIENT_ID y registra un redirect fijo en MCLAUNCH_MICROSOFT_REDIRECT_URI.",
+      );
+    }
+
     const id = crypto.randomUUID();
-    const redirectUri = `${this.publicBaseUrl}/api/v1/login/callback/${id}`;
-    const auth = new Auth(prompt as "login" | "consent" | "select_account" | "none");
-    const authorizeUrl = auth.createLink(redirectUri);
+    const redirectUri = this.env.microsoftRedirectUri;
+    const auth = this.createAuth(prompt);
+    const authorizeUrl = this.attachState(auth.createLink(redirectUri), id);
     const expiresAt = Date.now() + LOGIN_TTL_MS;
 
     const session: LoginSession = {
@@ -94,7 +101,7 @@ export class LoginService {
     }
 
     try {
-      const auth = new Auth(session.prompt as "login" | "consent" | "select_account" | "none");
+      const auth = this.createAuth(session.prompt);
       const xbox = await auth.login(code, session.redirectUri);
       const mc = await xbox.getMinecraft();
       const profile = mc.profile as { id?: string; name?: string; skins?: Array<{ state?: string; url?: string }> };
@@ -149,5 +156,20 @@ export class LoginService {
     };
     await this.cache.setJson(getSessionKey(id), failed, 60 * 10);
     return failed;
+  }
+
+  private createAuth(prompt: string): Auth {
+    return new Auth({
+      client_id: this.env.microsoftClientId,
+      clientSecret: this.env.microsoftClientSecret || undefined,
+      redirect: this.env.microsoftRedirectUri,
+      prompt: prompt as "login" | "consent" | "select_account" | "none",
+    });
+  }
+
+  private attachState(authorizeUrl: string, state: string): string {
+    const url = new URL(authorizeUrl);
+    url.searchParams.set("state", state);
+    return url.toString();
   }
 }

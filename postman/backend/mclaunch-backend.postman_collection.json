@@ -167,7 +167,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/login/callback/{{sessionId}}?code={{callbackCode}}",
+              "raw": "{{baseUrl}}/api/v1/login/callback?state={{sessionId}}&code={{callbackCode}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -175,10 +175,13 @@
                 "api",
                 "v1",
                 "login",
-                "callback",
-                "{{sessionId}}"
+                "callback"
               ],
               "query": [
+                {
+                  "key": "state",
+                  "value": "{{sessionId}}"
+                },
                 {
                   "key": "code",
                   "value": "{{callbackCode}}"
