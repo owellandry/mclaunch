@@ -3,8 +3,13 @@
  * @description Plantilla principal para la landing page. Incluye la estructura base, el navbar minimalista y el footer.
  */
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Footer } from "../organisms/Footer";
 
 export function LandingLayout({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
+
   return (
     <div className="relative flex flex-col min-h-screen bg-surface overflow-hidden text-textMain selection:bg-primary/30">
       {/* Fondos y gradientes */}
@@ -13,13 +18,13 @@ export function LandingLayout({ children }: { children: ReactNode }) {
 
       {/* Navbar Simple */}
       <header className="relative z-50 flex items-center justify-between px-8 py-6 w-full max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="h-6 w-6 bg-primary rounded-sm shadow-[0_0_15px_var(--color-primary-shadow)] mc-cutout-small" />
-          <strong className="text-xl font-black uppercase tracking-widest text-textMain">MC Launch</strong>
-        </div>
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="h-6 w-6 bg-primary rounded-sm shadow-[0_0_15px_var(--color-primary-shadow)] mc-cutout-small group-hover:bg-primaryHover transition-colors" />
+          <strong className="text-xl font-black uppercase tracking-widest text-textMain group-hover:text-primary transition-colors">MC Launch</strong>
+        </Link>
         <nav className="hidden md:flex gap-8">
-          <a href="#features" className="text-sm font-bold uppercase tracking-widest text-textMuted hover:text-primary transition-colors">Características</a>
-          <a href="#download" className="text-sm font-bold uppercase tracking-widest text-textMuted hover:text-primary transition-colors">Descargar</a>
+          <a href="/#features" className="text-sm font-bold uppercase tracking-widest text-textMuted hover:text-primary transition-colors">{t("nav.features")}</a>
+          <a href="/#download" className="text-sm font-bold uppercase tracking-widest text-textMuted hover:text-primary transition-colors">{t("nav.download")}</a>
         </nav>
       </header>
 
@@ -28,10 +33,8 @@ export function LandingLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 py-8 text-center text-xs font-bold uppercase tracking-[0.2em] text-textMuted/50">
-        © 2026 MC Launch. No asociado con Mojang o Microsoft.
-      </footer>
+      {/* Footer Extraído */}
+      <Footer />
     </div>
   );
 }

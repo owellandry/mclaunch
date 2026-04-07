@@ -1,0 +1,49 @@
+{
+  "nav": {
+    "features": "Características",
+    "download": "Descargar"
+  },
+  "hero": {
+    "badge": "La nueva era de los Launchers",
+    "title_1": "Juega",
+    "title_mc": "Minecraft",
+    "title_2": "Sin Límites",
+    "desc": "Un launcher atómico, ultra-rápido, y visualmente espectacular. Soporte nativo para cuentas de Microsoft y mods de Fabric integrados directamente en el menú de inicio.",
+    "btn_download": "Descargar MC Launch",
+    "detected": "Detectado para"
+  },
+  "features": {
+    "title": "Diseñado para el Futuro",
+    "subtitle": "No es solo un launcher, es una extensión de tu experiencia de juego.",
+    "f1_title": "Diseño Atómico",
+    "f1_desc": "Interfaz Glassmorphism ultra rápida con animaciones fluidas y reactivas.",
+    "f2_title": "Cuentas Premium",
+    "f2_desc": "Soporte nativo y ultra seguro usando MSMC para cuentas Microsoft oficiales.",
+    "f3_title": "Mod Inyectable",
+    "f3_desc": "Menú principal de Java reimaginado por completo mostrando tu skin en 3D.",
+    "f4_title": "Alto Rendimiento",
+    "f4_desc": "Optimizado con Electron, Vite y React para consumir el mínimo de memoria RAM."
+  },
+  "download": {
+    "title": "Multiplataforma",
+    "subtitle": "Descarga la versión oficial para tu sistema operativo y comienza a disfrutar de una experiencia de juego sin precedentes.",
+    "recommended": "Recomendado"
+  },
+  "footer": {
+    "rights": "© 2026 MC Launch. No asociado con Mojang o Microsoft.",
+    "privacy": "Privacidad",
+    "terms": "Términos"
+  },
+  "privacy": {
+    "title": "Políticas de Privacidad",
+    "p1": "En MC Launch nos tomamos tu privacidad en serio. No recolectamos telemetría, no vendemos tus datos y no rastreamos tus sesiones de juego.",
+    "p2": "Tus tokens de Microsoft se almacenan exclusivamente en una base de datos SQLite cifrada de manera local en tu propia máquina.",
+    "p3": "Si tienes dudas sobre cómo manejamos la información, puedes revisar el código fuente abierto en nuestro repositorio."
+  },
+  "terms": {
+    "title": "Términos y Condiciones",
+    "p1": "El software se proporciona 'tal cual', sin garantía de ningún tipo, expresa o implícita. MC Launch no es un producto oficial de Minecraft ni de Mojang Studios.",
+    "p2": "El uso de este launcher requiere una copia legítima (Premium) de Minecraft asociada a una cuenta de Microsoft válida.",
+    "p3": "Al descargar este software, aceptas nuestra licencia MIT de código abierto."
+  }
+}

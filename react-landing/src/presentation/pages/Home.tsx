@@ -3,13 +3,15 @@
  * @description Página principal (Home). Agrupa el Hero y las Features.
  */
 import { HeroSection } from "../components/organisms/HeroSection";
-import { FeaturesSection } from "../components/organisms/FeaturesSection";
+import { FeaturesListSection } from "../components/organisms/FeaturesListSection";
+import { DownloadSection } from "../components/organisms/DownloadSection";
 
 export function Home() {
   return (
-    <div className="flex flex-col gap-12 w-full pb-20">
+    <div className="flex flex-col gap-12 w-full pb-20 animate-in fade-in duration-500">
       <HeroSection />
-      <FeaturesSection />
+      <FeaturesListSection />
+      <DownloadSection />
     </div>
   );
 }
