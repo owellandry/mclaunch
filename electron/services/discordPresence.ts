@@ -41,18 +41,13 @@ class DiscordPresenceService {
   private currentPresence: PresenceContext = createDefaultPresence();
 
   start(): void {
-    if (!this.clientId) {
-      return;
-    }
-
+    if (!this.clientId) return;
     this.setLauncherPresence();
     void this.connect();
   }
 
   stop(): void {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-    }
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 
     if (this.socket && this.isReady) {
       this.sendFrame(OPCODE_FRAME, {
@@ -85,9 +80,7 @@ class DiscordPresenceService {
   }
 
   private async connect(): Promise<void> {
-    if (!this.clientId || this.socket || this.isConnecting) {
-      return;
-    }
+    if (!this.clientId || this.socket || this.isConnecting) return;
 
     this.isConnecting = true;
 
@@ -110,9 +103,9 @@ class DiscordPresenceService {
 
   private getIpcPaths(): string[] {
     if (process.platform === "win32") {
-      return Array.from({ length: MAX_PIPE_INDEX }, (_, index) => [
-        `\\\\.\\pipe\\discord-ipc-${index}`,
-        `\\\\?\\pipe\\discord-ipc-${index}`,
+      return Array.from({ length: MAX_PIPE_INDEX }, (_, i) => [
+        `\\\\.\\pipe\\discord-ipc-${i}`,
+        `\\\\?\\pipe\\discord-ipc-${i}`,
       ]).flat();
     }
 
@@ -125,17 +118,21 @@ class DiscordPresenceService {
     ].filter(Boolean) as string[];
 
     return runtimeDirs.flatMap((dir) =>
-      Array.from({ length: MAX_PIPE_INDEX }, (_, index) => path.join(dir, `discord-ipc-${index}`))
+      Array.from({ length: MAX_PIPE_INDEX }, (_, i) =>
+        path.join(dir, `discord-ipc-${i}`)
+      )
     );
   }
 
   private connectToPath(ipcPath: string): Promise<net.Socket> {
     return new Promise((resolve, reject) => {
       const socket = net.createConnection(ipcPath);
+
       const handleError = (error: Error) => {
         socket.destroy();
         reject(error);
       };
+
       const handleConnect = () => {
         socket.off("error", handleError);
         resolve(socket);
@@ -151,15 +148,17 @@ class DiscordPresenceService {
     this.isConnecting = false;
     this.inboundBuffer = Buffer.alloc(0);
 
-    socket.on("data", (chunk) => this.handleData(chunk));
+    socket.on("data", (chunk) => {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      this.handleData(buffer);
+    });
+
     socket.on("error", () => this.handleDisconnect(socket));
     socket.on("close", () => this.handleDisconnect(socket));
   }
 
   private handleDisconnect(socket: net.Socket): void {
-    if (this.socket !== socket) {
-      return;
-    }
+    if (this.socket !== socket) return;
 
     this.socket = null;
     this.isReady = false;
@@ -169,9 +168,7 @@ class DiscordPresenceService {
   }
 
   private scheduleReconnect(): void {
-    if (!this.clientId || this.reconnectTimer) {
-      return;
-    }
+    if (!this.clientId || this.reconnectTimer) return;
 
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
@@ -186,9 +183,7 @@ class DiscordPresenceService {
       const opcode = this.inboundBuffer.readInt32LE(0);
       const payloadLength = this.inboundBuffer.readInt32LE(4);
 
-      if (this.inboundBuffer.length < 8 + payloadLength) {
-        return;
-      }
+      if (this.inboundBuffer.length < 8 + payloadLength) return;
 
       const payloadBuffer = this.inboundBuffer.subarray(8, 8 + payloadLength);
       this.inboundBuffer = this.inboundBuffer.subarray(8 + payloadLength);
@@ -196,10 +191,8 @@ class DiscordPresenceService {
       let payload: Record<string, unknown> = {};
       if (payloadBuffer.length > 0) {
         try {
-          payload = JSON.parse(payloadBuffer.toString("utf8")) as Record<string, unknown>;
-        } catch {
-          payload = {};
-        }
+          payload = JSON.parse(payloadBuffer.toString("utf8"));
+        } catch {}
       }
 
       if (opcode === OPCODE_PING) {
@@ -234,6 +227,7 @@ class DiscordPresenceService {
 
   private buildActivity(): Record<string, unknown> {
     const { mode, startedAt, username, version } = this.currentPresence;
+
     const base = {
       timestamps: { start: Math.floor(startedAt / 1000) },
       instance: false,
@@ -267,14 +261,14 @@ class DiscordPresenceService {
   }
 
   private sendFrame(opcode: number, payload: Record<string, unknown>): void {
-    if (!this.socket?.writable) {
-      return;
-    }
+    if (!this.socket?.writable) return;
 
     const payloadBuffer = Buffer.from(JSON.stringify(payload), "utf8");
     const header = Buffer.alloc(8);
+
     header.writeInt32LE(opcode, 0);
     header.writeInt32LE(payloadBuffer.length, 4);
+
     this.socket.write(Buffer.concat([header, payloadBuffer]));
   }
 }
