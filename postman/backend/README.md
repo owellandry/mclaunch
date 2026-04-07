@@ -10,9 +10,9 @@ Coleccion y environment listos para probar el backend remoto de MC Launch.
 ## Valores remotos incluidos
 
 - Host: `207.180.205.8`
-- Puerto: `8787`
-- Base URL: `http://207.180.205.8:8787`
-- WebSocket URL: `ws://207.180.205.8:8787/ws/v1/launcher`
+- Puerto: `8791`
+- Base URL: `http://207.180.205.8:8791`
+- WebSocket URL: `ws://207.180.205.8:8791/ws/v1/launcher`
 
 ## Variables utiles
 
