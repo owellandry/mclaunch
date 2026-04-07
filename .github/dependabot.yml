@@ -1,0 +1,53 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Bogota"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "javascript"
+    groups:
+      frontend:
+        patterns:
+          - "react*"
+          - "@types/react*"
+          - "@vitejs/*"
+          - "vite"
+          - "tailwindcss"
+          - "@tailwindcss/*"
+      desktop:
+        patterns:
+          - "electron"
+          - "electron-builder"
+          - "better-sqlite3"
+          - "minecraft-launcher-core"
+          - "msmc"
+
+  - package-ecosystem: "gradle"
+    directory: "/mc-home-client"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:15"
+      timezone: "America/Bogota"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "java"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:30"
+      timezone: "America/Bogota"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
