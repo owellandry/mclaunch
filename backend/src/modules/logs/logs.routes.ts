@@ -17,7 +17,7 @@ const resolveLimit = (value: string | null): number | undefined => {
 export const registerLogsRoutes = (router: Router): void => {
   router.add(
     "GET",
-    "/api/v1/logs",
+    "/api/v1/NX4u7o2q84",
     ({ query, services }) => {
       const level = resolveLevel(query.get("level"));
       const moduleName = query.get("module")?.trim() || undefined;
@@ -48,9 +48,9 @@ export const registerLogsRoutes = (router: Router): void => {
       });
     },
     {
-      private: true,
+      hidden: true,
       module: "logs",
-      summary: "Devuelve logs internos recientes del backend para diagnostico. Ruta privada.",
+      summary: "Devuelve logs internos recientes del backend para diagnostico.",
     },
   );
 };

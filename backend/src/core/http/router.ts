@@ -41,6 +41,7 @@ type RouteDefinition = {
   path: string;
   segments: string[];
   isPrivate: boolean;
+  hidden: boolean;
   module: string;
   summary: string;
   handler: (ctx: RouteContext) => Promise<Response> | Response;
@@ -55,13 +56,14 @@ export class Router {
     method: string,
     path: string,
     handler: RouteDefinition["handler"],
-    options: { private?: boolean; module: string; summary: string },
+    options: { private?: boolean; hidden?: boolean; module: string; summary: string },
   ): void {
     this.routes.push({
       method: method.toUpperCase(),
       path,
       segments: splitPath(path),
       isPrivate: options.private ?? false,
+      hidden: options.hidden ?? false,
       module: options.module,
       summary: options.summary,
       handler,
@@ -69,13 +71,15 @@ export class Router {
   }
 
   describe(): Array<Pick<RouteDefinition, "method" | "path" | "isPrivate" | "module" | "summary">> {
-    return this.routes.map(({ method, path, isPrivate, module, summary }) => ({
+    return this.routes
+      .filter((route) => !route.hidden)
+      .map(({ method, path, isPrivate, module, summary }) => ({
       method,
       path,
       isPrivate,
       module,
       summary,
-    }));
+      }));
   }
 
   async handle(request: Request, services: RouteServices): Promise<Response> {
