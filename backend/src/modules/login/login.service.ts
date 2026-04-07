@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { Auth } from "msmc";
+import { Auth, lexicon } from "msmc";
 import type { AccountsService, StoredAccount } from "../accounts/accounts.service";
 import type { TokenService } from "../../core/security/token-service";
 import type { RedisCache } from "../../infrastructure/redis/cache";
@@ -38,6 +38,65 @@ const resolveSkinUrl = (profile: { skins?: Array<{ state?: string; url?: string 
 };
 
 const getSessionKey = (id: string): string => `mclaunch:login:session:${id}`;
+
+const isResponseLike = (value: unknown): value is { status: number; statusText?: string; text: () => Promise<string> } => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.status === "number" && typeof candidate.text === "function";
+};
+
+const resolveResponseDetails = async (response: unknown): Promise<string | null> => {
+  if (!isResponseLike(response)) return null;
+
+  const fallback = response.statusText?.trim() ? `${response.status} ${response.statusText.trim()}` : `HTTP ${response.status}`;
+
+  try {
+    const rawBody = (await response.text()).trim();
+    if (!rawBody) return fallback;
+
+    try {
+      const parsed = JSON.parse(rawBody) as Record<string, unknown>;
+      const error = typeof parsed.error === "string" ? parsed.error : "";
+      const errorDescription =
+        typeof parsed.error_description === "string"
+          ? parsed.error_description
+          : typeof parsed.errorDescription === "string"
+            ? parsed.errorDescription
+            : "";
+      const description = errorDescription || error;
+      return description ? `${fallback}: ${description}` : fallback;
+    } catch {
+      return `${fallback}: ${rawBody}`;
+    }
+  } catch {
+    return fallback;
+  }
+};
+
+const resolveLoginErrorMessage = async (error: unknown): Promise<string> => {
+  if (error instanceof Error && error.message.trim()) return error.message.trim();
+  if (typeof error === "string" && error.trim()) return lexicon.wrapError(error).message;
+
+  if (typeof error === "object" && error !== null) {
+    const candidate = error as Record<string, unknown>;
+
+    if (typeof candidate.message === "string" && candidate.message.trim()) {
+      return candidate.message.trim();
+    }
+
+    if (typeof candidate.error === "string" && candidate.error.trim()) {
+      return candidate.error.trim();
+    }
+
+    if (typeof candidate.ts === "string" && candidate.ts.trim()) {
+      const wrapped = lexicon.wrapError(candidate);
+      const responseDetails = await resolveResponseDetails(candidate.response);
+      return responseDetails ? `${wrapped.message} (${responseDetails})` : wrapped.message;
+    }
+  }
+
+  return "No fue posible completar el login.";
+};
 
 export class LoginService {
   constructor(
@@ -136,10 +195,18 @@ export class LoginService {
       await this.cache.setJson(getSessionKey(id), completed, 60 * 30);
       return completed;
     } catch (error) {
+      const errorMessage = await resolveLoginErrorMessage(error);
+      console.error("[login] Error completando login Microsoft", {
+        sessionId: id,
+        redirectUri: session.redirectUri,
+        message: errorMessage,
+        rawError: error,
+      });
+
       const failed: LoginSession = {
         ...session,
         status: "error",
-        error: error instanceof Error ? error.message : "No fue posible completar el login.",
+        error: errorMessage,
       };
       await this.cache.setJson(getSessionKey(id), failed, 60 * 10);
       return failed;

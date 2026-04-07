@@ -80,7 +80,25 @@ export const useAppStore = create<AppState>((set, get) => {
         throw new Error("No se pudo abrir la ventana de autenticacion.");
       }
 
-      const status = await authApi.waitForLogin(session.sessionId);
+      const controller = new AbortController();
+      const popupClosedWatcher = window.setInterval(() => {
+        if (popup.closed && !controller.signal.aborted) {
+          controller.abort();
+        }
+      }, 400);
+
+      let status;
+      try {
+        status = await authApi.waitForLogin(session.sessionId, controller.signal);
+      } catch (error) {
+        if (controller.signal.aborted) {
+          throw new Error("Inicio de sesion cancelado por el usuario.");
+        }
+        throw error;
+      } finally {
+        window.clearInterval(popupClosedWatcher);
+        if (!popup.closed) popup.close();
+      }
 
       if (!status.result) {
         throw new Error("La API no devolvio la informacion final del login.");
