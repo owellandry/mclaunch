@@ -1,12 +1,15 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "../components/atoms/Button";
 import { Card } from "../components/atoms/Card";
+import { SlimeAnimationMob } from "../components/atoms/SlimeAnimationMob";
+import { clearTransitionDirection, INSTALLER_SLIME_TRANSITION_NAME } from "../lib/viewTransition";
 
 const installSteps = [
-  { title: "Escanear el sistema", desc: "Comprobando dependencias (Java, Node)..." },
-  { title: "Preparar runtime", desc: "Descargando MC Launch core y assets." },
-  { title: "Aplicar experiencia", desc: "Instalando configuraciones visuales." },
-  { title: "Verificar instalación", desc: "Registrando atajos y cerrando." },
+  { title: "Escanear el sistema", desc: "Comprobando dependencias y espacio disponible." },
+  { title: "Preparar runtime", desc: "Descargando MC Launch core y assets iniciales." },
+  { title: "Aplicar experiencia", desc: "Instalando configuraciones y accesos utiles." },
+  { title: "Verificar instalacion", desc: "Validando el entorno final del launcher." },
 ];
 
 export function Installing() {
@@ -14,50 +17,96 @@ export function Installing() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    clearTransitionDirection();
+  }, []);
+
+  useEffect(() => {
+    let finishTimer: number | undefined;
+
+    const timer = window.setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
-          clearInterval(timer);
-          setTimeout(() => navigate("/done"), 500);
+          window.clearInterval(timer);
+          if (finishTimer == null) {
+            finishTimer = window.setTimeout(() => {
+              navigate("/done", { viewTransition: true });
+            }, 350);
+          }
           return 100;
         }
-        return prev + Math.floor(Math.random() * 5) + 1;
+
+        return Math.min(100, prev + Math.floor(Math.random() * 5) + 1);
       });
     }, 100);
-    return () => clearInterval(timer);
+
+    return () => {
+      window.clearInterval(timer);
+      if (finishTimer != null) {
+        window.clearTimeout(finishTimer);
+      }
+    };
   }, [navigate]);
 
-  const activeStep = useMemo(() => Math.min(installSteps.length - 1, Math.floor((progress / 100) * installSteps.length)), [progress]);
+  const activeStep = useMemo(() => {
+    return Math.min(
+      installSteps.length - 1,
+      Math.floor((progress / 100) * installSteps.length),
+    );
+  }, [progress]);
 
   return (
-    <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full animate-in fade-in zoom-in duration-300">
-      <div className="flex items-end justify-between mb-4">
-        <div>
-          <p className="text-[10px] uppercase font-bold tracking-widest text-primary mb-1">PROGRESO DE INSTALACIÓN</p>
-          <h2 className="text-2xl font-black uppercase text-textMain">Instalando MC Launch</h2>
-        </div>
-        <span className="text-4xl font-black text-primary">{Math.min(progress, 100)}%</span>
-      </div>
+    <div className="flex-1 flex items-center justify-center animate-in fade-in zoom-in duration-300">
+      <div className="w-full max-w-4xl grid grid-cols-[280px_minmax(0,1fr)] gap-5 items-center installer-install-grid">
+        <Card className="p-5 relative overflow-hidden installer-slime-card h-full">
+          <div className="relative flex items-center justify-center h-full">
+            <SlimeAnimationMob
+              size={178}
+              transitionName={INSTALLER_SLIME_TRANSITION_NAME}
+            />
+          </div>
+        </Card>
 
-      <div className="h-4 bg-surfaceLight border border-white/10 rounded-full overflow-hidden mb-8">
-        <div 
-          className="h-full bg-gradient-to-r from-primary/50 via-primary to-primary/80 transition-all duration-300 shadow-[0_0_20px_var(--color-primary-shadow)]"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      <div className="flex flex-col gap-3">
-        {installSteps.map((step, index) => (
-          <Card key={index} className={`p-4 transition-all duration-500 ${index === activeStep ? 'border-primary shadow-[0_0_15px_var(--color-primary-shadow)] bg-surface' : index < activeStep ? 'opacity-50 border-transparent bg-transparent' : 'opacity-20 border-transparent bg-transparent'}`}>
-            <div className="flex items-center gap-4">
-              <span className={`text-xl font-bold ${index <= activeStep ? 'text-primary' : 'text-textMuted'}`}>0{index + 1}</span>
-              <div>
-                <strong className={`block text-sm uppercase font-bold ${index <= activeStep ? 'text-textMain' : 'text-textMuted'}`}>{step.title}</strong>
-                <p className="text-xs text-textMuted mt-1">{step.desc}</p>
-              </div>
+        <div className="flex flex-col justify-center gap-4 min-w-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase font-bold tracking-[0.35em] text-primary mb-2">
+                Instalacion en progreso
+              </p>
+              <h2 className="text-4xl font-black uppercase tracking-tight text-textMain leading-none">
+                Instalando
+                <br />
+                MC Launch
+              </h2>
             </div>
-          </Card>
-        ))}
+
+            <div className="shrink-0 text-right">
+              <span className="block text-4xl font-black text-primary leading-none">
+                {Math.min(progress, 100)}%
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.28em] text-textMuted">
+                Estado actual
+              </span>
+            </div>
+          </div>
+
+          <p className="text-textMuted text-sm leading-relaxed max-w-xl">
+            Estamos preparando los archivos base, accesos y configuracion inicial del launcher.
+            Apenas termine, pasamos automaticamente al cierre del instalador.
+          </p>
+
+          <div className="h-4 bg-surfaceLight/70 border border-black/8 overflow-hidden mc-button-cutout">
+            <div
+              className="h-full bg-primary transition-all duration-300 shadow-[0_0_18px_var(--color-primary-shadow)] mc-button-cutout"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+
+          <div className="flex items-center pt-1">
+            <div className="text-xs text-textMuted uppercase tracking-[0.18em]">
+              {installSteps[activeStep].title}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

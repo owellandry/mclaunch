@@ -106,10 +106,41 @@
   animation-name: app-view-in;
 }
 
+/* Installer-specific root slide direction (/ → /install) */
+:root[data-installer-transition="forward"] ::view-transition-old(root) {
+  animation-name: app-slide-out-left;
+}
+
+:root[data-installer-transition="forward"] ::view-transition-new(root) {
+  animation-name: app-slide-in-right;
+}
+
 ::view-transition-group(player-profile-chip),
 ::view-transition-group(player-avatar) {
   animation-duration: 420ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-group(installer-slime-mob) {
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.34, 1.28, 0.64, 1);
+  z-index: 12;
+}
+
+::view-transition-old(installer-slime-mob),
+::view-transition-new(installer-slime-mob) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  mix-blend-mode: normal;
+  transform-origin: center center;
+}
+
+::view-transition-old(installer-slime-mob) {
+  animation-name: installer-slime-shared-old;
+}
+
+::view-transition-new(installer-slime-mob) {
+  animation-name: installer-slime-shared-new;
 }
 
 ::view-transition-old(player-profile-chip),
@@ -258,6 +289,54 @@
   }
 }
 
+@keyframes installer-slime-shared-old {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes installer-slime-shared-new {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes app-slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.992);
+    filter: blur(6px);
+  }
+}
+
+@keyframes app-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
 @keyframes boot-loader {
   0% {
     transform: translateX(-115%);
@@ -370,6 +449,12 @@
   background-image: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+.installer-install-grid,
+.installer-done-grid {
+  min-height: 100%;
+  align-items: stretch;
 }
 
 @keyframes slime-bounce {

@@ -1,14 +1,23 @@
+import type { CSSProperties } from "react";
+
 type SlimeAnimationMobProps = {
   size?: number;
   className?: string;
+  transitionName?: string;
 };
 
-export function SlimeAnimationMob({ size = 148, className = "" }: SlimeAnimationMobProps) {
+export function SlimeAnimationMob({
+  size = 148,
+  className = "",
+  transitionName,
+}: SlimeAnimationMobProps) {
+  const style = {
+    ["--slime-size" as string]: `${size}px`,
+    ...(transitionName ? { viewTransitionName: transitionName } : {}),
+  } as CSSProperties;
+
   return (
-    <div
-      className={`slime-mob-shell ${className}`}
-      style={{ ["--slime-size" as string]: `${size}px` }}
-    >
+    <div className={`slime-mob-shell ${className}`} style={style}>
       <div className="slime">
         <div className="inner-layer inner-front" />
         <div className="inner-layer inner-right" />
