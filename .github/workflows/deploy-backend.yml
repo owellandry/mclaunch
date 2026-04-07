@@ -9,6 +9,24 @@ on:
       - "backend/**"
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
+    inputs:
+      deploy_host:
+        description: Host remoto del backend
+        required: false
+        type: string
+      deploy_port:
+        description: Puerto SSH remoto
+        required: false
+        default: "22"
+        type: string
+      deploy_user:
+        description: Usuario SSH remoto
+        required: false
+        type: string
+      deploy_path:
+        description: Ruta remota donde vive backend/
+        required: false
+        type: string
 
 concurrency:
   group: deploy-backend
@@ -18,13 +36,42 @@ jobs:
   deploy:
     name: Deploy to Server
     runs-on: ubuntu-latest
-    if: ${{ vars.BACKEND_DEPLOY_HOST != '' && vars.BACKEND_DEPLOY_USER != '' && vars.BACKEND_DEPLOY_PATH != '' }}
     permissions:
       contents: read
+    env:
+      DEPLOY_HOST: ${{ github.event.inputs.deploy_host || vars.BACKEND_DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ github.event.inputs.deploy_port || vars.BACKEND_DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ github.event.inputs.deploy_user || vars.BACKEND_DEPLOY_USER }}
+      DEPLOY_PATH: ${{ github.event.inputs.deploy_path || vars.BACKEND_DEPLOY_PATH }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Validate deploy settings
+        env:
+          DEPLOY_KEY: ${{ secrets.BACKEND_DEPLOY_SSH_KEY }}
+        run: |
+          missing=0
+          if [ -z "${DEPLOY_HOST}" ]; then
+            echo "::error::Falta DEPLOY_HOST. Define vars.BACKEND_DEPLOY_HOST o el input deploy_host."
+            missing=1
+          fi
+          if [ -z "${DEPLOY_USER}" ]; then
+            echo "::error::Falta DEPLOY_USER. Define vars.BACKEND_DEPLOY_USER o el input deploy_user."
+            missing=1
+          fi
+          if [ -z "${DEPLOY_PATH}" ]; then
+            echo "::error::Falta DEPLOY_PATH. Define vars.BACKEND_DEPLOY_PATH o el input deploy_path."
+            missing=1
+          fi
+          if [ -z "${DEPLOY_KEY}" ]; then
+            echo "::error::Falta secrets.BACKEND_DEPLOY_SSH_KEY."
+            missing=1
+          fi
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
 
       - name: Prepare SSH key
         env:
@@ -36,7 +83,7 @@ jobs:
 
       - name: Trust server host key
         run: |
-          ssh-keyscan -p "${{ vars.BACKEND_DEPLOY_PORT || '22' }}" -H "${{ vars.BACKEND_DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
 
       - name: Sync backend files
         run: |
@@ -46,12 +93,12 @@ jobs:
             --exclude 'node_modules' \
             --exclude '.git' \
             ./backend/ \
-            "${{ vars.BACKEND_DEPLOY_USER }}@${{ vars.BACKEND_DEPLOY_HOST }}:${{ vars.BACKEND_DEPLOY_PATH }}/"
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
         env:
-          RSYNC_RSH: ssh -i ~/.ssh/mclaunch_backend -p ${{ vars.BACKEND_DEPLOY_PORT || '22' }}
+          RSYNC_RSH: ssh -i ~/.ssh/mclaunch_backend -p ${{ env.DEPLOY_PORT }}
 
       - name: Install and restart backend
         run: |
-          ssh -i ~/.ssh/mclaunch_backend -p "${{ vars.BACKEND_DEPLOY_PORT || '22' }}" \
-            "${{ vars.BACKEND_DEPLOY_USER }}@${{ vars.BACKEND_DEPLOY_HOST }}" \
+          ssh -i ~/.ssh/mclaunch_backend -p "${DEPLOY_PORT}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
             "/usr/local/bin/mclaunch-backend-deploy"
