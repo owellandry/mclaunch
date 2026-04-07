@@ -23,7 +23,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Configurar Java 21 para CI
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: x64
 
       - name: Make scripts executable
         run: chmod +x react-installer/script/linux/x64/*.sh
@@ -42,8 +49,6 @@ jobs:
 
       - name: "[2/3] Verificacion e instalacion de Java"
         run: |
-          # Forzar escenario de instalacion eliminando java del PATH del runner
-          # para probar que el script instala correctamente si Java < 21 o no existe
           echo "Java actual en el runner:"
           java -version 2>&1 || true
 
@@ -72,7 +77,14 @@ jobs:
     runs-on: ubuntu-24.04-arm
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Configurar Java 21 para CI
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: aarch64
 
       - name: Make scripts executable
         run: chmod +x react-installer/script/linux/arm64/*.sh
@@ -113,10 +125,17 @@ jobs:
   # ─────────────────────────────────────────
   macos-x64:
     name: macOS x64 (Intel)
-    runs-on: macos-13
+    runs-on: macos-15-intel
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Configurar Java 21 para CI
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: x64
 
       - name: Make scripts executable
         run: chmod +x react-installer/script/macos/x64/*.sh
@@ -163,7 +182,14 @@ jobs:
     runs-on: macos-14
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+
+      - name: Configurar Java 21 para CI
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: aarch64
 
       - name: Make scripts executable
         run: chmod +x react-installer/script/macos/arm64/*.sh

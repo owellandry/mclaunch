@@ -13,7 +13,7 @@ chmod +x "$SCRIPT_DIR/01-detect.sh" "$SCRIPT_DIR/02-check-java.sh"
 
 log_step 1 3 "Detectando entorno del sistema..."
 DETECT_JSON=$("$SCRIPT_DIR/01-detect.sh")
-LOCALE=$(echo "$DETECT_JSON" | grep -oE '"locale": "[^"]+"' | grep -oE '"[^"]+$' | tr -d '"')
+LOCALE=$(printf '%s' "$DETECT_JSON" | python3 -c 'import json, sys; print(json.load(sys.stdin).get("locale", "unknown"))')
 log_step 1 3 "Entorno detectado: macOS x64 (Intel), locale=$LOCALE"
 
 log_step 2 3 "Verificando Java (minimo v21)..."
