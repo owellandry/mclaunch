@@ -274,12 +274,15 @@ export class LoginService {
   }
 
   private createAuth(prompt: string): Auth {
-    return new Auth({
+    const options: ConstructorParameters<typeof Auth>[0] = {
       client_id: this.env.microsoftClientId,
-      clientSecret: this.env.microsoftClientSecret || undefined,
       redirect: this.env.microsoftRedirectUri,
       prompt: prompt as "login" | "consent" | "select_account" | "none",
-    });
+    };
+    if (this.env.microsoftClientSecret) {
+      options.clientSecret = this.env.microsoftClientSecret;
+    }
+    return new Auth(options);
   }
 
   private attachState(authorizeUrl: string, state: string): string {
