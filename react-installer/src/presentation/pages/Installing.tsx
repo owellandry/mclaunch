@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "../components/atoms/Button";
 import { Card } from "../components/atoms/Card";
 import { SlimeAnimationMob } from "../components/atoms/SlimeAnimationMob";
 import { clearTransitionDirection, INSTALLER_SLIME_TRANSITION_NAME } from "../lib/viewTransition";

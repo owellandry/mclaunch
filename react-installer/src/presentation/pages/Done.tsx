@@ -35,7 +35,7 @@ export function Done() {
 
           <div className="flex gap-3 flex-wrap">
             <Button
-              onClick={() => window.installerApi?.launchApp()}
+              onClick={() => (window as any).installerApi?.launchApp?.()}
               variant="primary"
               className="px-8 py-3 text-sm"
             >

@@ -57,11 +57,13 @@ jobs:
       - name: Verificar Java >= 21 disponible
         shell: pwsh
         run: |
-          # Refrescar PATH por si se acaba de instalar Java
-          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
-                      [System.Environment]::GetEnvironmentVariable("Path","User")
+          $javaBin = if ($env:JAVA_HOME) {
+              Join-Path $env:JAVA_HOME "bin\java.exe"
+          } else {
+              "java"
+          }
 
-          $raw = & java -version 2>&1 | Select-String "version" | Select-Object -First 1
+          $raw = & $javaBin -version 2>&1 | Select-String "version" | Select-Object -First 1
           Write-Host "java -version: $raw"
 
           if ($raw -match '"(\d+)(?:\.(\d+))?') {
@@ -128,10 +130,13 @@ jobs:
       - name: Verificar Java >= 21 disponible
         shell: pwsh
         run: |
-          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" +
-                      [System.Environment]::GetEnvironmentVariable("Path","User")
+          $javaBin = if ($env:JAVA_HOME) {
+              Join-Path $env:JAVA_HOME "bin\java.exe"
+          } else {
+              "java"
+          }
 
-          $raw = & java -version 2>&1 | Select-String "version" | Select-Object -First 1
+          $raw = & $javaBin -version 2>&1 | Select-String "version" | Select-Object -First 1
           Write-Host "java -version: $raw"
 
           if ($raw -match '"(\d+)(?:\.(\d+))?') {
