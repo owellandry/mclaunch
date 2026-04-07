@@ -1,0 +1,34 @@
+/**
+ * @file DownloadCard.tsx
+ * @description Componente molécula que presenta una opción de descarga y muestra si es recomendada.
+ */
+import { Button } from "../atoms/Button";
+import { Card } from "../atoms/Card";
+import { DownloadOption } from "../../../domain/entities/OS";
+import { Download } from "lucide-react";
+
+interface DownloadCardProps {
+  option: DownloadOption;
+  isRecommended?: boolean;
+}
+
+export function DownloadCard({ option, isRecommended }: DownloadCardProps) {
+  return (
+    <Card className={`relative flex flex-col p-8 transition-all hover:-translate-y-1 ${isRecommended ? 'border-primary/50 shadow-[0_0_30px_var(--color-primary-shadow)]' : 'border-white/5 opacity-80 hover:opacity-100'}`}>
+      {isRecommended && (
+        <div className="absolute -top-3 right-6 bg-primary text-background px-3 py-1 text-[10px] font-black uppercase tracking-widest mc-cutout-small">
+          Recomendado
+        </div>
+      )}
+      
+      <div className="mb-8">
+        <h3 className="text-xl font-black uppercase tracking-tight text-textMain mb-2">{option.os === "mac" ? "macOS" : option.os}</h3>
+        <p className="text-sm text-textMuted font-medium">{option.filename}</p>
+      </div>
+
+      <Button variant={isRecommended ? "primary" : "secondary"} className="w-full mt-auto py-4" icon={<Download size={18} />}>
+        {option.label}
+      </Button>
+    </Card>
+  );
+}

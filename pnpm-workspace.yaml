@@ -1,3 +1,4 @@
 packages:
   - "react-ui"
   - "react-installer"
+  - "react-landing"
