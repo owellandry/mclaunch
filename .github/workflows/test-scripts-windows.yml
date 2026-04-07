@@ -1,0 +1,160 @@
+name: Test Install Scripts (Windows)
+
+on:
+  push:
+    branches: ["master", "main"]
+    paths:
+      - "react-installer/script/windows/**"
+      - ".github/workflows/test-scripts-windows.yml"
+  pull_request:
+    branches: ["master", "main"]
+    paths:
+      - "react-installer/script/windows/**"
+      - ".github/workflows/test-scripts-windows.yml"
+
+jobs:
+  # ─────────────────────────────────────────
+  # Windows x64
+  # ─────────────────────────────────────────
+  windows-x64:
+    name: Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configurar Java 21 para CI
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: x64
+
+      - name: "[1/3] Deteccion del entorno"
+        id: detect
+        shell: pwsh
+        run: |
+          $output = & "react-installer\script\windows\x64\01-detect.ps1"
+          Write-Host $output
+
+          # Validar que la salida sea JSON valido
+          $parsed = $output | ConvertFrom-Json
+          if (-not $parsed) { throw "01-detect.ps1 no devolvio JSON valido" }
+
+          "lang=$($parsed.lang)" >> $env:GITHUB_OUTPUT
+          "arch=$($parsed.arch)" >> $env:GITHUB_OUTPUT
+          Write-Host "Detectado: $($parsed.os) $($parsed.arch), locale=$($parsed.locale)"
+
+      - name: "[2/3] Verificacion e instalacion de Java"
+        shell: pwsh
+        run: |
+          Write-Host "Java actual en el runner:"
+          try { & java -version 2>&1 | Write-Host } catch { Write-Host "Java no encontrado" }
+          Write-Host "---"
+          & "react-installer\script\windows\x64\02-check-java.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verificar Java >= 21 disponible
+        shell: pwsh
+        run: |
+          $javaBin = if ($env:JAVA_HOME) {
+              Join-Path $env:JAVA_HOME "bin\java.exe"
+          } else {
+              "java"
+          }
+
+          $raw = & $javaBin -version 2>&1 | Select-String "version" | Select-Object -First 1
+          Write-Host "java -version: $raw"
+
+          if ($raw -match '"(\d+)(?:\.(\d+))?') {
+              $major = [int]$Matches[1]
+              if ($major -eq 1 -and $Matches[2]) { $major = [int]$Matches[2] }
+          } else {
+              throw "No se pudo leer la version de Java"
+          }
+
+          Write-Host "Java major version: $major"
+          if ($major -lt 21) {
+              Write-Error "FAIL: Java $major < 21"
+              exit 1
+          }
+          Write-Host "OK: Java $major >= 21"
+
+      - name: "[3/3] Instalador principal (dry run)"
+        shell: pwsh
+        run: |
+          & "react-installer\script\windows\x64\03-install.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  # ─────────────────────────────────────────
+  # Windows ARM64
+  # Requiere runner windows-11-arm (GitHub Team/Enterprise o self-hosted)
+  # ─────────────────────────────────────────
+  windows-arm64:
+    name: Windows ARM64
+    runs-on: windows-11-arm
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configurar Java 21 para CI
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          architecture: aarch64
+
+      - name: "[1/3] Deteccion del entorno"
+        id: detect
+        shell: pwsh
+        run: |
+          $output = & "react-installer\script\windows\arm64\01-detect.ps1"
+          Write-Host $output
+
+          $parsed = $output | ConvertFrom-Json
+          if (-not $parsed) { throw "01-detect.ps1 no devolvio JSON valido" }
+
+          "lang=$($parsed.lang)" >> $env:GITHUB_OUTPUT
+          "arch=$($parsed.arch)" >> $env:GITHUB_OUTPUT
+          Write-Host "Detectado: $($parsed.os) $($parsed.arch), locale=$($parsed.locale)"
+
+      - name: "[2/3] Verificacion e instalacion de Java"
+        shell: pwsh
+        run: |
+          Write-Host "Java actual en el runner:"
+          try { & java -version 2>&1 | Write-Host } catch { Write-Host "Java no encontrado" }
+          Write-Host "---"
+          & "react-installer\script\windows\arm64\02-check-java.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Verificar Java >= 21 disponible
+        shell: pwsh
+        run: |
+          $javaBin = if ($env:JAVA_HOME) {
+              Join-Path $env:JAVA_HOME "bin\java.exe"
+          } else {
+              "java"
+          }
+
+          $raw = & $javaBin -version 2>&1 | Select-String "version" | Select-Object -First 1
+          Write-Host "java -version: $raw"
+
+          if ($raw -match '"(\d+)(?:\.(\d+))?') {
+              $major = [int]$Matches[1]
+              if ($major -eq 1 -and $Matches[2]) { $major = [int]$Matches[2] }
+          } else {
+              throw "No se pudo leer la version de Java"
+          }
+
+          Write-Host "Java major version: $major"
+          if ($major -lt 21) {
+              Write-Error "FAIL: Java $major < 21"
+              exit 1
+          }
+          Write-Host "OK: Java $major >= 21"
+
+      - name: "[3/3] Instalador principal (dry run)"
+        shell: pwsh
+        run: |
+          & "react-installer\script\windows\arm64\03-install.ps1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
