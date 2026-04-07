@@ -14,6 +14,7 @@ import { app, BrowserWindow, Menu, session, ipcMain } from "electron";
 import path from "node:path";
 import { registerLauncherIpc } from "./ipc/launcher";
 import { discordPresence } from "./services/discordPresence";
+import { launcherActivitySocket } from "./services/launcherActivitySocket";
 
 // ── FLAGS DE RENDIMIENTO (Electron 34+ / Chromium 132) ─────────────────────
 app.commandLine.appendSwitch("disable-gpu-shader-disk-cache"); // Evita errores "Access denied"
@@ -104,7 +105,14 @@ const createWindow = async (): Promise<void> => {
 
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
-  discordPresence.start();
+  const apiBaseUrl = process.env.MCLAUNCH_API_BASE_URL?.trim();
+  launcherActivitySocket.start({
+    apiBaseUrl,
+    launcherVersion: app.getVersion(),
+    onWelcomeConfig: ({ discordClientId }) => {
+      void discordPresence.start({ clientId: discordClientId });
+    },
+  });
 
   // Registrar IPC solo UNA vez (evita duplicados)
   if (!hasRegisteredIpc) {
@@ -137,6 +145,7 @@ app.whenReady().then(async () => {
 });
 
 app.on("before-quit", () => {
+  launcherActivitySocket.stop();
   discordPresence.stop();
 });
 

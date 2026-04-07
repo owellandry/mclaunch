@@ -1,0 +1,777 @@
+{
+  "info": {
+    "_postman_id": "25ff8fe9-dcf6-4f91-8f6a-2c7609f9b1de",
+    "name": "MC Launch Backend",
+    "description": "Coleccion base para probar las rutas publicas y privadas del backend remoto de MC Launch.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://207.180.205.8:8787"
+    },
+    {
+      "key": "wsUrl",
+      "value": "ws://207.180.205.8:8787/ws/v1/launcher"
+    }
+  ],
+  "item": [
+    {
+      "name": "Meta",
+      "item": [
+        {
+          "name": "API Index",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api"
+              ]
+            },
+            "description": "Indice de rutas publicas y privadas registradas por el backend."
+          }
+        },
+        {
+          "name": "Public Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public-config"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Launcher Socket URL Reference",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/public-config",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "public-config"
+              ]
+            },
+            "description": "Referencia HTTP. El socket del launcher vive en {{wsUrl}}."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "Start",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body?.data?.sessionId) pm.environment.set('sessionId', body.data.sessionId);",
+                  "if (body?.data?.authorizeUrl) pm.environment.set('authorizeUrl', body.data.authorizeUrl);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/login/start?prompt=select_account",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "login",
+                "start"
+              ],
+              "query": [
+                {
+                  "key": "prompt",
+                  "value": "select_account"
+                }
+              ]
+            },
+            "description": "Inicia el flujo OAuth. Guarda sessionId y authorizeUrl en el environment."
+          }
+        },
+        {
+          "name": "Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/login/status/{{sessionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "login",
+                "status",
+                "{{sessionId}}"
+              ]
+            },
+            "description": "Consulta el estado actual del login usando la sessionId guardada."
+          }
+        },
+        {
+          "name": "Callback",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/login/callback/{{sessionId}}?code={{callbackCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "login",
+                "callback",
+                "{{sessionId}}"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{callbackCode}}"
+                }
+              ]
+            },
+            "description": "Normalmente esta ruta la llama Microsoft al redirigir. Se deja para pruebas manuales."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/login/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "login",
+                "logout"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Create Local Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Owen Test\",\n  \"email\": \"owen@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Accounts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Downloads",
+      "item": [
+        {
+          "name": "List Downloads",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const first = body?.data?.items?.[0];",
+                  "if (first?.fileName) pm.environment.set('downloadFileName', first.fileName);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/downloads?app={{downloadApp}}&platform={{downloadPlatform}}&arch={{downloadArch}}&kind={{downloadKind}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "downloads"
+              ],
+              "query": [
+                {
+                  "key": "app",
+                  "value": "{{downloadApp}}"
+                },
+                {
+                  "key": "platform",
+                  "value": "{{downloadPlatform}}"
+                },
+                {
+                  "key": "arch",
+                  "value": "{{downloadArch}}"
+                },
+                {
+                  "key": "kind",
+                  "value": "{{downloadKind}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolve Download",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/downloads/resolve?app={{downloadApp}}&platform={{downloadPlatform}}&arch={{downloadArch}}&kind={{downloadKind}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "downloads",
+                "resolve"
+              ],
+              "query": [
+                {
+                  "key": "app",
+                  "value": "{{downloadApp}}"
+                },
+                {
+                  "key": "platform",
+                  "value": "{{downloadPlatform}}"
+                },
+                {
+                  "key": "arch",
+                  "value": "{{downloadArch}}"
+                },
+                {
+                  "key": "kind",
+                  "value": "{{downloadKind}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/downloads/files/{{downloadApp}}/{{downloadFileName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "downloads",
+                "files",
+                "{{downloadApp}}",
+                "{{downloadFileName}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reindex Downloads",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/downloads/reindex",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "downloads",
+                "reindex"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hotupdates",
+      "item": [
+        {
+          "name": "List Hotupdates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const first = body?.data?.items?.[0];",
+                  "if (first?.fileName) pm.environment.set('hotupdateFileName', first.fileName);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotupdates?platform={{hotupdatePlatform}}&arch={{hotupdateArch}}&channel={{hotupdateChannel}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotupdates"
+              ],
+              "query": [
+                {
+                  "key": "platform",
+                  "value": "{{hotupdatePlatform}}"
+                },
+                {
+                  "key": "arch",
+                  "value": "{{hotupdateArch}}"
+                },
+                {
+                  "key": "channel",
+                  "value": "{{hotupdateChannel}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Resolve Hotupdate",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotupdates/resolve?platform={{hotupdatePlatform}}&arch={{hotupdateArch}}&channel={{hotupdateChannel}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotupdates",
+                "resolve"
+              ],
+              "query": [
+                {
+                  "key": "platform",
+                  "value": "{{hotupdatePlatform}}"
+                },
+                {
+                  "key": "arch",
+                  "value": "{{hotupdateArch}}"
+                },
+                {
+                  "key": "channel",
+                  "value": "{{hotupdateChannel}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Download Hotupdate File",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotupdates/files/{{hotupdateFileName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotupdates",
+                "files",
+                "{{hotupdateFileName}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reindex Hotupdates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/hotupdates/reindex",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "hotupdates",
+                "reindex"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Banners",
+      "item": [
+        {
+          "name": "List Public Banners",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/banners?placement=home",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "banners"
+              ],
+              "query": [
+                {
+                  "key": "placement",
+                  "value": "home"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Admin Banners",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/banners/admin?placement=home&includeInactive=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "banners",
+                "admin"
+              ],
+              "query": [
+                {
+                  "key": "placement",
+                  "value": "home"
+                },
+                {
+                  "key": "includeInactive",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Banner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body?.data?.id) pm.environment.set('bannerId', body.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slug\": \"home-launcher-main\",\n  \"title\": \"Banner principal\",\n  \"subtitle\": \"Probando Postman\",\n  \"imageUrl\": \"https://example.com/banner.png\",\n  \"mobileImageUrl\": \"https://example.com/banner-mobile.png\",\n  \"targetUrl\": \"https://mclaunch.app\",\n  \"placement\": \"home\",\n  \"variant\": \"hero\",\n  \"isActive\": true,\n  \"sortOrder\": 1,\n  \"startsAt\": null,\n  \"endsAt\": null,\n  \"metadata\": {\n    \"source\": \"postman\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/banners",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "banners"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Banner",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Banner principal actualizado\",\n  \"subtitle\": \"Actualizado desde Postman\",\n  \"sortOrder\": 2,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/banners/{{bannerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "banners",
+                "{{bannerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Banner",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/banners/{{bannerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "banners",
+                "{{bannerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reindex Banners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/banners/reindex",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "banners",
+                "reindex"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  }
+}
