@@ -9,7 +9,7 @@
 // - No se bloquea el hilo principal
 // - Documentación completa JSDoc para entender cada método
 
-import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
+import { contextBridge, ipcRenderer, IpcRendererEvent, shell } from "electron";
 import type { LaunchPayload, MinecraftVersion } from "./ipc/launcher";
 
 /**
@@ -34,7 +34,10 @@ const CHANNELS = {
   loginMicrosoft: "auth:loginMicrosoft",
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
+  setBackendSession: "auth:setBackendSession",
 } as const;
+
+const DEFAULT_API_BASE_URL = "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
 
 /**
  * Estados posibles del launcher (usado por la UI para mostrar feedback en tiempo real)
@@ -97,6 +100,14 @@ const api = {
     return ipcRenderer.invoke(CHANNELS.loginMicrosoft);
   },
 
+  setBackendAuthSession: (payload: {
+    msmcToken: string;
+    mclcAuth: unknown;
+    profile: unknown;
+  }): Promise<any> => {
+    return ipcRenderer.invoke(CHANNELS.setBackendSession, payload);
+  },
+
   logoutMicrosoft: (): Promise<boolean> => {
     return ipcRenderer.invoke(CHANNELS.logoutMicrosoft);
   },
@@ -115,6 +126,14 @@ const api = {
 
   restartApp: (): void => {
     ipcRenderer.send(CHANNELS.restartApp);
+  },
+
+  getApiBaseUrl: (): string => {
+    return process.env.MCLAUNCH_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
+  },
+
+  openExternal: (url: string): Promise<void> => {
+    return shell.openExternal(url).then(() => undefined);
   },
 
   // Controles de ventana (rápidos, fire-and-forget)

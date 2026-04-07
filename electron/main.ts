@@ -27,6 +27,15 @@ app.commandLine.appendSwitch("disable-web-security", "false"); // Seguridad prim
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 const shouldOpenDevTools = process.env.OPEN_ELECTRON_DEVTOOLS === "1";
 const rendererDistPath = path.join(__dirname, "..", "react-ui", "dist");
+const configuredApiBaseUrl = process.env.MCLAUNCH_API_BASE_URL?.trim() || "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
+const configuredApiOrigin = (() => {
+  try {
+    return new URL(configuredApiBaseUrl).origin;
+  } catch {
+    return "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
+  }
+})();
+const configuredApiWsOrigin = configuredApiOrigin.replace(/^http/i, "ws");
 
 let mainWindow: BrowserWindow | null = null;
 let hasRegisteredIpc = false;
@@ -39,18 +48,18 @@ const DEV_CSP = [
   "default-src 'self' http://localhost:5173 ws://localhost:5173",
   "script-src 'self' 'unsafe-inline' http://localhost:5173",
   "style-src 'self' 'unsafe-inline' http://localhost:5173",
-  "img-src 'self' data: blob: http://localhost:5173 https://mc-heads.net https://textures.minecraft.net http://textures.minecraft.net",
+  `img-src 'self' data: blob: http://localhost:5173 https: ${configuredApiOrigin}`,
   "font-src 'self' data:",
-  "connect-src 'self' http://localhost:5173 ws://localhost:5173",
+  `connect-src 'self' http://localhost:5173 ws://localhost:5173 ${configuredApiOrigin} ${configuredApiWsOrigin}`,
 ].join("; ");
 
 const PROD_CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://mc-heads.net https://textures.minecraft.net http://textures.minecraft.net",
+  `img-src 'self' data: blob: https: ${configuredApiOrigin}`,
   "font-src 'self' data:",
-  "connect-src 'self'",
+  `connect-src 'self' ${configuredApiOrigin} ${configuredApiWsOrigin}`,
 ].join("; ");
 
 const shouldInjectAppCsp = (url: string): boolean => {

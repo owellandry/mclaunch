@@ -7,6 +7,8 @@
 import { create } from "zustand";
 import type { LauncherStatus, MinecraftVersion } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
+import { contentApi } from "../../infrastructure/api/contentApi";
+import type { BackendBanner } from "../../infrastructure/api/backendClient";
 import { useAppStore } from "./useAppStore";
 import { useNotificationStore } from "./useNotificationStore";
 
@@ -19,11 +21,13 @@ interface LauncherState {
   launchedVersionWasDownloaded: boolean;
   weeklyActivity: number[];
   statistics: { win_rate: number; kda: number };
+  homeBanners: BackendBanner[];
   setStatus: (status: LauncherStatus) => void;
   addLog: (log: string) => void;
   clearLogs: () => void;
   fetchVersions: () => Promise<void>;
   fetchDbData: () => Promise<void>;
+  fetchHomeBanners: () => Promise<void>;
   hydrateDashboard: (force?: boolean) => Promise<void>;
   launch: () => void;
   initListeners: () => () => void;
@@ -46,6 +50,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   launchedVersionWasDownloaded: false,
   weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
   statistics: { win_rate: 0, kda: 0 },
+  homeBanners: [],
   setStatus: (status) => set({ status }),
   addLog: (log) =>
     set((state) => ({
@@ -78,6 +83,15 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       throw e;
     }
   },
+  fetchHomeBanners: async () => {
+    try {
+      const homeBanners = await contentApi.getHomeBanners();
+      set({ homeBanners });
+    } catch (e) {
+      console.error(e);
+      set({ homeBanners: [] });
+    }
+  },
   hydrateDashboard: async (force = false) => {
     const { gameDir } = useAppStore.getState().config;
     const now = Date.now();
@@ -90,7 +104,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       return;
     }
 
-    dashboardHydrationPromise = Promise.all([get().fetchVersions(), get().fetchDbData()])
+    dashboardHydrationPromise = Promise.all([get().fetchVersions(), get().fetchDbData(), get().fetchHomeBanners()])
       .then(() => {
         lastHydratedAt = Date.now();
         lastHydratedGameDir = gameDir;

@@ -4,6 +4,7 @@ import type { LauncherConfig } from "../../core/domain/launcher";
 
 const PROFILE_KEY = "nebula_profile";
 const CONFIG_KEY = "nebula_launcher_config";
+const BACKEND_ACCESS_TOKEN_KEY = "nebula_backend_access_token";
 
 export class LocalStorageAdapter implements IStoragePort {
   getProfile(): UserProfile | null {
@@ -13,6 +14,18 @@ export class LocalStorageAdapter implements IStoragePort {
 
   saveProfile(profile: UserProfile): void {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  }
+
+  getBackendAccessToken(): string | null {
+    return localStorage.getItem(BACKEND_ACCESS_TOKEN_KEY);
+  }
+
+  saveBackendAccessToken(token: string): void {
+    localStorage.setItem(BACKEND_ACCESS_TOKEN_KEY, token);
+  }
+
+  clearBackendAccessToken(): void {
+    localStorage.removeItem(BACKEND_ACCESS_TOKEN_KEY);
   }
 
   getLauncherConfig(): LauncherConfig | null {
@@ -27,5 +40,6 @@ export class LocalStorageAdapter implements IStoragePort {
   clearAll(): void {
     localStorage.removeItem(PROFILE_KEY);
     localStorage.removeItem(CONFIG_KEY);
+    localStorage.removeItem(BACKEND_ACCESS_TOKEN_KEY);
   }
 }

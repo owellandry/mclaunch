@@ -27,11 +27,18 @@ export type ElectronApi = {
   getLanguage: () => Promise<string>;
   setLanguage: (lang: string) => void;
   loginMicrosoft: () => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean}>;
+  setBackendAuthSession: (payload: {
+    msmcToken: string;
+    mclcAuth: unknown;
+    profile: unknown;
+  }) => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean}>;
   logoutMicrosoft: () => Promise<boolean>;
   getProfile: () => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean} | null>;
   clearCache: () => Promise<void>;
   clearAllData: () => Promise<void>;
   restartApp: () => void;
+  getApiBaseUrl: () => string;
+  openExternal: (url: string) => Promise<void>;
   minimizeWindow: () => void;
   maximizeWindow: () => void;
   closeWindow: () => void;

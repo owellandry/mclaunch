@@ -24,6 +24,7 @@ export function Dashboard() {
   const weeklyActivity = useLauncherStore((state) => state.weeklyActivity);
   const statistics = useLauncherStore((state) => state.statistics);
   const progress = useLauncherStore((state) => state.progress);
+  const homeBanners = useLauncherStore((state) => state.homeBanners);
   const config = useAppStore((state) => state.config);
   const setConfig = useAppStore((state) => state.setConfig);
   const searchQuery = useAppStore((state) => state.searchQuery);
@@ -33,6 +34,10 @@ export function Dashboard() {
 
   const selectedVersion = config.version || "1.20.1";
   const isDownloaded = downloadedVersions.includes(selectedVersion);
+  const featuredBanner = homeBanners[0] ?? null;
+  const heroTitle = featuredBanner?.title || `Minecraft ${selectedVersion}`;
+  const heroDescription = featuredBanner?.subtitle || t("dashboard.hero_desc");
+  const heroImageUrl = featuredBanner?.imageUrl || heroImage;
   
   let buttonText = isDownloaded ? t("dashboard.play") : t("dashboard.download");
   if (isRunning) {
@@ -57,6 +62,11 @@ export function Dashboard() {
     launch();
   };
 
+  const handleFeaturedBannerClick = () => {
+    if (!featuredBanner?.targetUrl) return;
+    void window.api?.openExternal?.(featuredBanner.targetUrl);
+  };
+
   return (
     <div className="flex flex-col gap-6 h-full">
       {/* Hero Section matching Image 1 */}
@@ -64,7 +74,7 @@ export function Dashboard() {
         {/* Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          style={{ backgroundImage: `url(${heroImageUrl})` }}
         />
         {/* Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
@@ -86,14 +96,23 @@ export function Dashboard() {
         {/* Bottom Content */}
         <div className="absolute bottom-10 left-10 max-w-xl">
           <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_var(--color-primary-shadow)]">
-            {t("dashboard.vanilla_release")}
+            {featuredBanner?.placement ? `${t("dashboard.featured_banner")} · ${featuredBanner.placement}` : t("dashboard.vanilla_release")}
           </span>
           <h1 className="text-5xl font-black text-textMain mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
-            Minecraft {selectedVersion}
+            {heroTitle}
           </h1>
           <p className="text-textMuted font-bold leading-relaxed max-w-md text-sm drop-shadow-md">
-            {t("dashboard.hero_desc")}
+            {heroDescription}
           </p>
+          {featuredBanner?.targetUrl ? (
+            <button
+              type="button"
+              onClick={handleFeaturedBannerClick}
+              className="mt-5 inline-flex items-center border border-white/20 bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-black/55 mc-cutout-small"
+            >
+              {t("dashboard.open_banner")}
+            </button>
+          ) : null}
         </div>
 
         {/* The Cutout Button Container */}

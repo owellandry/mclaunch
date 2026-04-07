@@ -8,9 +8,12 @@ import { create } from "zustand";
 import type { UserProfile } from "../../core/domain/profile";
 import type { LauncherConfig } from "../../core/domain/launcher";
 import { LocalStorageAdapter } from "../../infrastructure/adapters/LocalStorageAdapter";
+import { authApi } from "../../infrastructure/api/authApi";
+import type { BackendAccount } from "../../infrastructure/api/backendClient";
 
 interface AppState {
   profile: UserProfile | null;
+  backendAccessToken: string | null;
   config: LauncherConfig;
   searchQuery: string;
   logo: string;
@@ -31,6 +34,13 @@ interface AppState {
 
 const storage = new LocalStorageAdapter();
 
+const mapAccountToProfile = (account: BackendAccount): UserProfile => ({
+  username: account.displayName,
+  uuid: account.uuid ?? undefined,
+  skinUrl: account.skinUrl ?? null,
+  isOnboardingCompleted: true,
+});
+
 const DEFAULT_CONFIG: LauncherConfig = {
   version: "1.20.1",
   memoryMb: 4096,
@@ -39,10 +49,12 @@ const DEFAULT_CONFIG: LauncherConfig = {
 
 export const useAppStore = create<AppState>((set, get) => {
   const initialProfile = storage.getProfile();
+  const initialBackendAccessToken = storage.getBackendAccessToken();
   const initialConfig = storage.getLauncherConfig() || DEFAULT_CONFIG;
 
   return {
     profile: initialProfile,
+    backendAccessToken: initialBackendAccessToken,
     config: initialConfig,
     searchQuery: "",
     logo: "logo_gren.svg",
@@ -52,26 +64,67 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ profile });
     },
     loginMicrosoft: async () => {
-      if (window.api && window.api.loginMicrosoft) {
-        const authData = await window.api.loginMicrosoft();
-        const newProfile: UserProfile = {
-          username: authData.username,
-          uuid: authData.uuid,
-          skinUrl: authData.skinUrl ?? null,
-          isOnboardingCompleted: true
-        };
-        storage.saveProfile(newProfile);
-        set({ profile: newProfile });
+      const session = await authApi.startMicrosoftLogin("select_account");
+      if (window.api?.openExternal) {
+        await window.api.openExternal(session.authorizeUrl);
+      } else {
+        window.open(session.authorizeUrl, "_blank", "noopener,noreferrer");
       }
+      const status = await authApi.waitForLogin(session.sessionId);
+
+      if (!status.result) {
+        throw new Error("La API no devolvio la informacion final del login.");
+      }
+
+      const persistedProfile = await window.api?.setBackendAuthSession?.(status.result.launcher);
+      const backendAccessToken = status.result.accessToken;
+      const newProfile = persistedProfile
+        ? {
+            username: persistedProfile.username,
+            uuid: persistedProfile.uuid,
+            skinUrl: persistedProfile.skinUrl ?? null,
+            isOnboardingCompleted: true,
+          }
+        : mapAccountToProfile(status.result.account);
+
+      storage.saveBackendAccessToken(backendAccessToken);
+      storage.saveProfile(newProfile);
+      set({ profile: newProfile, backendAccessToken });
     },
     logoutMicrosoft: async () => {
+      const backendAccessToken = get().backendAccessToken;
+
+      if (backendAccessToken) {
+        try {
+          await authApi.logout(backendAccessToken);
+        } catch (error) {
+          console.warn("No se pudo notificar el logout al backend.", error);
+        }
+      }
+
       if (window.api && window.api.logoutMicrosoft) {
         await window.api.logoutMicrosoft();
-        storage.clearAll?.();
-        set({ profile: null });
       }
+
+      storage.clearAll?.();
+      set({ profile: null, backendAccessToken: null });
     },
     checkAuth: async () => {
+      const backendAccessToken = storage.getBackendAccessToken();
+
+      if (backendAccessToken) {
+        try {
+          const account = await authApi.getCurrentAccount(backendAccessToken);
+          const profile = mapAccountToProfile(account);
+          storage.saveProfile(profile);
+          set({ profile, backendAccessToken });
+          return;
+        } catch (error) {
+          console.warn("No se pudo restaurar la sesion desde el backend.", error);
+          storage.clearBackendAccessToken();
+        }
+      }
+
       if (window.api && window.api.getProfile) {
         const p = await window.api.getProfile();
         if (p) {
@@ -82,12 +135,12 @@ export const useAppStore = create<AppState>((set, get) => {
             isOnboardingCompleted: p.isOnboardingCompleted
           };
           storage.saveProfile(profile);
-          set({ profile });
+          set({ profile, backendAccessToken: null });
           return;
         }
 
         storage.clearAll?.();
-        set({ profile: null });
+        set({ profile: null, backendAccessToken: null });
       }
     },
     setConfig: (config) => {
@@ -133,7 +186,7 @@ export const useAppStore = create<AppState>((set, get) => {
     },
     clearAll: () => {
       storage.clearAll?.();
-      set({ profile: null, config: initialConfig, searchQuery: "", logo: "logo_gren.svg", language: "es" });
+      set({ profile: null, backendAccessToken: null, config: initialConfig, searchQuery: "", logo: "logo_gren.svg", language: "es" });
     }
   };
 });

@@ -91,6 +91,7 @@ const CHANNELS = {
   loginMicrosoft: "auth:loginMicrosoft",
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
+  setBackendSession: "auth:setBackendSession",
 } as const;
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
@@ -459,6 +460,31 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       return null;
     }
   });
+
+  ipcMain.handle(
+    CHANNELS.setBackendSession,
+    (
+      _event,
+      payload: {
+        msmcToken: string;
+        mclcAuth: unknown;
+        profile: unknown;
+      },
+    ) => {
+      const profile = payload.profile as { id?: string; name?: string; skins?: Array<{ state?: string; url?: string }> };
+
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("msmc_token", payload.msmcToken);
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mc_profile", JSON.stringify(payload.profile));
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mclc_auth", JSON.stringify(payload.mclcAuth));
+
+      return {
+        username: profile?.name || "Player",
+        uuid: profile?.id || "00000000-0000-0000-0000-000000000000",
+        skinUrl: resolveSkinUrl(profile),
+        isOnboardingCompleted: true,
+      };
+    },
+  );
 
   // Versiones de Minecraft con caché
   ipcMain.handle(CHANNELS.getVersions, async () => {
