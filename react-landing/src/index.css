@@ -1,0 +1,483 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+:root {
+  --color-primary: #4ade80;
+  --color-primary-hover: #22c55e;
+  --color-primary-shadow: rgba(74, 222, 128, 0.4);
+}
+
+.theme-logo_gren {
+  --color-primary: #4ade80;
+  --color-primary-hover: #22c55e;
+  --color-primary-shadow: rgba(74, 222, 128, 0.4);
+}
+
+.theme-logo_blue {
+  --color-primary: #60a5fa;
+  --color-primary-hover: #3b82f6;
+  --color-primary-shadow: rgba(96, 165, 250, 0.4);
+}
+
+.theme-logo_lemon {
+  --color-primary: #bef264;
+  --color-primary-hover: #a3e635;
+  --color-primary-shadow: rgba(190, 242, 100, 0.4);
+}
+
+.theme-logo_purple {
+  --color-primary: #c084fc;
+  --color-primary-hover: #a855f7;
+  --color-primary-shadow: rgba(192, 132, 252, 0.4);
+}
+
+.theme-logo_yellow {
+  --color-primary: #fde047;
+  --color-primary-hover: #eab308;
+  --color-primary-shadow: rgba(253, 224, 71, 0.4);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-textMain font-sans overflow-hidden select-none m-0 p-0;
+    /* Subtle grid pattern to evoke a blocky/Minecraft feel */
+    background-image: 
+      linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
+
+@utility mc-cutout {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%);
+}
+
+@utility mc-cutout-small {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+@utility mc-button-cutout {
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface/90 backdrop-blur-xl border border-black/10;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primaryHover transition-colors px-6 py-3 font-bold uppercase tracking-widest shadow-[0_0_20px_var(--color-primary-shadow)];
+  }
+  
+  .btn-secondary {
+    @apply bg-surfaceLight border border-black/10 text-textMain hover:bg-black/5 transition-colors px-6 py-3 font-bold uppercase tracking-widest;
+  }
+  
+  .input-field {
+    @apply bg-surface border-2 border-surfaceLight px-4 py-3 text-textMain focus:outline-none focus:border-primary transition-colors font-mono mc-cutout-small;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-surfaceLight rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/50;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(root) {
+  animation-name: app-view-out;
+}
+
+::view-transition-new(root) {
+  animation-name: app-view-in;
+}
+
+/* Installer-specific root slide direction (/ → /install) */
+:root[data-installer-transition="forward"] ::view-transition-old(root) {
+  animation-name: app-slide-out-left;
+}
+
+:root[data-installer-transition="forward"] ::view-transition-new(root) {
+  animation-name: app-slide-in-right;
+}
+
+::view-transition-group(player-profile-chip),
+::view-transition-group(player-avatar) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-group(installer-slime-mob) {
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.34, 1.28, 0.64, 1);
+  z-index: 12;
+}
+
+::view-transition-old(installer-slime-mob),
+::view-transition-new(installer-slime-mob) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  mix-blend-mode: normal;
+  transform-origin: center center;
+}
+
+::view-transition-old(installer-slime-mob) {
+  animation-name: installer-slime-shared-old;
+}
+
+::view-transition-new(installer-slime-mob) {
+  animation-name: installer-slime-shared-new;
+}
+
+::view-transition-old(player-profile-chip),
+::view-transition-new(player-profile-chip),
+::view-transition-old(player-avatar),
+::view-transition-new(player-avatar) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(player-profile-chip),
+::view-transition-old(player-avatar) {
+  animation-name: shared-fade-out;
+}
+
+::view-transition-new(player-profile-chip),
+::view-transition-new(player-avatar) {
+  animation-name: shared-fade-in;
+}
+
+::view-transition-old(player-skin-stage),
+::view-transition-new(player-skin-stage) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+::view-transition-old(player-skin-stage) {
+  filter: saturate(1) blur(0);
+}
+
+::view-transition-new(player-skin-stage) {
+  filter: saturate(1.05) blur(0);
+}
+
+.skin-3d-stage {
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.skin-3d-stage.is-dragging {
+  cursor: grabbing;
+}
+
+.skin-3d-character,
+.skin-3d-limb {
+  transform-style: preserve-3d;
+}
+
+@keyframes skin-3d-bob {
+  from {
+    transform: translateY(-4px);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+
+@keyframes skin-3d-arm-right {
+  from {
+    transform: rotateX(32deg) rotateZ(2deg);
+  }
+  to {
+    transform: rotateX(-36deg) rotateZ(-2deg);
+  }
+}
+
+@keyframes skin-3d-arm-left {
+  from {
+    transform: rotateX(-36deg) rotateZ(2deg);
+  }
+  to {
+    transform: rotateX(32deg) rotateZ(-2deg);
+  }
+}
+
+@keyframes skin-3d-leg-right {
+  from {
+    transform: rotateX(-26deg);
+  }
+  to {
+    transform: rotateX(28deg);
+  }
+}
+
+@keyframes skin-3d-leg-left {
+  from {
+    transform: rotateX(28deg);
+  }
+  to {
+    transform: rotateX(-26deg);
+  }
+}
+
+@keyframes app-view-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes app-view-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.992);
+    filter: blur(6px);
+  }
+}
+
+@keyframes shared-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes shared-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+    filter: blur(4px);
+  }
+}
+
+@keyframes installer-slime-shared-old {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+}
+
+@keyframes installer-slime-shared-new {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes app-slide-out-left {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-40px) scale(0.992);
+    filter: blur(6px);
+  }
+}
+
+@keyframes app-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40px) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes boot-loader {
+  0% {
+    transform: translateX(-115%);
+  }
+  55% {
+    transform: translateX(20%);
+  }
+  100% {
+    transform: translateX(160%);
+  }
+}
+
+.slime-mob-shell {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  padding: 8px 0 2px;
+  perspective: 1000px;
+}
+
+.slime {
+  --size: var(--slime-size, 148px);
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  transform-style: preserve-3d;
+  animation: slime-bounce 2s infinite ease-in-out;
+}
+
+.inner-layer {
+  --inner-color: hsl(108 49% 61%);
+  position: absolute;
+  top: 9.1%;
+  left: 9.1%;
+  inline-size: 84%;
+  block-size: 84%;
+  background-color: var(--inner-color);
+  background-repeat: no-repeat;
+  background-size: cover;
+  image-rendering: pixelated;
+  border: none;
+}
+
+.inner-front {
+  transform: rotateY(0deg) translateZ(calc(var(--size) * 0.417));
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAC3SURBVHgBLY9PDgFhDMXfK+uZQUL8uYWFg1g6griCAw0JlzALJnEJwc431rS+fqOLJn3t+7Xltl4rAJoawrNBMc5ASlSiakDXYHzdAnyAQoT7G6qa+oNZH4LoP5UXVPsaHvpVVGWNalfDzCDubHkt0ultyVgS3BxX5kgXSf7xTOt60wLiiR1CRFLzfLgmtw+HR4MupHV6SEewWM4hZFpVTCJBP4Z8lCMfZv6J9cZ5iMeFbJgFU4QfcHVPBPFyQLoAAAAASUVORK5CYII=);
+}
+
+.inner-back {
+  transform: rotateY(180deg) translateZ(calc(var(--size) * 0.417));
+}
+
+.inner-right {
+  transform: rotateY(90deg) translateZ(calc(var(--size) * 0.417));
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAACWSURBVHgBdU5LDoJQDJxW1r4HKwRP6B08oPcwxMTEV1lra/uQDQlN+kk7nRm63i7FYIAC5SHIfQYxAWS+JGq44fyaCgLDzJifs++BdnAgEVhVYWpL2r9/DeUudeYySf3eRoDjxqG9F5Uh9AK9fq1sod+NLbg7eznwYqh2Nxsmx+SmfXaw5FNyRyapT+/jkE2dVo3w8fwBvK5K8MLcH6IAAAAASUVORK5CYII=);
+}
+
+.inner-left {
+  transform: rotateY(-90deg) translateZ(calc(var(--size) * 0.417));
+  background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAACQSURBVHgBbU/LDsIwDHPSXidaJA5o/CH/wBfyG+PYcQXRhLganJbKkWrHecjtfnUIACciiWBdnvF11Lm4grw52rKiPUKIonI+kKZPsoSD4ugQQfdPZVK2kk3cC4UBJpthJ/KoijFm9ieFLziOVUmC41yRcgooNKXYTFEvBdRyf30aT5tOU6zjEqj093cft38BW3Y0w6Ds5JsAAAAASUVORK5CYII=);
+}
+
+.inner-top {
+  transform: rotateX(90deg) translateZ(calc(var(--size) * 0.417));
+}
+
+.inner-bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--size) * 0.417));
+}
+
+.outer-layer {
+  --outer-color: hsl(108 49% 61% / 0.1);
+  position: absolute;
+  inset: 0;
+  background-color: var(--outer-color);
+  border: none;
+  backdrop-filter: none;
+}
+
+.outer-front {
+  transform: rotateY(0deg) translateZ(calc(var(--size) * 0.5));
+}
+
+.outer-back {
+  transform: rotateY(180deg) translateZ(calc(var(--size) * 0.5));
+}
+
+.outer-right {
+  transform: rotateY(90deg) translateZ(calc(var(--size) * 0.5));
+}
+
+.outer-left {
+  transform: rotateY(-90deg) translateZ(calc(var(--size) * 0.5));
+}
+
+.outer-top {
+  transform: rotateX(90deg) translateZ(calc(var(--size) * 0.5));
+}
+
+.outer-bottom {
+  transform: rotateX(-90deg) translateZ(calc(var(--size) * 0.5));
+}
+
+.installer-slime-card {
+  min-height: 345px;
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.installer-install-grid,
+.installer-done-grid {
+  min-height: 100%;
+  align-items: stretch;
+}
+
+@keyframes slime-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotateX(-8deg) rotateY(-10deg) scaleY(1);
+  }
+
+  25% {
+    transform: translateY(-20px) rotateX(-5deg) rotateY(15deg) scaleY(1.05);
+  }
+
+  50% {
+    transform: translateY(-20px) rotateX(-7deg) rotateY(0deg) scaleY(0.9) scaleX(1.05);
+  }
+
+  75% {
+    transform: translateY(-20px) rotateX(-5deg) rotateY(-15deg) scaleY(1.05);
+  }
+}
+
+@media (max-width: 900px) {
+  .installer-slime-card {
+    min-height: 300px;
+  }
+}
