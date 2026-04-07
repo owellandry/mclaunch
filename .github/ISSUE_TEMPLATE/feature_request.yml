@@ -1,0 +1,58 @@
+name: Solicitud de Mejora
+description: Sugiere una mejora, una nueva capacidad o un cambio de diseno.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema U Oportunidad
+      description: Que hace falta o que se podria mejorar?
+      placeholder: Describe la limitacion actual o la idea.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Solucion Propuesta
+      description: Que te gustaria que ocurriera?
+      placeholder: Describe el cambio que quieres ver.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas Consideradas
+      description: Hay algun workaround o enfoque alternativo?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - react-ui
+        - electron
+        - react-installer
+        - mc-home-client
+        - CI / workflows
+        - docs
+        - otro
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Contexto Extra
+      description: Mockups, referencias o notas tecnicas.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Antes De Enviar
+      options:
+        - label: Revise primero si ya existia una solicitud parecida.
+          required: true
