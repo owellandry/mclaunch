@@ -39,10 +39,10 @@ jobs:
     permissions:
       contents: read
     env:
-      DEPLOY_HOST: ${{ github.event.inputs.deploy_host || vars.BACKEND_DEPLOY_HOST }}
-      DEPLOY_PORT: ${{ github.event.inputs.deploy_port || vars.BACKEND_DEPLOY_PORT || '22' }}
-      DEPLOY_USER: ${{ github.event.inputs.deploy_user || vars.BACKEND_DEPLOY_USER }}
-      DEPLOY_PATH: ${{ github.event.inputs.deploy_path || vars.BACKEND_DEPLOY_PATH }}
+      DEPLOY_HOST: ${{ github.event.inputs.deploy_host || vars.BACKEND_DEPLOY_HOST || secrets.BACKEND_DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ github.event.inputs.deploy_port || vars.BACKEND_DEPLOY_PORT || secrets.BACKEND_DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ github.event.inputs.deploy_user || vars.BACKEND_DEPLOY_USER || secrets.BACKEND_DEPLOY_USER }}
+      DEPLOY_PATH: ${{ github.event.inputs.deploy_path || vars.BACKEND_DEPLOY_PATH || secrets.BACKEND_DEPLOY_PATH }}
 
     steps:
       - name: Checkout
@@ -54,15 +54,15 @@ jobs:
         run: |
           missing=0
           if [ -z "${DEPLOY_HOST}" ]; then
-            echo "::error::Falta DEPLOY_HOST. Define vars.BACKEND_DEPLOY_HOST o el input deploy_host."
+            echo "::error::Falta DEPLOY_HOST. Define vars.BACKEND_DEPLOY_HOST, secrets.BACKEND_DEPLOY_HOST o el input deploy_host."
             missing=1
           fi
           if [ -z "${DEPLOY_USER}" ]; then
-            echo "::error::Falta DEPLOY_USER. Define vars.BACKEND_DEPLOY_USER o el input deploy_user."
+            echo "::error::Falta DEPLOY_USER. Define vars.BACKEND_DEPLOY_USER, secrets.BACKEND_DEPLOY_USER o el input deploy_user."
             missing=1
           fi
           if [ -z "${DEPLOY_PATH}" ]; then
-            echo "::error::Falta DEPLOY_PATH. Define vars.BACKEND_DEPLOY_PATH o el input deploy_path."
+            echo "::error::Falta DEPLOY_PATH. Define vars.BACKEND_DEPLOY_PATH, secrets.BACKEND_DEPLOY_PATH o el input deploy_path."
             missing=1
           fi
           if [ -z "${DEPLOY_KEY}" ]; then
