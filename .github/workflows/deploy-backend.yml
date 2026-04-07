@@ -1,0 +1,57 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    if: ${{ vars.BACKEND_DEPLOY_HOST != '' && vars.BACKEND_DEPLOY_USER != '' && vars.BACKEND_DEPLOY_PATH != '' }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare SSH key
+        env:
+          DEPLOY_KEY: ${{ secrets.BACKEND_DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/mclaunch_backend
+          chmod 600 ~/.ssh/mclaunch_backend
+
+      - name: Trust server host key
+        run: |
+          ssh-keyscan -p "${{ vars.BACKEND_DEPLOY_PORT || '22' }}" -H "${{ vars.BACKEND_DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync backend files
+        run: |
+          rsync -az --delete \
+            --exclude '.env' \
+            --exclude '.env.local' \
+            --exclude 'node_modules' \
+            --exclude '.git' \
+            ./backend/ \
+            "${{ vars.BACKEND_DEPLOY_USER }}@${{ vars.BACKEND_DEPLOY_HOST }}:${{ vars.BACKEND_DEPLOY_PATH }}/"
+        env:
+          RSYNC_RSH: ssh -i ~/.ssh/mclaunch_backend -p ${{ vars.BACKEND_DEPLOY_PORT || '22' }}
+
+      - name: Install and restart backend
+        run: |
+          ssh -i ~/.ssh/mclaunch_backend -p "${{ vars.BACKEND_DEPLOY_PORT || '22' }}" \
+            "${{ vars.BACKEND_DEPLOY_USER }}@${{ vars.BACKEND_DEPLOY_HOST }}" \
+            "/usr/local/bin/mclaunch-backend-deploy"

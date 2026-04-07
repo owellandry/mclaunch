@@ -32,7 +32,7 @@ const createDefaultPresence = (): PresenceContext => ({
 });
 
 class DiscordPresenceService {
-  private readonly clientId = process.env.MCLAUNCH_DISCORD_CLIENT_ID?.trim() ?? "";
+  private clientId = "";
   private socket: net.Socket | null = null;
   private isConnecting = false;
   private isReady = false;
@@ -40,8 +40,15 @@ class DiscordPresenceService {
   private inboundBuffer = Buffer.alloc(0);
   private currentPresence: PresenceContext = createDefaultPresence();
 
-  start(): void {
-    if (!this.clientId) return;
+  async start(options?: { clientId?: string | null }): Promise<void> {
+    const nextClientId = options?.clientId?.trim() || this.clientId;
+    if (!nextClientId) return;
+
+    if (this.clientId && this.clientId !== nextClientId) {
+      this.stop();
+    }
+
+    this.clientId = nextClientId;
     this.setLauncherPresence();
     void this.connect();
   }

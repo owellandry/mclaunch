@@ -24,6 +24,8 @@ release/
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+backend/.env.local
 
 # Logs and Caches
 npm-debug.log*
@@ -42,7 +44,7 @@ coverage/
 .tmp-gradle/
 .electron-runtime/
 .tmp-electron-runtime/
-.trae/
+.trae/*
 .qodo/
 
 # IDE / OS / Editor

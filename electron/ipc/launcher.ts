@@ -18,6 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, syncDownloadedVersions, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
 import { discordPresence } from "../services/discordPresence";
+import { launcherActivitySocket } from "../services/launcherActivitySocket";
 
 let versionsCache: MinecraftVersion[] | null = null;
 let versionsCacheTime = 0;
@@ -481,11 +482,13 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     emitStatus(window, "running");
     emitLog(window, `Preparando lanzamiento para ${payload.username}...`);
     discordPresence.setLaunchingPresence(payload);
+    launcherActivitySocket.setLaunchingPresence(payload);
 
     if (!isJavaInstalled()) {
       emitLog(window, "Error: Java no está instalado. Instala Java 17 o superior desde https://adoptium.net");
       emitStatus(window, "error");
       discordPresence.setLauncherPresence();
+      launcherActivitySocket.setLauncherPresence();
       return;
     }
 
@@ -508,6 +511,7 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
         const jarPath = path.join(payload.gameDir, "versions", payload.version, `${payload.version}.jar`);
         if (fs.existsSync(jarPath)) addDownloadedVersion(payload.version);
         discordPresence.setLauncherPresence();
+        launcherActivitySocket.setLauncherPresence();
         emitStatus(window, "done");
       });
 
@@ -556,11 +560,13 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
 
       emitLog(window, "Minecraft en ejecución.");
       discordPresence.setPlayingPresence(payload);
+      launcherActivitySocket.setPlayingPresence(payload);
       emitStatus(window, "playing");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Error desconocido";
       emitLog(window, `Error en lanzamiento: ${message}`);
       discordPresence.setLauncherPresence();
+      launcherActivitySocket.setLauncherPresence();
       emitStatus(window, "error");
     }
   });
