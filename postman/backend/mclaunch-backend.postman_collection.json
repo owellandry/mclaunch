@@ -8,11 +8,11 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://207.180.205.8:8787"
+      "value": "http://207.180.205.8:8791"
     },
     {
       "key": "wsUrl",
-      "value": "ws://207.180.205.8:8787/ws/v1/launcher"
+      "value": "ws://207.180.205.8:8791/ws/v1/launcher"
     }
   ],
   "item": [
