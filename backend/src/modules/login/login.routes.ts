@@ -227,6 +227,33 @@ export const registerLoginRoutes = (router: Router): void => {
 
   router.add(
     "POST",
+    "/api/v1/login/from-launcher",
+    async ({ jsonBody, services }) => {
+      try {
+        const body = await jsonBody<{
+          msmcToken: string;
+          mclcAuth: unknown;
+          profile: { id?: string; name?: string; skins?: Array<{ state?: string; url?: string }> };
+        }>();
+
+        if (!body?.msmcToken || !body?.profile) {
+          return json({ ok: false, error: { code: "INVALID_PAYLOAD", message: "Se requiere msmcToken y profile." } }, { status: 400 });
+        }
+
+        const result = await services.loginService.completeFromLauncher(body.msmcToken, body.mclcAuth, body.profile);
+        return json({ ok: true, data: { accessToken: result.accessToken, account: result.account, launcher: result.launcher } });
+      } catch (error) {
+        return json(
+          { ok: false, error: { code: "LOGIN_FROM_LAUNCHER_FAILED", message: error instanceof Error ? error.message : "Error al registrar el login." } },
+          { status: 500 },
+        );
+      }
+    },
+    { private: true, module: "login", summary: "Registra un login Electron completado y emite un JWT de backend." },
+  );
+
+  router.add(
+    "POST",
     "/api/v1/login/logout",
     () => json({ ok: true, data: { loggedOut: true } }),
     {

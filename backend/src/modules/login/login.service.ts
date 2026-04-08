@@ -251,6 +251,33 @@ export class LoginService {
     }
   }
 
+  async completeFromLauncher(
+    msmcToken: string,
+    mclcAuth: unknown,
+    rawProfile: { id?: string; name?: string; skins?: Array<{ state?: string; url?: string }> },
+  ): Promise<{ accessToken: string; account: StoredAccount; launcher: { msmcToken: string; mclcAuth: unknown; profile: unknown } }> {
+    const account = await this.accountsService.upsertMicrosoftAccount({
+      uuid: rawProfile.id || "00000000-0000-0000-0000-000000000000",
+      displayName: rawProfile.name || "Player",
+      skinUrl: resolveSkinUrl(rawProfile),
+      profile: rawProfile as Record<string, unknown>,
+    });
+
+    const accessToken = this.tokenService.issue({
+      sub: account.id,
+      username: account.displayName,
+      scopes: ["accounts:read", "downloads:read", "downloads:manage", "hotupdates:read"],
+      provider: account.provider,
+    });
+
+    this.logsService.info("login", "Login completado desde launcher Electron.", {
+      accountId: account.id,
+      displayName: account.displayName,
+    });
+
+    return { accessToken, account, launcher: { msmcToken, mclcAuth, profile: rawProfile } };
+  }
+
   async fail(id: string, errorMessage: string): Promise<LoginSession | null> {
     const session = await this.getStatus(id);
     if (!session) {

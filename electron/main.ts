@@ -10,7 +10,7 @@
 // - Documentación completa
 
 import "dotenv/config";
-import { app, BrowserWindow, Menu, session, ipcMain, shell } from "electron";
+import { app, BrowserWindow, Menu, session, ipcMain, shell, screen } from "electron";
 import path from "node:path";
 import { registerLauncherIpc } from "./ipc/launcher";
 import { discordPresence } from "./services/discordPresence";
@@ -196,6 +196,22 @@ const registerWindowControls = (): void => {
   ipcMain.on("window:close", () => mainWindow?.close());
 };
 
+const resizeWindowToHalfScreen = (window: BrowserWindow): void => {
+  const display = screen.getDisplayMatching(window.getBounds());
+  const { width, height, x, y } = display.workArea;
+  const targetWidth = Math.max(960, Math.floor(width / 2));
+  const targetHeight = Math.max(620, Math.floor(height / 2));
+  const targetX = x + Math.floor((width - targetWidth) / 2);
+  const targetY = y + Math.floor((height - targetHeight) / 2);
+
+  window.setBounds({
+    x: targetX,
+    y: targetY,
+    width: targetWidth,
+    height: targetHeight,
+  });
+};
+
 const createWindow = async (): Promise<void> => {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -222,7 +238,7 @@ const createWindow = async (): Promise<void> => {
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;
-    mainWindow.maximize();
+    resizeWindowToHalfScreen(mainWindow);
     mainWindow.show();
     if (isDev && shouldOpenDevTools) mainWindow.webContents.openDevTools({ mode: "detach" });
   });

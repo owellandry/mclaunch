@@ -64,6 +64,22 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ profile });
     },
     loginMicrosoft: async () => {
+      if (window.api?.loginMicrosoft) {
+        const result = await window.api.loginMicrosoft();
+        const newProfile: UserProfile = {
+          username: result.username,
+          uuid: result.uuid,
+          skinUrl: result.skinUrl ?? null,
+          isOnboardingCompleted: true,
+        };
+        const backendAccessToken: string | null = result.backendAccessToken ?? null;
+        if (backendAccessToken) storage.saveBackendAccessToken(backendAccessToken);
+        storage.saveProfile(newProfile);
+        set({ profile: newProfile, backendAccessToken });
+        return;
+      }
+
+      // Fallback para contextos no-Electron
       const session = await authApi.startMicrosoftLogin("select_account");
       console.info("[Auth] Sesion de login creada", {
         sessionId: session.sessionId,

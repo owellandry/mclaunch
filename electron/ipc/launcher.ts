@@ -566,16 +566,34 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
 
       const msmcToken = xbox.save();
       const mcToken = mc.mclc();
+      const profile = mc.profile as { id?: string; name?: string; skins?: Array<{ state?: string; url?: string }> };
 
       db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("msmc_token", msmcToken);
-      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mc_profile", JSON.stringify(mc.profile));
+      db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mc_profile", JSON.stringify(profile));
       db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mclc_auth", JSON.stringify(mcToken));
 
+      let backendAccessToken: string | null = null;
+      try {
+        const apiBase = process.env.MCLAUNCH_API_BASE_URL?.trim() || "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
+        const res = await fetch(`${apiBase}/api/v1/login/from-launcher`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ msmcToken, mclcAuth: mcToken, profile }),
+        });
+        if (res.ok) {
+          const data = await res.json() as { ok: boolean; data?: { accessToken?: string } };
+          backendAccessToken = data?.data?.accessToken ?? null;
+        }
+      } catch {
+        // Backend no disponible, continua sin JWT
+      }
+
       return {
-        username: mc.profile?.name || "Player",
-        uuid: mc.profile?.id || "00000000-0000-0000-0000-000000000000",
-        skinUrl: resolveSkinUrl(mc.profile),
+        username: profile?.name || "Player",
+        uuid: profile?.id || "00000000-0000-0000-0000-000000000000",
+        skinUrl: resolveSkinUrl(profile),
         isOnboardingCompleted: true,
+        backendAccessToken,
       };
     } catch (error: unknown) {
       const message = resolveAuthErrorMessage(error);
