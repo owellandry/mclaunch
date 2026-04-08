@@ -16,7 +16,7 @@ import { BrowserView, BrowserWindow, ipcMain, app } from "electron";
 import { spawn, SpawnOptions } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, syncDownloadedVersions, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db } from "./db";
+import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, syncDownloadedVersions, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db, addLauncherTime } from "./db";
 import { discordPresence } from "../services/discordPresence";
 import { launcherActivitySocket } from "../services/launcherActivitySocket";
 
@@ -759,6 +759,23 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       launcherActivitySocket.setLauncherPresence();
       emitStatus(window, "error");
     }
+  });
+
+  // ── TRACKING DE TIEMPO DE USO ─────────────────────────────────────────────
+  let lastFlush = Date.now();
+
+  const flushTime = (): void => {
+    const now = Date.now();
+    const seconds = Math.floor((now - lastFlush) / 1000);
+    lastFlush = now;
+    if (seconds > 0) addLauncherTime(seconds);
+  };
+
+  const activityTimer = setInterval(flushTime, 60_000);
+
+  app.once("before-quit", () => {
+    clearInterval(activityTimer);
+    flushTime();
   });
 };
 

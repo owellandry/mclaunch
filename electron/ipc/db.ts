@@ -43,6 +43,13 @@ export function initDb(): void {
     CREATE INDEX IF NOT EXISTS idx_downloaded_versions ON downloaded_versions(version);
   `);
 
+  // Migración: limpiar datos de actividad falsos/legacy
+  const migrated = db.prepare("SELECT 1 FROM app_settings WHERE key = 'activity_migrated_v2'").get();
+  if (!migrated) {
+    db.prepare("DELETE FROM activity").run();
+    db.prepare("INSERT INTO app_settings (key, value) VALUES ('activity_migrated_v2', '1')").run();
+  }
+
   const logoExists = db.prepare("SELECT 1 FROM app_settings WHERE key = 'logo'").get();
   if (!logoExists) {
     db.prepare("INSERT INTO app_settings (key, value) VALUES (?, ?)").run("logo", "logo_gren.svg");
@@ -58,41 +65,27 @@ export function initDb(): void {
     db.prepare("INSERT INTO statistics (win_rate, kda) VALUES (?, ?)").run(66.0, 3.15);
   }
 
-  const activityExists = db.prepare("SELECT 1 FROM activity LIMIT 1").get();
-  if (!activityExists) {
-    const dates = [
-      "2026-04-01",
-      "2026-04-02",
-      "2026-04-03",
-      "2026-04-04",
-      "2026-04-05",
-      "2026-04-06",
-      "2026-04-07",
-    ];
-    const playTimes = [40, 70, 30, 90, 50, 20, 100];
+}
 
-    const stmt = db.prepare("INSERT INTO activity (date, play_time) VALUES (?, ?)");
-    const transaction = db.transaction(() => {
-      for (let i = 0; i < dates.length; i += 1) {
-        stmt.run(dates[i], playTimes[i]);
-      }
-    });
-
-    transaction();
-  }
+export function addLauncherTime(seconds: number): void {
+  if (seconds <= 0) return;
+  const today = new Date().toISOString().split("T")[0];
+  db.prepare("INSERT OR IGNORE INTO activity (date, play_time) VALUES (?, 0)").run(today);
+  db.prepare("UPDATE activity SET play_time = play_time + ? WHERE date = ?").run(seconds, today);
 }
 
 export function getWeeklyActivity(): number[] {
-  const rows = db
-    .prepare("SELECT play_time FROM activity ORDER BY date DESC LIMIT 7")
-    .all() as { play_time: number }[];
-  const times = rows.map((row) => row.play_time).reverse();
-
-  while (times.length < 7) {
-    times.unshift(0);
+  const result: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    const row = db.prepare("SELECT play_time FROM activity WHERE date = ?").get(dateStr) as
+      | { play_time: number }
+      | undefined;
+    result.push(row?.play_time ?? 0);
   }
-
-  return times;
+  return result; // segundos reales, el frontend normaliza
 }
 
 export function getStatistics(): { win_rate: number; kda: number } {

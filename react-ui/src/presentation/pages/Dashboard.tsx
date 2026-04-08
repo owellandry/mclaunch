@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import heroImage from "../../assets/hero.png";
 
 export function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const status = useLauncherStore((state) => state.status);
   const launch = useLauncherStore((state) => state.launch);
   const availableVersions = useLauncherStore((state) => state.availableVersions);
@@ -148,17 +148,37 @@ export function Dashboard() {
         <Card className="flex flex-col min-h-0">
           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.weekly_activity")}</h3>
           <div className="flex items-end gap-2 flex-1 mb-3 min-h-0">
-            {weeklyActivity.map((h, i) => (
-              <div key={i} className="flex-1 bg-surfaceLight relative group h-full">
-                <div
-                  className="absolute bottom-0 left-0 right-0 bg-primary transition-all group-hover:bg-primaryHover"
-                  style={{ height: `${h}%` }}
-                />
-              </div>
-            ))}
+            {(() => {
+              const maxSec = Math.max(...weeklyActivity, 1);
+              const fmtTime = (s: number) => {
+                if (s === 0) return "Sin actividad";
+                const h = Math.floor(s / 3600);
+                const m = Math.floor((s % 3600) / 60);
+                return h > 0 ? `${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m` : `${m}m`;
+              };
+              return weeklyActivity.map((sec, i) => (
+                <div key={i} className="flex-1 bg-surfaceLight relative group h-full">
+                  <div
+                    className="absolute bottom-0 left-0 right-0 bg-primary transition-all group-hover:bg-primaryHover"
+                    style={{ height: `${Math.round((sec / maxSec) * 100)}%` }}
+                  />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-black/80 text-white text-[10px] font-mono rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    {fmtTime(sec)}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
           <div className="flex justify-between text-[10px] text-textMuted font-mono px-1 shrink-0">
-            <span>D</span><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span>
+            {Array.from({ length: 7 }, (_, i) => {
+              const d = new Date();
+              d.setDate(d.getDate() - (6 - i));
+              return (
+                <span key={i}>
+                  {new Intl.DateTimeFormat(i18n.language, { weekday: "short" }).format(d).replace(/\.$/, "").slice(0, 2)}
+                </span>
+              );
+            })}
           </div>
           <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
             {t("dashboard.see_full_activity")}

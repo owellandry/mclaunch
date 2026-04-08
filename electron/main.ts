@@ -213,12 +213,15 @@ const resizeWindowToHalfScreen = (window: BrowserWindow): void => {
 };
 
 const createWindow = async (): Promise<void> => {
+  const iconPath = path.join(__dirname, "..", "react-ui", isDev ? "public" : "dist", "logo_slaumcher.png");
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 760,
     minWidth: 960,
     minHeight: 620,
     title: "MC Launch",
+    icon: iconPath,
     frame: false,
     show: false,
     autoHideMenuBar: true,
