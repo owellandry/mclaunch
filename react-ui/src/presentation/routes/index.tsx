@@ -18,6 +18,15 @@ const Onboarding = lazy(() =>
 const Dashboard = lazy(() =>
   import("../pages/Dashboard").then((module) => ({ default: module.Dashboard }))
 );
+const ActivityDetails = lazy(() =>
+  import("../pages/ActivityDetails").then((module) => ({ default: module.ActivityDetails }))
+);
+const StatisticsDetails = lazy(() =>
+  import("../pages/StatisticsDetails").then((module) => ({ default: module.StatisticsDetails }))
+);
+const VersionsDetails = lazy(() =>
+  import("../pages/VersionsDetails").then((module) => ({ default: module.VersionsDetails }))
+);
 const Library = lazy(() =>
   import("../pages/Library").then((module) => ({ default: module.Library }))
 );
@@ -60,6 +69,9 @@ export const router = createHashRouter([
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: "dashboard", element: withSuspense(<Dashboard />) },
+          { path: "dashboard/activity", element: withSuspense(<ActivityDetails />) },
+          { path: "dashboard/statistics", element: withSuspense(<StatisticsDetails />) },
+          { path: "dashboard/versions", element: withSuspense(<VersionsDetails />) },
           { path: "library", element: withSuspense(<Library />) },
           { path: "servers", element: withSuspense(<Servers />) },
           { path: "profile", element: withSuspense(<SkinStudio />) },

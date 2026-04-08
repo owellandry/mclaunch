@@ -1,5 +1,5 @@
 import type { ILauncherPort } from "../../core/ports/ILauncherPort";
-import type { LauncherConfig, MinecraftVersion } from "../../core/domain/launcher";
+import type { ActivityDetails, DetailedMinecraftStats, LauncherConfig, MinecraftVersion, VersionCatalog } from "../../core/domain/launcher";
 
 export class ElectronLauncherAdapter implements ILauncherPort {
   launch(config: LauncherConfig, username: string): void {
@@ -30,8 +30,16 @@ export class ElectronLauncherAdapter implements ILauncherPort {
     return window.api.getWeeklyActivity();
   }
 
-  getStatistics(): Promise<{win_rate: number, kda: number}> {
-    return window.api.getStatistics();
+  getActivityDetails(): Promise<ActivityDetails> {
+    return window.api.getActivityDetails();
+  }
+
+  getMinecraftStats(gameDir: string, uuid: string): Promise<{ mob_kills: number; deaths: number; blocks_mined: number; hours_played: number; play_seconds: number }> {
+    return window.api.getMinecraftStats(gameDir, uuid);
+  }
+
+  getDetailedMinecraftStats(gameDir: string, uuid: string): Promise<DetailedMinecraftStats> {
+    return window.api.getDetailedMinecraftStats(gameDir, uuid);
   }
 
   getDownloadedVersions(): Promise<string[]> {
@@ -40,6 +48,10 @@ export class ElectronLauncherAdapter implements ILauncherPort {
 
   syncDownloadedVersions(gameDir: string): Promise<string[]> {
     return window.api.syncDownloadedVersions(gameDir);
+  }
+
+  getVersionCatalog(gameDir: string): Promise<VersionCatalog> {
+    return window.api.getVersionCatalog(gameDir);
   }
 
   onLog(callback: (message: string) => void): () => void {

@@ -5,7 +5,7 @@
  * Patrón: Atomic Design
  */
 import { create } from "zustand";
-import type { LauncherStatus, MinecraftVersion } from "../../core/domain/launcher";
+import type { ActivityDetails, DetailedMinecraftStats, LauncherStatus, MinecraftVersion, VersionCatalog } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
 import { contentApi } from "../../infrastructure/api/contentApi";
 import type { BackendBanner } from "../../infrastructure/api/backendClient";
@@ -20,13 +20,20 @@ interface LauncherState {
   downloadedVersions: string[];
   launchedVersionWasDownloaded: boolean;
   weeklyActivity: number[];
-  statistics: { win_rate: number; kda: number };
+  statistics: { mob_kills: number; deaths: number; blocks_mined: number; hours_played: number; play_seconds: number };
+  activityDetails: ActivityDetails | null;
+  detailedStatistics: DetailedMinecraftStats | null;
+  versionCatalog: VersionCatalog | null;
   homeBanners: BackendBanner[];
   setStatus: (status: LauncherStatus) => void;
   addLog: (log: string) => void;
   clearLogs: () => void;
   fetchVersions: () => Promise<void>;
   fetchDbData: () => Promise<void>;
+  fetchWeeklyActivity: () => Promise<void>;
+  fetchActivityDetails: () => Promise<void>;
+  fetchDetailedStatistics: () => Promise<void>;
+  fetchVersionCatalog: () => Promise<void>;
   fetchHomeBanners: () => Promise<void>;
   hydrateDashboard: (force?: boolean) => Promise<void>;
   launch: () => void;
@@ -49,7 +56,10 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
   downloadedVersions: [],
   launchedVersionWasDownloaded: false,
   weeklyActivity: [0, 0, 0, 0, 0, 0, 0],
-  statistics: { win_rate: 0, kda: 0 },
+  statistics: { mob_kills: 0, deaths: 0, blocks_mined: 0, hours_played: 0, play_seconds: 0 },
+  activityDetails: null,
+  detailedStatistics: null,
+  versionCatalog: null,
   homeBanners: [],
   setStatus: (status) => set({ status }),
   addLog: (log) =>
@@ -69,15 +79,53 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       throw e;
     }
   },
+  fetchWeeklyActivity: async () => {
+    try {
+      const weeklyActivity = await launcherAdapter.getWeeklyActivity();
+      set({ weeklyActivity });
+    } catch (e) {
+      console.error(e);
+    }
+  },
+  fetchActivityDetails: async () => {
+    try {
+      const activityDetails = await launcherAdapter.getActivityDetails();
+      set({ activityDetails });
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  },
   fetchDbData: async () => {
     try {
-      const { config } = useAppStore.getState();
+      const { config, profile } = useAppStore.getState();
+      const uuid = profile?.uuid ?? "";
       const [weeklyActivity, statistics, downloadedVersions] = await Promise.all([
         launcherAdapter.getWeeklyActivity(),
-        launcherAdapter.getStatistics(),
+        launcherAdapter.getMinecraftStats(config.gameDir, uuid),
         launcherAdapter.syncDownloadedVersions(config.gameDir),
       ]);
       set({ weeklyActivity, statistics, downloadedVersions });
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  },
+  fetchDetailedStatistics: async () => {
+    try {
+      const { config, profile } = useAppStore.getState();
+      const detailedStatistics = await launcherAdapter.getDetailedMinecraftStats(config.gameDir, profile?.uuid ?? "");
+      set({ detailedStatistics });
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  },
+  fetchVersionCatalog: async () => {
+    try {
+      const { config } = useAppStore.getState();
+      const versionCatalog = await launcherAdapter.getVersionCatalog(config.gameDir);
+      set({ versionCatalog });
     } catch (e) {
       console.error(e);
       throw e;

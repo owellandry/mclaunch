@@ -4,8 +4,9 @@
  * 
  * Patrón: Atomic Design
  */
-import { useDeferredValue, useMemo } from "react";
+import { useDeferredValue, useEffect, useMemo } from "react";
 import { FiPlay } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { useLauncherStore } from "../../application/store/useLauncherStore";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
@@ -14,14 +15,29 @@ import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
 import heroImage from "../../assets/hero.png";
 
+const formatPlaytime = (seconds: number): string => {
+  if (seconds <= 0) return "0m";
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  if (hours <= 0) return `${minutes}m`;
+  return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+};
+
 export function Dashboard() {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const status = useLauncherStore((state) => state.status);
   const launch = useLauncherStore((state) => state.launch);
   const availableVersions = useLauncherStore((state) => state.availableVersions);
   const downloadedVersions = useLauncherStore((state) => state.downloadedVersions);
   const launchedVersionWasDownloaded = useLauncherStore((state) => state.launchedVersionWasDownloaded);
   const weeklyActivity = useLauncherStore((state) => state.weeklyActivity);
+  const fetchWeeklyActivity = useLauncherStore((state) => state.fetchWeeklyActivity);
+
+  useEffect(() => {
+    const id = setInterval(fetchWeeklyActivity, 2 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchWeeklyActivity]);
   const statistics = useLauncherStore((state) => state.statistics);
   const progress = useLauncherStore((state) => state.progress);
   const homeBanners = useLauncherStore((state) => state.homeBanners);
@@ -180,7 +196,11 @@ export function Dashboard() {
               );
             })}
           </div>
-          <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/activity")}
+            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+          >
             {t("dashboard.see_full_activity")}
           </button>
         </Card>
@@ -188,17 +208,22 @@ export function Dashboard() {
         {/* Tus Estadísticas */}
         <Card className="flex flex-col min-h-0">
           <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.your_stats")}</h3>
-          <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
-            <div className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small">
-              <span className="text-4xl font-black text-textMain leading-none">{statistics.win_rate}<span className="text-primary text-xl">%</span></span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">{t("dashboard.win_rate")}</span>
-            </div>
-            <div className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small">
-              <span className="text-4xl font-black text-textMain leading-none">{statistics.kda}</span>
-              <span className="text-[10px] text-textMuted uppercase tracking-widest text-center mt-2">{t("dashboard.kda")}</span>
-            </div>
+          <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
+            {([
+              { key: "mob_kills",    value: statistics.mob_kills.toLocaleString()   },
+              { key: "hours_played", value: formatPlaytime(statistics.play_seconds)   },
+            ] as const).map(({ key, value }) => (
+              <div key={key} className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small p-2">
+                <span className="text-2xl font-black text-textMain leading-none">{value}</span>
+                <span className="text-[9px] text-textMuted uppercase tracking-widest text-center mt-2">{t(`dashboard.${key}`)}</span>
+              </div>
+            ))}
           </div>
-          <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/statistics")}
+            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+          >
             {t("dashboard.see_stats")}
           </button>
         </Card>
@@ -236,7 +261,11 @@ export function Dashboard() {
               ))
             )}
           </div>
-          <button className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate("/dashboard/versions")}
+            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+          >
             {t("dashboard.see_all_versions")}
           </button>
         </Card>

@@ -22,6 +22,10 @@ const CHANNELS = {
   status: "launcher:status",
   getVersions: "launcher:getVersions",
   getWeeklyActivity: "db:getWeeklyActivity",
+  getActivityDetails: "db:getActivityDetails",
+  getMinecraftStats: "db:getMinecraftStats",
+  getDetailedMinecraftStats: "db:getDetailedMinecraftStats",
+  getVersionCatalog: "launcher:getVersionCatalog",
   getStatistics: "db:getStatistics",
   getDownloadedVersions: "db:getDownloadedVersions",
   clearCache: "app:clearCache",
@@ -69,6 +73,54 @@ const api = {
     return ipcRenderer.invoke(CHANNELS.getWeeklyActivity);
   },
 
+  getActivityDetails: (): Promise<{
+    entries: Array<{ date: string; playTime: number }>;
+    summary: {
+      total_seconds_all_time: number;
+      total_seconds_last_30_days: number;
+      total_seconds_last_7_days: number;
+      average_seconds_last_7_days: number;
+      active_days_last_30_days: number;
+      current_streak_days: number;
+      longest_streak_days: number;
+      best_day: { date: string; playTime: number } | null;
+    };
+  }> => {
+    return ipcRenderer.invoke(CHANNELS.getActivityDetails);
+  },
+
+  getMinecraftStats: (gameDir: string, uuid: string): Promise<{ mob_kills: number; deaths: number; blocks_mined: number; hours_played: number; play_seconds: number }> => {
+    return ipcRenderer.invoke(CHANNELS.getMinecraftStats, gameDir, uuid);
+  },
+
+  getDetailedMinecraftStats: (
+    gameDir: string,
+    uuid: string,
+  ): Promise<{
+    summary: {
+      mob_kills: number;
+      deaths: number;
+      blocks_mined: number;
+      hours_played: number;
+      play_seconds: number;
+      worlds_tracked: number;
+      kill_death_ratio: number;
+      blocks_per_hour: number;
+      kills_per_hour: number;
+    };
+    worlds: Array<{
+      world_name: string;
+      mob_kills: number;
+      deaths: number;
+      blocks_mined: number;
+      hours_played: number;
+      play_seconds: number;
+      last_played_at: string | null;
+    }>;
+  }> => {
+    return ipcRenderer.invoke(CHANNELS.getDetailedMinecraftStats, gameDir, uuid);
+  },
+
   getStatistics: (): Promise<{ win_rate: number; kda: number }> => {
     return ipcRenderer.invoke(CHANNELS.getStatistics);
   },
@@ -79,6 +131,19 @@ const api = {
 
   syncDownloadedVersions: (gameDir: string): Promise<string[]> => {
     return ipcRenderer.invoke("db:syncVersions", gameDir);
+  },
+
+  getVersionCatalog: (
+    gameDir: string,
+  ): Promise<{
+    summary: {
+      available_versions: number;
+      downloaded_versions: number;
+      latest_downloaded_at: string | null;
+    };
+    versions: Array<MinecraftVersion & { installed: boolean; installedAt: string | null }>;
+  }> => {
+    return ipcRenderer.invoke(CHANNELS.getVersionCatalog, gameDir);
   },
 
   getLogo: (): Promise<string> => {

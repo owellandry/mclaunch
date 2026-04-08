@@ -16,7 +16,26 @@ import { BrowserView, BrowserWindow, ipcMain, app } from "electron";
 import { spawn, SpawnOptions } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { initDb, getWeeklyActivity, getStatistics, getDownloadedVersions, addDownloadedVersion, syncDownloadedVersions, clearCache, clearAllData, getLogo, setLogo, getLanguage, setLanguage, db, addLauncherTime } from "./db";
+import {
+  initDb,
+  getWeeklyActivity,
+  getActivityDetails,
+  getMinecraftStats,
+  getDetailedMinecraftStats,
+  getStatistics,
+  getDownloadedVersions,
+  getDownloadedVersionEntries,
+  addDownloadedVersion,
+  syncDownloadedVersions,
+  clearCache,
+  clearAllData,
+  getLogo,
+  setLogo,
+  getLanguage,
+  setLanguage,
+  db,
+  addLauncherTime,
+} from "./db";
 import { discordPresence } from "../services/discordPresence";
 import { launcherActivitySocket } from "../services/launcherActivitySocket";
 
@@ -78,7 +97,11 @@ const CHANNELS = {
   progress: "launcher:progress",
   status: "launcher:status",
   getVersions: "launcher:getVersions",
+  getVersionCatalog: "launcher:getVersionCatalog",
   getWeeklyActivity: "db:getWeeklyActivity",
+  getActivityDetails: "db:getActivityDetails",
+  getMinecraftStats: "db:getMinecraftStats",
+  getDetailedMinecraftStats: "db:getDetailedMinecraftStats",
   getStatistics: "db:getStatistics",
   getDownloadedVersions: "db:getDownloadedVersions",
   clearCache: "app:clearCache",
@@ -227,6 +250,24 @@ const resolveHomeClientArtifact = async (window: BrowserWindow | null): Promise<
     return null;
   }
   return buildHomeClientWorkspaceAsync(window, projectDir);
+};
+
+const getReleaseVersions = async (limit = 50): Promise<MinecraftVersion[]> => {
+  const now = Date.now();
+  if (versionsCache && now - versionsCacheTime < VERSIONS_CACHE_TTL_MS && versionsCache.length >= limit) {
+    return versionsCache.slice(0, limit);
+  }
+
+  try {
+    const res = await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json");
+    const data = await res.json();
+    const releaseVersions = data.versions.filter((v: MinecraftVersion) => v.type === "release") as MinecraftVersion[];
+    versionsCache = releaseVersions;
+    versionsCacheTime = now;
+    return releaseVersions.slice(0, limit);
+  } catch {
+    return (versionsCache || []).slice(0, limit);
+  }
 };
 
 const ensureFabricProfile = async (window: BrowserWindow | null, gameDir: string, minecraftVersion: string): Promise<FabricVersionProfile | null> => {
@@ -545,6 +586,11 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
 
   // Handlers de base de datos
   ipcMain.handle(CHANNELS.getWeeklyActivity, () => getWeeklyActivity());
+  ipcMain.handle(CHANNELS.getActivityDetails, () => getActivityDetails());
+  ipcMain.handle(CHANNELS.getMinecraftStats, (_e, gameDir: string, uuid: string) => getMinecraftStats(gameDir, uuid));
+  ipcMain.handle(CHANNELS.getDetailedMinecraftStats, (_e, gameDir: string, uuid: string) =>
+    getDetailedMinecraftStats(gameDir, uuid),
+  );
   ipcMain.handle(CHANNELS.getStatistics, () => getStatistics());
   ipcMain.handle(CHANNELS.getDownloadedVersions, () => getDownloadedVersions());
   ipcMain.handle("db:syncVersions", async (_, gameDir: string) => syncDownloadedVersions(gameDir));
@@ -652,18 +698,28 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
 
   // Versiones de Minecraft con caché
   ipcMain.handle(CHANNELS.getVersions, async () => {
-    const now = Date.now();
-    if (versionsCache && now - versionsCacheTime < VERSIONS_CACHE_TTL_MS) return versionsCache;
+    return getReleaseVersions(50);
+  });
 
-    try {
-      const res = await fetch("https://launchermeta.mojang.com/mc/game/version_manifest.json");
-      const data = await res.json();
-      versionsCache = data.versions.filter((v: any) => v.type === "release").slice(0, 50);
-      versionsCacheTime = now;
-      return versionsCache;
-    } catch {
-      return versionsCache || [];
-    }
+  ipcMain.handle(CHANNELS.getVersionCatalog, async (_event, gameDir: string) => {
+    const versions = await getReleaseVersions(120);
+    syncDownloadedVersions(gameDir);
+
+    const installedEntries = getDownloadedVersionEntries();
+    const installedMap = new Map(installedEntries.map((entry) => [entry.version, entry.installed_at]));
+
+    return {
+      summary: {
+        available_versions: versions.length,
+        downloaded_versions: installedEntries.length,
+        latest_downloaded_at: installedEntries[0]?.installed_at ?? null,
+      },
+      versions: versions.map((version) => ({
+        ...version,
+        installed: installedMap.has(version.id),
+        installedAt: installedMap.get(version.id) ?? null,
+      })),
+    };
   });
 
   // Lanza Minecraft (corazón del launcher)
@@ -697,6 +753,8 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
         if (text) emitLog(window, `[minecraft] ${text}`);
       });
       launcher.on("close", (code) => {
+        flushTime();
+        isGameActive = false;
         emitLog(window, `Minecraft cerrado (código: ${code})`);
         const jarPath = path.join(payload.gameDir, "versions", payload.version, `${payload.version}.jar`);
         if (fs.existsSync(jarPath)) addDownloadedVersion(payload.version);
@@ -751,8 +809,11 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       emitLog(window, "Minecraft en ejecución.");
       discordPresence.setPlayingPresence(payload);
       launcherActivitySocket.setPlayingPresence(payload);
+      isGameActive = true;
+      lastFlush = Date.now();
       emitStatus(window, "playing");
     } catch (error) {
+      isGameActive = false;
       const message = error instanceof Error ? error.message : "Error desconocido";
       emitLog(window, `Error en lanzamiento: ${message}`);
       discordPresence.setLauncherPresence();
@@ -761,21 +822,24 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     }
   });
 
-  // ── TRACKING DE TIEMPO DE USO ─────────────────────────────────────────────
+  // ── TRACKING DE TIEMPO DE JUEGO ──────────────────────────────────────────
+  // Solo se contabiliza tiempo cuando Minecraft está activamente corriendo
+  // (status "playing"), no mientras el launcher está en idle.
   let lastFlush = Date.now();
+  let isGameActive = false;
 
   const flushTime = (): void => {
     const now = Date.now();
     const seconds = Math.floor((now - lastFlush) / 1000);
     lastFlush = now;
-    if (seconds > 0) addLauncherTime(seconds);
+    if (isGameActive && seconds > 0) addLauncherTime(seconds);
   };
 
   const activityTimer = setInterval(flushTime, 60_000);
 
   app.once("before-quit", () => {
     clearInterval(activityTimer);
-    flushTime();
+    if (isGameActive) flushTime();
   });
 };
 
