@@ -1,0 +1,223 @@
+name: Publish Desktop Hotupdate
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "electron/**"
+      - "react-ui/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "scripts/create-hotupdate-manifest.mjs"
+      - ".github/workflows/publish-hotupdate.yml"
+
+concurrency:
+  group: publish-hotupdate
+  cancel-in-progress: true
+
+jobs:
+  publish-hotupdate:
+    name: Build and Publish Hotupdate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DEPLOY_HOST: ${{ vars.HOTUPDATE_DEPLOY_HOST || vars.BACKEND_DEPLOY_HOST || secrets.HOTUPDATE_DEPLOY_HOST || secrets.BACKEND_DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ vars.HOTUPDATE_DEPLOY_PORT || vars.BACKEND_DEPLOY_PORT || secrets.HOTUPDATE_DEPLOY_PORT || secrets.BACKEND_DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ vars.HOTUPDATE_DEPLOY_USER || vars.BACKEND_DEPLOY_USER || secrets.HOTUPDATE_DEPLOY_USER || secrets.BACKEND_DEPLOY_USER }}
+      HOTUPDATE_DEPLOY_PATH: ${{ vars.HOTUPDATE_DEPLOY_PATH || secrets.HOTUPDATE_DEPLOY_PATH }}
+      BACKEND_DEPLOY_PATH: ${{ vars.BACKEND_DEPLOY_PATH || secrets.BACKEND_DEPLOY_PATH }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect hotupdate-safe desktop changes
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          before_sha="${{ github.event.before }}"
+          after_sha="${{ github.sha }}"
+
+          if [ -z "$before_sha" ] || [ "$before_sha" = "0000000000000000000000000000000000000000" ]; then
+            mapfile -t changed_files < <(git show --pretty="" --name-only "$after_sha")
+          else
+            mapfile -t changed_files < <(git diff --name-only "$before_sha" "$after_sha")
+          fi
+
+          printf '%s\n' "${changed_files[@]}" > changed-files.txt
+
+          has_desktop_change=false
+          is_hotupdate=true
+
+          for file in "${changed_files[@]}"; do
+            [ -z "$file" ] && continue
+
+            if [[ "$file" =~ ^(electron/|react-ui/) ]]; then
+              has_desktop_change=true
+              continue
+            fi
+
+            if [[ "$file" =~ ^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|scripts/|backend/|build/|react-installer/|mc-home-client/|\.github/workflows/) ]]; then
+              is_hotupdate=false
+              break
+            fi
+
+            is_hotupdate=false
+            break
+          done
+
+          if [ "$has_desktop_change" != true ]; then
+            is_hotupdate=false
+          fi
+
+          echo "is_hotupdate=$is_hotupdate" >> "$GITHUB_OUTPUT"
+          echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
+          cat changed-files.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Skip publish when commit needs full desktop build
+        if: steps.detect.outputs.is_hotupdate != 'true'
+        run: |
+          echo "El push no califica como hotupdate."
+          echo "Archivos detectados:"
+          echo "${{ steps.detect.outputs.changed_files }}"
+
+      - name: Validate deploy settings
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        env:
+          DEPLOY_KEY: ${{ secrets.HOTUPDATE_DEPLOY_SSH_KEY || secrets.BACKEND_DEPLOY_SSH_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deploy_path="$HOTUPDATE_DEPLOY_PATH"
+          if [ -z "$deploy_path" ] && [ -n "$BACKEND_DEPLOY_PATH" ]; then
+            deploy_path="$(dirname "$BACKEND_DEPLOY_PATH")/shared/hotupdates"
+          fi
+
+          missing=0
+          if [ -z "${DEPLOY_HOST}" ]; then
+            echo "::error::Falta DEPLOY_HOST o HOTUPDATE_DEPLOY_HOST."
+            missing=1
+          fi
+          if [ -z "${DEPLOY_USER}" ]; then
+            echo "::error::Falta DEPLOY_USER o HOTUPDATE_DEPLOY_USER."
+            missing=1
+          fi
+          if [ -z "${deploy_path}" ]; then
+            echo "::error::Falta HOTUPDATE_DEPLOY_PATH o BACKEND_DEPLOY_PATH."
+            missing=1
+          fi
+          if [ -z "${DEPLOY_KEY}" ]; then
+            echo "::error::Falta HOTUPDATE_DEPLOY_SSH_KEY o BACKEND_DEPLOY_SSH_KEY."
+            missing=1
+          fi
+          if [ "${missing}" -ne 0 ]; then
+            exit 1
+          fi
+
+          echo "DEPLOY_PATH=${deploy_path}" >> "$GITHUB_ENV"
+
+      - name: Setup pnpm
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.x
+
+      - name: Install dependencies
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop runtime
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        run: pnpm build
+
+      - name: Package hotupdate
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_ts="$(date -u +%Y%m%dT%H%M%SZ)"
+          published_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          short_sha="${GITHUB_SHA::8}"
+          release_id="desktop-${release_ts}-${short_sha}"
+
+          staging_dir="${RUNNER_TEMP}/${release_id}"
+          output_dir="${GITHUB_WORKSPACE}/build/hotupdates/publish"
+          bundle_name="${release_id}.tar.gz"
+          manifest_name="${release_id}.json"
+
+          rm -rf "$staging_dir" "$output_dir"
+          mkdir -p "$staging_dir/react-ui" "$output_dir"
+
+          cp -R dist-electron "$staging_dir/"
+          cp -R react-ui/dist "$staging_dir/react-ui/"
+
+          tar -czf "${output_dir}/${bundle_name}" -C "$staging_dir" dist-electron react-ui
+
+          node scripts/create-hotupdate-manifest.mjs \
+            --bundle "${output_dir}/${bundle_name}" \
+            --output "${output_dir}/${manifest_name}" \
+            --release-id "${release_id}" \
+            --commit "${GITHUB_SHA}" \
+            --published-at "${published_at}"
+
+          echo "release_id=${release_id}" >> "$GITHUB_OUTPUT"
+          echo "bundle_path=${output_dir}/${bundle_name}" >> "$GITHUB_OUTPUT"
+          echo "manifest_path=${output_dir}/${manifest_name}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare SSH key
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        env:
+          DEPLOY_KEY: ${{ secrets.HOTUPDATE_DEPLOY_SSH_KEY || secrets.BACKEND_DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/mclaunch_hotupdate
+          chmod 600 ~/.ssh/mclaunch_hotupdate
+
+      - name: Trust server host key
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        run: |
+          ssh-keyscan -p "${DEPLOY_PORT}" -H "${DEPLOY_HOST}" >> ~/.ssh/known_hosts
+
+      - name: Ensure remote hotupdate directory exists
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        run: |
+          ssh -i ~/.ssh/mclaunch_hotupdate -p "${DEPLOY_PORT}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" \
+            "mkdir -p '${DEPLOY_PATH}'"
+
+      - name: Upload hotupdate bundle
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        run: |
+          rsync -az \
+            "${{ steps.package.outputs.bundle_path }}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+        env:
+          RSYNC_RSH: ssh -i ~/.ssh/mclaunch_hotupdate -p ${{ env.DEPLOY_PORT }}
+
+      - name: Upload hotupdate manifest
+        if: steps.detect.outputs.is_hotupdate == 'true'
+        run: |
+          rsync -az \
+            "${{ steps.package.outputs.manifest_path }}" \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/"
+        env:
+          RSYNC_RSH: ssh -i ~/.ssh/mclaunch_hotupdate -p ${{ env.DEPLOY_PORT }}
