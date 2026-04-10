@@ -49,11 +49,20 @@
       "include": "build/installer.nsh"
     },
     "win": {
+      "artifactName": "MC-Launch-${version}-windows-${arch}.${ext}",
+      "signAndEditExecutable": false,
       "target": [
         "nsis"
       ]
     },
+    "mac": {
+      "artifactName": "MC-Launch-${version}-macos-${arch}.${ext}",
+      "target": [
+        "zip"
+      ]
+    },
     "linux": {
+      "artifactName": "MC-Launch-${version}-linux-${arch}.${ext}",
       "target": [
         "AppImage"
       ]
