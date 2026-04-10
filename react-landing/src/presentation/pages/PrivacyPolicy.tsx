@@ -10,7 +10,7 @@ export function PrivacyPolicy() {
 
   return (
     <div className="w-full max-w-4xl mx-auto py-32 min-h-[85vh] animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-8 mb-16">
+      <div className="flex flex-col items-start gap-8 mb-16">
         <div className="w-20 h-20 bg-surface border-2 border-surfaceLight flex items-center justify-center mc-cutout">
           <Shield className="text-primary" size={40} strokeWidth={1.5} />
         </div>
