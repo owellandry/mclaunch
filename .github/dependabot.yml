@@ -11,6 +11,8 @@ updates:
     labels:
       - "dependencies"
       - "javascript"
+    ignore:
+      - dependency-name: "axios"
     groups:
       frontend:
         patterns:
