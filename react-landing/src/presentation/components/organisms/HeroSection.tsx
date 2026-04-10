@@ -48,12 +48,12 @@ export function HeroSection() {
       {/* Scrolling Ticker Tape at bottom of Hero */}
       <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[110vw] overflow-hidden bg-primary py-3 border-y-2 border-textMain flex whitespace-nowrap -rotate-2 z-20 shadow-[0_10px_30px_rgba(0,0,0,0.1)]">
         <div className="animate-scroll_20s_linear_infinite flex gap-4 text-textMain font-bold font-mono text-sm tracking-[0.2em] uppercase px-2">
-          {Array(10).fill("// EXPERIMENTA EL LAUNCHER DE NUEVA GENERACIÓN ").map((text, i) => (
+          {Array(10).fill(t("hero.ticker_1")).map((text, i) => (
             <span key={`a-${i}`}>{text}</span>
           ))}
         </div>
         <div className="animate-scroll_20s_linear_infinite flex gap-4 text-textMain font-bold font-mono text-sm tracking-[0.2em] uppercase px-2">
-          {Array(10).fill("// EXPERIMENTA EL LAUNCHER DE NUEVA GENERACIÓN ").map((text, i) => (
+          {Array(10).fill(t("hero.ticker_1")).map((text, i) => (
             <span key={`b-${i}`}>{text}</span>
           ))}
         </div>
@@ -62,12 +62,12 @@ export function HeroSection() {
       {/* Decorative Ticker Tape Background (Opuesto) */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[110vw] overflow-hidden bg-surfaceLight/30 py-2 border-y-2 border-textMain/10 flex whitespace-nowrap rotate-1 z-0 pointer-events-none">
         <div className="animate-scroll_30s_linear_infinite_reverse flex gap-4 text-textMain/20 font-bold font-mono text-sm tracking-[0.2em] uppercase px-2">
-          {Array(10).fill("// PLAY WITH FRIENDS // EXPLORE NEW WORLDS ").map((text, i) => (
+          {Array(10).fill(t("hero.ticker_2")).map((text, i) => (
             <span key={`bg-a-${i}`}>{text}</span>
           ))}
         </div>
         <div className="animate-scroll_30s_linear_infinite_reverse flex gap-4 text-textMain/20 font-bold font-mono text-sm tracking-[0.2em] uppercase px-2">
-          {Array(10).fill("// PLAY WITH FRIENDS // EXPLORE NEW WORLDS ").map((text, i) => (
+          {Array(10).fill(t("hero.ticker_2")).map((text, i) => (
             <span key={`bg-b-${i}`}>{text}</span>
           ))}
         </div>

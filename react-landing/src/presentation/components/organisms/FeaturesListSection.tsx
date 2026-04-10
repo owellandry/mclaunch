@@ -72,12 +72,12 @@ export function FeaturesListSection() {
       {/* Decorative Line Separator */}
       <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[110vw] overflow-hidden bg-textMain py-1.5 flex whitespace-nowrap rotate-1 z-20 pointer-events-none">
         <div className="animate-scroll_40s_linear_infinite flex gap-4 text-background font-bold font-mono text-[10px] tracking-[0.3em] uppercase px-2 opacity-50">
-          {Array(15).fill("+++ SECURE YOUR ACCOUNT +++ FAST UPDATES +++ MOD SUPPORT ").map((text, i) => (
+          {Array(15).fill(t("hero.ticker_3")).map((text, i) => (
             <span key={`feat-a-${i}`}>{text}</span>
           ))}
         </div>
         <div className="animate-scroll_40s_linear_infinite flex gap-4 text-background font-bold font-mono text-[10px] tracking-[0.3em] uppercase px-2 opacity-50">
-          {Array(15).fill("+++ SECURE YOUR ACCOUNT +++ FAST UPDATES +++ MOD SUPPORT ").map((text, i) => (
+          {Array(15).fill(t("hero.ticker_3")).map((text, i) => (
             <span key={`feat-b-${i}`}>{text}</span>
           ))}
         </div>
