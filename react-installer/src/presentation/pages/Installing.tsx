@@ -127,7 +127,7 @@ export function Installing() {
               <h2 className="text-4xl font-black uppercase tracking-tight text-textMain leading-none">
                 Instalando
                 <br />
-                MC Launch
+                Slaumcher
               </h2>
             </div>
 

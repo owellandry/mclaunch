@@ -212,7 +212,7 @@ const createWindow = async (runtimePaths: DesktopRuntimePaths): Promise<void> =>
     height: 760,
     minWidth: 960,
     minHeight: 620,
-    title: "MC Launch",
+    title: "Slaumcher",
     icon: iconPath,
     frame: false,
     show: false,

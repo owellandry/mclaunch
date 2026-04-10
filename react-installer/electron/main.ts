@@ -63,7 +63,7 @@ const createWindow = async (): Promise<void> => {
     height: 560,
     minWidth: 860,
     minHeight: 560,
-    title: "MC Launch Installer",
+    title: "Slaumcher Installer",
     frame: false,
     titleBarStyle: "hidden",
     backgroundColor: "#0d1118",

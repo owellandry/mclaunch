@@ -56,7 +56,7 @@ export function Done() {
             Instalacion completa
           </p>
           <h1 className="text-4xl font-black uppercase tracking-tight text-textMain mb-4 leading-none">
-            MC Launch ya
+            Slaumcher ya
             <br />
             esta listo
           </h1>

@@ -12,9 +12,9 @@ export function DownloadSection() {
   const { t } = useTranslation();
 
   const allOptions: DownloadOption[] = [
-    { os: "windows", label: t("nav.download") + " Windows", filename: "MCLaunch-Setup.exe", url: "#win" },
-    { os: "mac", label: t("nav.download") + " macOS", filename: "MCLaunch-Setup.dmg", url: "#mac" },
-    { os: "linux", label: t("nav.download") + " Linux", filename: "MCLaunch-x86_64.AppImage", url: "#lin" },
+    { os: "windows", label: t("nav.download") + " Windows", filename: "Slaumcher-Setup.exe", url: "#win" },
+    { os: "mac", label: t("nav.download") + " macOS", filename: "Slaumcher.dmg", url: "#mac" },
+    { os: "linux", label: t("nav.download") + " Linux", filename: "Slaumcher.AppImage", url: "#lin" },
   ];
 
   return (

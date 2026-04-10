@@ -1,6 +1,6 @@
 /**
  * @file OS.ts
- * @description Entidad que define los sistemas operativos soportados por MC Launch.
+ * @description Entidad que define los sistemas operativos soportados por Slaumcher.
  */
 export type OS = "windows" | "mac" | "linux" | "unknown";
 

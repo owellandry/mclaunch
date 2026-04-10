@@ -1,5 +1,5 @@
 # 03-install.ps1
-# Orquestador principal del instalador de MC Launch para Windows ARM64
+# Orquestador principal del instalador de Slaumcher para Windows ARM64
 
 $ErrorActionPreference = "Stop"
 $SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -30,11 +30,11 @@ try {
     exit 1
 }
 
-Write-Step 3 3 "Instalando MC Launch..."
+Write-Step 3 3 "Instalando Slaumcher..."
 
 # TODO: Reemplazar cuando la URL del launcher este disponible.
-# $LAUNCHER_URL = "https://releases.mclaunch.app/windows/arm64/MCLaunch-Setup.exe"
-# $LAUNCHER_EXE = Join-Path $env:TEMP "MCLaunch-Setup.exe"
+# $LAUNCHER_URL = "https://slaumcher.net/downloads/windows/arm64/Slaumcher-Setup.exe"
+# $LAUNCHER_EXE = Join-Path $env:TEMP "Slaumcher-Setup.exe"
 # Invoke-WebRequest -Uri $LAUNCHER_URL -OutFile $LAUNCHER_EXE -UseBasicParsing
 # Start-Process $LAUNCHER_EXE -ArgumentList "/S" -Wait -NoNewWindow
 # Remove-Item $LAUNCHER_EXE -Force -ErrorAction SilentlyContinue

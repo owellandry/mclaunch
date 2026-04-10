@@ -22,7 +22,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
           <div className="h-8 w-8 bg-primary shadow-[0_0_20px_var(--color-primary-shadow)] mc-cutout-small group-hover:bg-primaryHover transition-colors flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-black/30 mc-cutout-small" />
           </div>
-          <strong className="text-2xl font-black uppercase tracking-tighter text-white group-hover:text-primary transition-colors">MC Launch</strong>
+          <strong className="text-2xl font-black uppercase tracking-tighter text-white group-hover:text-primary transition-colors">Slaumcher</strong>
         </Link>
         <nav className="hidden md:flex gap-10">
           <a href="/#features" className="text-xs font-bold uppercase tracking-[0.2em] text-white/50 hover:text-primary transition-colors">{t("nav.features")}</a>

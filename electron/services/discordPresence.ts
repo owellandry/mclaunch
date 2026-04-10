@@ -253,7 +253,7 @@ class DiscordPresenceService {
     if (mode === "playing") {
       return {
         ...base,
-        details: "Jugando con MC Launch",
+        details: "Jugando con Slaumcher",
         state: version
           ? `${username ?? "Jugador"} | Minecraft ${version}`
           : `${username ?? "Jugador"} | En partida`,
@@ -262,7 +262,7 @@ class DiscordPresenceService {
 
     return {
       ...base,
-      details: "Usando MC Launch",
+      details: "Usando Slaumcher",
       state: "Explorando el launcher",
     };
   }

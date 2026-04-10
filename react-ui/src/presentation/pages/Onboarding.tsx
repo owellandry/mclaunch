@@ -20,7 +20,7 @@ export function Onboarding() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const memoryMb = 4096;
-  const gameDir = "./mclaunch_data";
+  const gameDir = "./slaumcher_data";
 
   const handleMicrosoftLogin = async () => {
     setIsLoggingIn(true);
