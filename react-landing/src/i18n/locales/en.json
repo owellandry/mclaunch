@@ -10,7 +10,10 @@
     "title_2": "Without Limits",
     "desc": "An atomic, ultra-fast, visually spectacular launcher. Native support for Microsoft accounts and Fabric mods integrated directly into the main menu.",
     "btn_download": "Download Slaumcher",
-    "detected": "Detected for"
+    "detected": "Detected for",
+    "ticker_1": "// EXPERIENCE THE NEXT GENERATION LAUNCHER ",
+    "ticker_2": "// PLAY WITH FRIENDS // EXPLORE NEW WORLDS ",
+    "ticker_3": "+++ SECURE YOUR ACCOUNT +++ FAST UPDATES +++ MOD SUPPORT "
   },
   "features": {
     "title": "Designed for the Future",
@@ -32,7 +35,10 @@
   "footer": {
     "rights": "© 2026 Slaumcher. Not associated with Mojang or Microsoft.",
     "privacy": "Privacy",
-    "terms": "Terms"
+    "terms": "Terms",
+    "section_legal": "// LEGAL",
+    "section_language": "// LANGUAGE",
+    "status": "SYSTEM OFFLINE [ // ]"
   },
   "privacy": {
     "title": "Privacy Policy",
