@@ -17,9 +17,9 @@ export function DownloadCard({ option, isRecommended }: DownloadCardProps) {
   const { t } = useTranslation();
 
   return (
-    <Card className={`relative flex flex-col p-8 transition-all hover:-translate-y-1 ${isRecommended ? 'border-primary/50 shadow-[0_0_30px_var(--color-primary-shadow)]' : 'border-white/5 opacity-80 hover:opacity-100'}`}>
+    <Card className={`relative flex flex-col p-8 transition-all hover:-translate-y-1 ${isRecommended ? 'border-primary shadow-[0_0_30px_var(--color-primary-shadow)]' : 'border-surfaceLight opacity-80 hover:opacity-100 hover:border-primary/50'}`}>
       {isRecommended && (
-        <div className="absolute -top-3 right-6 bg-primary text-background px-3 py-1 text-[10px] font-black uppercase tracking-widest mc-cutout-small">
+        <div className="absolute -top-3 right-6 bg-primary text-white px-3 py-1 text-[10px] font-bold uppercase tracking-widest mc-cutout-small shadow-sm">
           {t("download.recommended")}
         </div>
       )}

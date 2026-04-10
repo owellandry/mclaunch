@@ -18,14 +18,22 @@ export function DownloadSection() {
   ];
 
   return (
-    <section id="download" className="relative w-full py-32 border-t border-white/5 scroll-mt-20">
+    <section id="download" className="relative w-full py-32 border-t-2 border-surfaceLight scroll-mt-20">
+      
+      {/* Minecraft-style Section Header */}
+      <div className="max-w-6xl mx-auto px-4 mb-16">
+        <div className="flex items-center gap-4 text-primary font-mono text-sm sm:text-base tracking-[0.2em] uppercase">
+          <div className="px-6 py-2 bg-surface border-2 border-surfaceLight mc-cutout-small font-bold text-textMain">
+            02 // {t("download.title")}
+          </div>
+          <div className="flex-1 h-px border-t-2 border-dashed border-surfaceLight" />
+        </div>
+      </div>
+
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[radial-gradient(ellipse_at_top,var(--color-primary-shadow)_0%,transparent_70%)] opacity-20 pointer-events-none blur-[100px]" />
 
       <div className="text-center mb-20 relative z-10">
-        <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-white mb-6">
-          {t("download.title")}
-        </h2>
-        <p className="text-white/60 max-w-2xl mx-auto text-lg md:text-xl font-medium tracking-wide">
+        <p className="text-textMuted max-w-2xl mx-auto text-lg md:text-xl font-medium tracking-wide">
           {t("download.subtitle")}
         </p>
       </div>
