@@ -21,6 +21,21 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
+      keyframes: {
+        scroll: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(-100%)' },
+        },
+        scroll_reverse: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        }
+      },
+      animation: {
+        'scroll_20s_linear_infinite': 'scroll 20s linear infinite',
+        'scroll_30s_linear_infinite_reverse': 'scroll_reverse 30s linear infinite',
+        'scroll_40s_linear_infinite': 'scroll 40s linear infinite',
+      }
     },
   },
   plugins: [],
