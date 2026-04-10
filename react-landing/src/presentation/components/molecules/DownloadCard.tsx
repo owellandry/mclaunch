@@ -19,13 +19,13 @@ export function DownloadCard({ option, isRecommended }: DownloadCardProps) {
   return (
     <div className={`relative transition-all hover:-translate-y-1 ${isRecommended ? 'z-20' : 'z-10'}`}>
       {isRecommended && (
-        <div className="absolute -top-3 right-6 bg-primary text-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest mc-cutout-small shadow-[0_4px_0_var(--color-primary-hover)] z-[100]">
+        <div className="absolute -top-3 right-4 sm:right-6 bg-primary text-white px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest mc-cutout-small shadow-[0_4px_0_var(--color-primary-hover)] z-[100]">
           {t("download.recommended")}
         </div>
       )}
-      <Card className={`relative flex flex-col p-8 h-full ${isRecommended ? 'border-primary shadow-[0_0_30px_var(--color-primary-shadow)]' : 'border-surfaceLight opacity-80 hover:opacity-100 hover:border-primary/50'}`}>
+      <Card className={`relative flex flex-col p-6 sm:p-8 lg:p-10 h-full ${isRecommended ? 'border-primary shadow-[0_0_30px_var(--color-primary-shadow)]' : 'border-surfaceLight opacity-80 hover:opacity-100 hover:border-primary/50'}`}>
         
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <h3 className="text-xl font-black uppercase tracking-tight text-textMain mb-2">{option.os === "mac" ? "macOS" : option.os}</h3>
         </div>
 

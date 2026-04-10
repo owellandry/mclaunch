@@ -15,17 +15,12 @@ export function Footer() {
 
   return (
     <footer className="relative z-10 w-full bg-surface mt-auto overflow-hidden">
-      
-      {/* Decorative Top Border Line */}
       <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
       <div className="h-1 w-full border-t-2 border-dashed border-surfaceLight" />
 
-      {/* Decorative Grid Pattern for Footer */}
       <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(var(--color-primary)_1px,transparent_1px),linear-gradient(90deg,var(--color-primary)_1px,transparent_1px)] [background-size:32px_32px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-8 py-16 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-12">
-        
-        {/* Logo / Brand / Copyright */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-12">
         <div className="flex flex-col items-center lg:items-start gap-6">
           <Link to="/" className="flex items-center gap-4 group">
             <div className="h-10 w-10 bg-primary mc-cutout-small flex items-center justify-center shadow-[0_4px_0_var(--color-primary-shadow)] group-hover:-translate-y-1 transition-transform">
@@ -38,12 +33,9 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Right Section: Links & Language */}
         <div className="flex flex-col sm:flex-row items-center lg:items-start gap-10 sm:gap-16">
-          
-          {/* Navigation Links */}
           <div className="flex flex-col items-center sm:items-start gap-4">
-            <span className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-2">// LEGAL</span>
+            <span className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-2">{t("footer.section_legal")}</span>
             <Link to="/privacy" className="text-sm font-bold uppercase tracking-widest text-textMain hover:text-primary transition-colors relative group">
               {t("footer.privacy")}
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
@@ -54,10 +46,9 @@ export function Footer() {
             </Link>
           </div>
 
-          {/* Language Selector */}
           <div className="flex flex-col items-center sm:items-start gap-4">
-            <span className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-2">// LANGUAGE</span>
-            <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest text-textMuted bg-background px-4 py-3 border-2 border-surfaceLight mc-cutout shadow-sm">
+            <span className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-2">{t("footer.section_language")}</span>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs font-bold uppercase tracking-widest text-textMuted bg-background px-4 py-3 border-2 border-surfaceLight mc-cutout shadow-sm">
               <Globe size={16} className="text-primary" />
               <button 
                 onClick={() => changeLanguage('es')} 
@@ -73,14 +64,12 @@ export function Footer() {
               >PT</button>
             </div>
           </div>
-          
         </div>
-
       </div>
-      
-      {/* Bottom Bar */}
-      <div className="w-full bg-background py-4 border-t-2 border-surfaceLight flex justify-center">
-        <span className="text-[10px] font-mono font-bold text-textMuted uppercase tracking-[0.4em]">SYSTEM OFFLINE [ // ]</span>
+      <div className="w-full bg-background py-4 border-t-2 border-surfaceLight flex justify-center px-4">
+        <span className="text-[10px] font-mono font-bold text-textMuted uppercase tracking-[0.25em] sm:tracking-[0.4em] text-center">
+          {t("footer.status")}
+        </span>
       </div>
     </footer>
   );

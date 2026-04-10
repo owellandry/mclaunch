@@ -16,7 +16,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,var(--color-primary-shadow)_0%,transparent_40%)] opacity-20 pointer-events-none" />
 
       {/* Navbar Simple */}
-      <header className="relative z-50 flex items-center justify-between px-8 py-8 w-full max-w-7xl mx-auto">
+      <header className="relative z-50 flex items-center justify-between w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <Link to="/" className="flex items-center gap-4 group">
           <div className="h-8 w-8 bg-primary shadow-[0_0_20px_var(--color-primary-shadow)] mc-cutout-small group-hover:bg-primaryHover transition-colors flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white/80 mc-cutout-small" />
@@ -30,7 +30,7 @@ export function LandingLayout({ children }: { children: ReactNode }) {
       </header>
 
       {/* Contenido Principal */}
-      <main className="relative z-10 flex-1 flex flex-col w-full max-w-7xl mx-auto px-6">
+      <main className="relative z-10 flex-1 flex flex-col w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {children}
       </main>
 

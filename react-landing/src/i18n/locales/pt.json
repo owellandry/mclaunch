@@ -35,7 +35,10 @@
   "footer": {
     "rights": "© 2026 Slaumcher. Não associado à Mojang ou Microsoft.",
     "privacy": "Privacidade",
-    "terms": "Termos"
+    "terms": "Termos",
+    "section_legal": "// LEGAL",
+    "section_language": "// IDIOMA",
+    "status": "SISTEMA OFFLINE [ // ]"
   },
   "privacy": {
     "title": "Políticas de Privacidade",
