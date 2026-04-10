@@ -9,7 +9,7 @@
     "title_mc": "Minecraft",
     "title_2": "Sin Límites",
     "desc": "Un launcher atómico, ultra-rápido, y visualmente espectacular. Soporte nativo para cuentas de Microsoft y mods de Fabric integrados directamente en el menú de inicio.",
-    "btn_download": "Descargar MC Launch",
+    "btn_download": "Descargar Slaumcher",
     "detected": "Detectado para"
   },
   "features": {
@@ -30,19 +30,19 @@
     "recommended": "Recomendado"
   },
   "footer": {
-    "rights": "© 2026 MC Launch. No asociado con Mojang o Microsoft.",
+    "rights": "© 2026 Slaumcher. No asociado con Mojang o Microsoft.",
     "privacy": "Privacidad",
     "terms": "Términos"
   },
   "privacy": {
     "title": "Políticas de Privacidad",
-    "p1": "En MC Launch nos tomamos tu privacidad en serio. No recolectamos telemetría, no vendemos tus datos y no rastreamos tus sesiones de juego.",
+    "p1": "En Slaumcher nos tomamos tu privacidad en serio. No recolectamos telemetría, no vendemos tus datos y no rastreamos tus sesiones de juego.",
     "p2": "Tus tokens de Microsoft se almacenan exclusivamente en una base de datos SQLite cifrada de manera local en tu propia máquina.",
     "p3": "Si tienes dudas sobre cómo manejamos la información, puedes revisar el código fuente abierto en nuestro repositorio."
   },
   "terms": {
     "title": "Términos y Condiciones",
-    "p1": "El software se proporciona 'tal cual', sin garantía de ningún tipo, expresa o implícita. MC Launch no es un producto oficial de Minecraft ni de Mojang Studios.",
+    "p1": "El software se proporciona 'tal cual', sin garantía de ningún tipo, expresa o implícita. Slaumcher no es un producto oficial de Minecraft ni de Mojang Studios.",
     "p2": "El uso de este launcher requiere una copia legítima (Premium) de Minecraft asociada a una cuenta de Microsoft válida.",
     "p3": "Al descargar este software, aceptas nuestra licencia MIT de código abierto."
   }

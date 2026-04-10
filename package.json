@@ -2,7 +2,7 @@
   "name": "mclaunch",
   "version": "0.1.0",
   "private": true,
-  "description": "Launcher de Minecraft con React + Electron",
+  "description": "Slaumcher, launcher de Minecraft con React + Electron",
   "main": "dist-electron/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -24,7 +24,7 @@
   },
   "build": {
     "appId": "com.mclaunch.app",
-    "productName": "MC Launch",
+    "productName": "Slaumcher",
     "files": [
       "dist-electron/**/*",
       "react-ui/dist/**/*",
@@ -45,24 +45,24 @@
       "installerHeaderIcon": "build/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "MC Launch",
+      "shortcutName": "Slaumcher",
       "include": "build/installer.nsh"
     },
     "win": {
-      "artifactName": "MC-Launch-${version}-windows-${arch}.${ext}",
+      "artifactName": "Slaumcher-${version}-windows-${arch}.${ext}",
       "signAndEditExecutable": false,
       "target": [
         "nsis"
       ]
     },
     "mac": {
-      "artifactName": "MC-Launch-${version}-macos-${arch}.${ext}",
+      "artifactName": "Slaumcher-${version}-macos-${arch}.${ext}",
       "target": [
         "zip"
       ]
     },
     "linux": {
-      "artifactName": "MC-Launch-${version}-linux-${arch}.${ext}",
+      "artifactName": "Slaumcher-${version}-linux-${arch}.${ext}",
       "target": [
         "AppImage"
       ]

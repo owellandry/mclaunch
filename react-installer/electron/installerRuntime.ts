@@ -8,7 +8,7 @@ import { Readable } from "node:stream";
 const DEFAULT_GITHUB_REPOSITORY = process.env.MCLAUNCH_GITHUB_REPOSITORY?.trim() || "owellandry/mclaunch";
 const DEFAULT_RELEASE_TAG = process.env.MCLAUNCH_INSTALL_TARGET_TAG?.trim() || "";
 const RELEASE_MANIFEST_NAME = "release-manifest.json";
-const INSTALLER_USER_AGENT = "MC-Launch-Installer";
+const INSTALLER_USER_AGENT = "Slaumcher-Installer";
 
 export type SupportedPlatform = "windows" | "linux" | "macos";
 export type SupportedArch = "x64" | "arm64" | "universal";
@@ -340,7 +340,7 @@ const downloadReleaseAsset = async (
     throw new Error(`No se pudo descargar ${asset.fileName}: HTTP ${response.status}`);
   }
 
-  const downloadDir = path.join(system.tempDir, "mclaunch-installer");
+  const downloadDir = path.join(system.tempDir, "slaumcher-installer");
   fs.mkdirSync(downloadDir, { recursive: true });
 
   const destination = path.join(downloadDir, asset.fileName);
@@ -370,9 +370,9 @@ const downloadReleaseAsset = async (
 
 const tryResolveWindowsInstallPath = (): string => {
   const candidates = [
-    path.join(process.env.LOCALAPPDATA || "", "Programs", "MC Launch", "MC Launch.exe"),
-    path.join(process.env.ProgramFiles || "", "MC Launch", "MC Launch.exe"),
-    path.join(process.env["ProgramFiles(x86)"] || "", "MC Launch", "MC Launch.exe"),
+    path.join(process.env.LOCALAPPDATA || "", "Programs", "Slaumcher", "Slaumcher.exe"),
+    path.join(process.env.ProgramFiles || "", "Slaumcher", "Slaumcher.exe"),
+    path.join(process.env["ProgramFiles(x86)"] || "", "Slaumcher", "Slaumcher.exe"),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -388,12 +388,12 @@ const installOnWindows = async (downloadPath: string): Promise<string> => {
 };
 
 const installOnLinux = async (downloadPath: string, system: SystemProfile): Promise<string> => {
-  const installDir = path.join(system.homeDir, ".local", "share", "mclaunch");
-  const binaryPath = path.join(installDir, "MC Launch.AppImage");
+  const installDir = path.join(system.homeDir, ".local", "share", "slaumcher");
+  const binaryPath = path.join(installDir, "Slaumcher.AppImage");
   const applicationsDir = path.join(system.homeDir, ".local", "share", "applications");
   const binDir = path.join(system.homeDir, ".local", "bin");
-  const desktopPath = path.join(applicationsDir, "mclaunch.desktop");
-  const symlinkPath = path.join(binDir, "mclaunch");
+  const desktopPath = path.join(applicationsDir, "slaumcher.desktop");
+  const symlinkPath = path.join(binDir, "slaumcher");
 
   fs.mkdirSync(installDir, { recursive: true });
   fs.mkdirSync(applicationsDir, { recursive: true });
@@ -407,7 +407,7 @@ const installOnLinux = async (downloadPath: string, system: SystemProfile): Prom
     [
       "[Desktop Entry]",
       "Type=Application",
-      "Name=MC Launch",
+      "Name=Slaumcher",
       `Exec=${binaryPath}`,
       "Terminal=false",
       "Categories=Game;",
@@ -439,7 +439,7 @@ const resolveWritableMacApplicationsDir = (system: SystemProfile): string => {
 };
 
 const installOnMacos = async (downloadPath: string, system: SystemProfile): Promise<string> => {
-  const extractDir = path.join(system.tempDir, "mclaunch-installer", "macos-extract");
+  const extractDir = path.join(system.tempDir, "slaumcher-installer", "macos-extract");
   fs.rmSync(extractDir, { recursive: true, force: true });
   fs.mkdirSync(extractDir, { recursive: true });
 

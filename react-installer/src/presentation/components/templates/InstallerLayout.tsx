@@ -18,7 +18,7 @@ export function InstallerLayout({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-3">
           <div className="h-4 w-4 bg-primary rounded-sm shadow-[0_0_10px_var(--color-primary-shadow)]" />
           <div className="flex flex-col">
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary">MC Launch</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Slaumcher</span>
             <strong className="text-xs text-textMain leading-none">Installer Setup</strong>
           </div>
         </div>

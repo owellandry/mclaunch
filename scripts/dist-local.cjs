@@ -4,8 +4,8 @@ const { spawnSync } = require("node:child_process");
 
 const projectRoot = process.cwd();
 const unpackedDir = join(projectRoot, "dist", "win-unpacked");
-const executablePath = join(unpackedDir, "MC Launch.exe");
-const outputZip = join(projectRoot, "dist", "MC-Launch-local-portable.zip");
+const executablePath = join(unpackedDir, "Slaumcher.exe");
+const outputZip = join(projectRoot, "dist", "Slaumcher-local-portable.zip");
 const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 const powershellCommand = process.platform === "win32" ? "powershell.exe" : "powershell";
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 03-install.sh
-# Orquestador principal del instalador de MC Launch para macOS x64 (Intel)
+# Orquestador principal del instalador de Slaumcher para macOS x64 (Intel)
 
 set -euo pipefail
 
@@ -22,15 +22,15 @@ if ! "$SCRIPT_DIR/02-check-java.sh"; then
     exit 1
 fi
 
-log_step 3 3 "Instalando MC Launch..."
+log_step 3 3 "Instalando Slaumcher..."
 
 # TODO: Reemplazar cuando la URL del launcher este disponible.
-# LAUNCHER_URL="https://releases.mclaunch.app/macos/x64/MCLaunch.dmg"
-# LAUNCHER_DMG="/tmp/MCLaunch.dmg"
+# LAUNCHER_URL="https://slaumcher.net/downloads/macos/x64/Slaumcher.dmg"
+# LAUNCHER_DMG="/tmp/Slaumcher.dmg"
 # curl -fsSL "$LAUNCHER_URL" -o "$LAUNCHER_DMG"
 # hdiutil attach "$LAUNCHER_DMG" -nobrowse -quiet
-# cp -R "/Volumes/MCLaunch/MCLaunch.app" /Applications/
-# hdiutil detach "/Volumes/MCLaunch" -quiet
+# cp -R "/Volumes/Slaumcher/Slaumcher.app" /Applications/
+# hdiutil detach "/Volumes/Slaumcher" -quiet
 # rm -f "$LAUNCHER_DMG"
 
 log_status "done" "Instalacion completada correctamente."

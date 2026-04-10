@@ -174,7 +174,7 @@ const electronProcess = spawn(
 );
 children.push(electronProcess);
 
-log('✅ MC Launch en modo DESARROLLO iniciado correctamente', 'bright');
+log('✅ Slaumcher en modo DESARROLLO iniciado correctamente', 'bright');
 log('   • esbuild watch → cambios en electron/ se aplican al instante', 'cyan');
 log('   • Vite HMR → cambios en React se ven en milisegundos', 'cyan');
 log('   Presiona Ctrl+C para detener todo de forma limpia.', 'yellow');

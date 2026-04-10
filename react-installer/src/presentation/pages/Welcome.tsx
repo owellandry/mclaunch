@@ -22,7 +22,7 @@ export function Welcome() {
           <h1 className="text-4xl font-black uppercase tracking-tight text-textMain mb-4 leading-none">
             Preparando
             <br />
-            MC Launch
+            Slaumcher
           </h1>
           <p className="text-textMuted text-sm leading-relaxed mb-8 max-w-xl">
             Instala el launcher moderno de Minecraft con una interfaz atomica, integracion

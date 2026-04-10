@@ -27,10 +27,10 @@ export function Sidebar() {
       <div className="mb-8 flex flex-col items-center gap-1.5">
         <img
           src={`./logo/${logo}`}
-          alt="MCLaunch"
+          alt="Slaumcher"
           className="w-12 h-12 "
         />
-        <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">MC</span>
+        <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em]">SL</span>
       </div>
 
       {/* Navigation */}

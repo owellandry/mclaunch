@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 03-install.sh
-# Orquestador principal del instalador de MC Launch para Linux ARM64
+# Orquestador principal del instalador de Slaumcher para Linux ARM64
 
 set -euo pipefail
 
@@ -22,14 +22,15 @@ if ! "$SCRIPT_DIR/02-check-java.sh"; then
     exit 1
 fi
 
-log_step 3 3 "Instalando MC Launch..."
+log_step 3 3 "Instalando Slaumcher..."
 
 # TODO: Reemplazar cuando la URL del launcher este disponible.
-# LAUNCHER_URL="https://releases.mclaunch.app/linux/arm64/MCLaunch.tar.gz"
-# LAUNCHER_TAR="/tmp/MCLaunch.tar.gz"
+# LAUNCHER_URL="https://slaumcher.net/downloads/linux/arm64/Slaumcher.tar.gz"
+# LAUNCHER_TAR="/tmp/Slaumcher.tar.gz"
 # curl -fsSL "$LAUNCHER_URL" -o "$LAUNCHER_TAR"
-# sudo tar -xzf "$LAUNCHER_TAR" -C /opt/mclaunch --strip-components=1
+# sudo tar -xzf "$LAUNCHER_TAR" -C /opt/slaumcher --strip-components=1
 # rm -f "$LAUNCHER_TAR"
+# sudo ln -sf /opt/slaumcher/slaumcher /usr/local/bin/slaumcher
 
 log_status "done" "Instalacion completada correctamente."
 exit 0

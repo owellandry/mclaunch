@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.0.0",
-  "description": "Landing page de MC Launch para descargar el instalador",
+  "description": "Landing page de Slaumcher para descargar el instalador",
   "scripts": {
     "dev": "vite --port 5175",
     "build": "tsc -p tsconfig.app.json && vite build",

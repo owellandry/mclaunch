@@ -6,9 +6,9 @@ import { OS, DownloadOption } from "../../domain/entities/OS";
 import { OSRepository } from "../../domain/repositories/OSRepository";
 
 const downloadOptions: Record<OS, DownloadOption | null> = {
-  windows: { os: "windows", label: "Descargar para Windows", filename: "MCLaunch-Setup.exe", url: "#download-win" },
-  mac: { os: "mac", label: "Descargar para macOS", filename: "MCLaunch-Setup.dmg", url: "#download-mac" },
-  linux: { os: "linux", label: "Descargar para Linux", filename: "MCLaunch-x86_64.AppImage", url: "#download-linux" },
+  windows: { os: "windows", label: "Descargar para Windows", filename: "Slaumcher-Setup.exe", url: "#download-win" },
+  mac: { os: "mac", label: "Descargar para macOS", filename: "Slaumcher.dmg", url: "#download-mac" },
+  linux: { os: "linux", label: "Descargar para Linux", filename: "Slaumcher.AppImage", url: "#download-linux" },
   unknown: null,
 };
 
