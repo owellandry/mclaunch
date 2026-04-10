@@ -46,14 +46,14 @@ export function HeroSection() {
       </div>
 
       {/* Scrolling Ticker Tape at bottom of Hero */}
-      <div className="absolute -bottom-4 left-0 w-[110%] -translate-x-[5%] overflow-hidden bg-primary py-3 border-y-2 border-textMain flex whitespace-nowrap -rotate-2 z-20">
+      <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[110vw] overflow-hidden bg-primary py-3 border-y-2 border-textMain flex whitespace-nowrap -rotate-2 z-20">
         <div className="animate-[scroll_20s_linear_infinite] flex gap-4 text-textMain font-bold font-mono text-sm tracking-[0.2em] uppercase px-2">
-          {Array(10).fill("// EXPERIENCE THE NEXT GENERATION LAUNCHER ").map((text, i) => (
+          {Array(10).fill("// EXPERIMENTA EL LAUNCHER DE NUEVA GENERACIÓN ").map((text, i) => (
             <span key={`a-${i}`}>{text}</span>
           ))}
         </div>
         <div className="animate-[scroll_20s_linear_infinite] flex gap-4 text-textMain font-bold font-mono text-sm tracking-[0.2em] uppercase px-2">
-          {Array(10).fill("// EXPERIENCE THE NEXT GENERATION LAUNCHER ").map((text, i) => (
+          {Array(10).fill("// EXPERIMENTA EL LAUNCHER DE NUEVA GENERACIÓN ").map((text, i) => (
             <span key={`b-${i}`}>{text}</span>
           ))}
         </div>
