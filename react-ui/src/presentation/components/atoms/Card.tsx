@@ -7,7 +7,7 @@
 import type { ReactNode } from "react";
 
 interface CardProps {
-  children: ReactNode;
+  children?: ReactNode;
   className?: string;
   cutout?: boolean;
 }

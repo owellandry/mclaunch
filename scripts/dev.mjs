@@ -63,7 +63,7 @@ process.on('SIGINT', () => { killAll(); process.exit(0); });
 process.on('SIGTERM', () => { killAll(); process.exit(0); });
 
 // ── 1. Compilación ultra-rápida con esbuild (parallel + watch) ───────────
-log('Compilando Electron main + preload con esbuild...', 'bright');
+log('Compilando Electron bootstrap + app-main + preload con esbuild...', 'bright');
 
 const sharedEsbuildOptions = {
   bundle: true,
@@ -76,11 +76,16 @@ const sharedEsbuildOptions = {
   minify: false,                  // solo en dev
 };
 
-const [mainCtx, preloadCtx] = await Promise.all([
+const [mainCtx, appMainCtx, preloadCtx] = await Promise.all([
   esbuildContext({
     ...sharedEsbuildOptions,
     entryPoints: [path.join(projectRoot, 'electron/main.ts')],
     outfile: path.join(projectRoot, 'dist-electron/main.js'),
+  }),
+  esbuildContext({
+    ...sharedEsbuildOptions,
+    entryPoints: [path.join(projectRoot, 'electron/app-main.ts')],
+    outfile: path.join(projectRoot, 'dist-electron/app-main.js'),
   }),
   esbuildContext({
     ...sharedEsbuildOptions,
@@ -90,11 +95,11 @@ const [mainCtx, preloadCtx] = await Promise.all([
 ]);
 
 // Primera compilación (bloqueante solo una vez)
-await Promise.all([mainCtx.rebuild(), preloadCtx.rebuild()]);
-log('Electron main + preload compilados correctamente ✓', 'green');
+await Promise.all([mainCtx.rebuild(), appMainCtx.rebuild(), preloadCtx.rebuild()]);
+log('Electron bootstrap + app-main + preload compilados correctamente ✓', 'green');
 
 // Iniciamos watch (rebuilds automáticos en ~50ms)
-await Promise.all([mainCtx.watch(), preloadCtx.watch()]);
+await Promise.all([mainCtx.watch(), appMainCtx.watch(), preloadCtx.watch()]);
 log('esbuild en modo watch activado (cambios en electron/ se recompilan al instante)', 'green');
 
 // ── 2. Iniciar Vite renderer ──────────────────────────────────────────────
@@ -177,7 +182,7 @@ log('   Presiona Ctrl+C para detener todo de forma limpia.', 'yellow');
 // ── 5. Manejo de salida ───────────────────────────────────────────────────
 const dispose = async () => {
   log('Cerrando esbuild contexts...', 'yellow');
-  await Promise.allSettled([mainCtx.dispose(), preloadCtx.dispose()]);
+  await Promise.allSettled([mainCtx.dispose(), appMainCtx.dispose(), preloadCtx.dispose()]);
   killAll();
 };
 
