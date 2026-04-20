@@ -13,9 +13,9 @@
     "start": "node ../scripts/run-electron.cjs ."
   },
   "dependencies": {
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-router-dom": "^7.14.0"
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
@@ -31,7 +31,7 @@
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.2",
-    "vite": "^8.0.5",
+    "vite": "^8.0.9",
     "wait-on": "^9.0.4"
   }
 }
