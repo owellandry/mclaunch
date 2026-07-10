@@ -55,8 +55,8 @@ export function ActivityDetails() {
         <div className="grid grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
             <Card key={i} className="flex flex-col gap-2">
-              <div className="h-3 w-24 animate-pulse rounded bg-black/10" />
-              <div className="h-8 w-16 animate-pulse rounded bg-black/10" />
+              <div className="h-3 w-24 animate-pulse rounded bg-white/10" />
+              <div className="h-8 w-16 animate-pulse rounded bg-white/10" />
             </Card>
           ))}
         </div>
@@ -131,7 +131,7 @@ export function ActivityDetails() {
               {t("dashboard.last_30_days_desc")}
             </p>
           </div>
-          <div className="rounded-2xl border border-black/5 bg-surfaceLight/60 px-4 py-3 text-right">
+          <div className="rounded-2xl border border-white/5 bg-surfaceLight/60 px-4 py-3 text-right">
             <span className="block text-[11px] font-black uppercase tracking-[0.25em] text-textMuted">
               {t("dashboard.total_all_time")}
             </span>
@@ -143,13 +143,13 @@ export function ActivityDetails() {
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr),220px]">
           <div className="overflow-x-auto pb-2">
-            <div className="min-w-[720px] rounded-[28px] border border-black/5 bg-surfaceLight/45 px-4 py-5">
+            <div className="min-w-[720px] rounded-[28px] border border-white/5 bg-surfaceLight/45 px-4 py-5">
               <div className="relative h-72">
                 <div className="pointer-events-none absolute inset-0 bottom-8">
                   {[0, 1, 2, 3].map((line) => (
                     <div
                       key={line}
-                      className="absolute left-0 right-0 border-t border-dashed border-black/10"
+                      className="absolute left-0 right-0 border-t border-dashed border-white/10"
                       style={{ bottom: `${(line / 3) * 100}%` }}
                     />
                   ))}
@@ -165,12 +165,12 @@ export function ActivityDetails() {
                     return (
                       <div key={entry.date} className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-3">
                         <div className="relative flex-1">
-                          <div className="absolute inset-x-0 bottom-0 h-full rounded-[20px] border border-black/5 bg-white/45" />
+                          <div className="absolute inset-x-0 bottom-0 h-full rounded-[20px] border border-white/5 bg-white/45" />
                           <div
                             className={`absolute inset-x-[3px] bottom-[3px] rounded-b-[14px] transition-all duration-200 group-hover:brightness-105 ${
                               isActive
                                 ? "rounded-t-[14px] bg-gradient-to-t from-primary via-primary to-primary/70 shadow-[0_8px_22px_var(--color-primary-shadow)]"
-                                : "h-[8px] rounded-t-[10px] bg-black/10"
+                                : "h-[8px] rounded-t-[10px] bg-white/10"
                             }`}
                             style={isActive ? { height: `${height}%` } : undefined}
                           />
@@ -201,7 +201,7 @@ export function ActivityDetails() {
           </div>
 
           <div className="grid gap-3">
-            <div className="rounded-2xl border border-black/5 bg-surfaceLight/60 px-4 py-4">
+            <div className="rounded-2xl border border-white/5 bg-surfaceLight/60 px-4 py-4">
               <span className="block text-[11px] font-black uppercase tracking-[0.25em] text-textMuted">
                 {t("dashboard.best_day")}
               </span>
@@ -218,7 +218,7 @@ export function ActivityDetails() {
               </span>
             </div>
 
-            <div className="rounded-2xl border border-black/5 bg-surfaceLight/60 px-4 py-4">
+            <div className="rounded-2xl border border-white/5 bg-surfaceLight/60 px-4 py-4">
               <span className="block text-[11px] font-black uppercase tracking-[0.25em] text-textMuted">
                 {t("dashboard.active_days")}
               </span>
@@ -239,7 +239,7 @@ export function ActivityDetails() {
             {t("dashboard.activity_highlights")}
           </h2>
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-black/5 bg-surfaceLight/60 p-4">
+            <div className="rounded-2xl border border-white/5 bg-surfaceLight/60 p-4">
               <FiClock className="mb-3 text-xl text-primary" />
               <span className="block text-[11px] font-black uppercase tracking-[0.25em] text-textMuted">
                 {t("dashboard.total_last_30_days")}
@@ -248,7 +248,7 @@ export function ActivityDetails() {
                 {formatDuration(summary?.total_seconds_last_30_days ?? 0)}
               </strong>
             </div>
-            <div className="rounded-2xl border border-black/5 bg-surfaceLight/60 p-4">
+            <div className="rounded-2xl border border-white/5 bg-surfaceLight/60 p-4">
               <FiTrendingUp className="mb-3 text-xl text-primary" />
               <span className="block text-[11px] font-black uppercase tracking-[0.25em] text-textMuted">
                 {t("dashboard.longest_streak")}
@@ -257,7 +257,7 @@ export function ActivityDetails() {
                 {summary?.longest_streak_days ?? 0}
               </strong>
             </div>
-            <div className="rounded-2xl border border-black/5 bg-surfaceLight/60 p-4">
+            <div className="rounded-2xl border border-white/5 bg-surfaceLight/60 p-4">
               <FiZap className="mb-3 text-xl text-primary" />
               <span className="block text-[11px] font-black uppercase tracking-[0.25em] text-textMuted">
                 {t("dashboard.best_day")}
@@ -283,14 +283,14 @@ export function ActivityDetails() {
           </h2>
           <div className="flex flex-col gap-3">
             {activeEntries.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-black/10 bg-surfaceLight/50 px-4 py-6 text-sm text-textMuted">
+              <div className="rounded-2xl border border-dashed border-white/10 bg-surfaceLight/50 px-4 py-6 text-sm text-textMuted">
                 {t("dashboard.no_activity_records")}
               </div>
             ) : (
               activeEntries.slice(0, 8).map((entry) => (
                 <div
                   key={entry.date}
-                  className="flex items-center justify-between rounded-2xl border border-black/5 bg-surfaceLight/60 px-4 py-3"
+                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-surfaceLight/60 px-4 py-3"
                 >
                   <div>
                     <div className="text-sm font-black uppercase tracking-[0.18em] text-textMain">

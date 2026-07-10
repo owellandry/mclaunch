@@ -18,7 +18,7 @@ export function SectionTitle({ eyebrow, title, subtitle, icon, action }: Section
   return (
     <div className="flex items-start justify-between mb-6">
       <div className="flex items-start gap-4">
-        <div className="p-3 bg-surfaceLight border border-black/5 text-primary text-xl mc-cutout-small shadow-[0_0_15px_var(--color-primary-shadow)]">
+        <div className="p-3 bg-surfaceLight border border-white/5 text-primary text-xl mc-cutout-small shadow-[0_0_15px_var(--color-primary-shadow)]">
           {icon}
         </div>
         <div>

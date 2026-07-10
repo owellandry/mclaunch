@@ -22,7 +22,7 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-20 border-r border-black/5 flex flex-col items-center py-6 bg-surface/80 backdrop-blur-xl z-20">
+    <aside className="w-20 border-r border-white/5 flex flex-col items-center py-6 bg-surface/80 backdrop-blur-xl z-20">
       {/* Brand Icon — logo */}
       <div className="mb-8 flex flex-col items-center gap-1.5">
         <img
@@ -45,8 +45,8 @@ export function Sidebar() {
               title={item.label}
               className={`w-12 h-12 flex items-center justify-center transition-all ${
                 isActive
-                  ? "bg-surfaceLight text-primary border border-black/5 mc-cutout-small"
-                  : "text-textMuted hover:bg-black/5 hover:text-textMain rounded-xl"
+                  ? "bg-surfaceLight text-primary border border-white/5 mc-cutout-small"
+                  : "text-textMuted hover:bg-white/5 hover:text-textMain rounded-xl"
               }`}
             >
               <Icon className={`text-xl ${isActive ? "drop-shadow-[0_0_8px_var(--color-primary-shadow)]" : ""}`} />

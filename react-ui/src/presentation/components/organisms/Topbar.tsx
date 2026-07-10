@@ -69,7 +69,7 @@ export function Topbar() {
 
   return (
     <header
-      className="h-14 flex items-center justify-between px-6 z-10 relative shrink-0 border-b border-black/5 select-none"
+      className="h-14 flex items-center justify-between px-6 z-10 relative shrink-0 border-b border-white/5 select-none"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
       {/* Title */}
@@ -84,7 +84,7 @@ export function Topbar() {
 
       <div className="flex items-center gap-4" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         {/* Search */}
-        <div className="flex items-center gap-3 bg-surfaceLight border border-black/5 px-4 py-2 w-64 focus-within:border-primary/50 transition-colors mc-cutout-small">
+        <div className="flex items-center gap-3 bg-surfaceLight border border-white/5 px-4 py-2 w-64 focus-within:border-primary/50 transition-colors mc-cutout-small">
           <FiSearch className="text-textMuted" />
           <input
             className="bg-transparent border-none outline-none text-sm text-textMain w-full placeholder-textMuted font-mono"
@@ -100,7 +100,7 @@ export function Topbar() {
             onClick={() => setShowNotifications(!showNotifications)}
             title={t("topbar.notifications")}
             className={`w-10 h-10 bg-surfaceLight border flex items-center justify-center transition-colors mc-cutout-small relative
-              ${showNotifications ? 'border-primary/50 text-textMain' : 'border-black/5 text-textMuted hover:text-textMain hover:border-primary/50'}`}
+              ${showNotifications ? 'border-primary/50 text-textMain' : 'border-white/5 text-textMuted hover:text-textMain hover:border-primary/50'}`}
           >
             <FiBell />
             {count > 0 && (
@@ -112,8 +112,8 @@ export function Topbar() {
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-80 bg-surfaceLight border border-black/5 shadow-2xl mc-cutout-small z-50 overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b border-black/5 bg-black/5">
+            <div className="absolute right-0 top-12 w-80 bg-surfaceLight border border-white/5 shadow-2xl mc-cutout-small z-50 overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
                 <h3 className="text-sm font-bold text-textMain uppercase tracking-widest">{t("topbar.notifications")}</h3>
                 <div className="flex gap-2">
                   <button onClick={markAllAsRead} className="text-textMuted hover:text-primary transition-colors" title={t("topbar.mark_all_read")}>
@@ -135,7 +135,7 @@ export function Topbar() {
                     <div 
                       key={notif.id} 
                       onClick={() => markAsRead(notif.id)}
-                      className={`p-4 border-b border-black/5 flex gap-3 cursor-pointer hover:bg-black/5 transition-colors ${!notif.read ? 'bg-primary/5' : ''}`}
+                      className={`p-4 border-b border-white/5 flex gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notif.read ? 'bg-primary/5' : ''}`}
                     >
                       <div className="shrink-0 mt-1">
                         {getNotificationIcon(notif.type)}
@@ -169,7 +169,7 @@ export function Topbar() {
           type="button"
           onClick={openSkinStudio}
           title={t("topbar.profile")}
-          className="flex items-center gap-3 bg-surfaceLight border border-black/5 pl-4 pr-1 py-1 mc-cutout-small transition-colors hover:border-primary/40 hover:bg-black/5"
+          className="flex items-center gap-3 bg-surfaceLight border border-white/5 pl-4 pr-1 py-1 mc-cutout-small transition-colors hover:border-primary/40 hover:bg-white/5"
           style={{ viewTransitionName: PLAYER_PROFILE_CHIP_TRANSITION_NAME }}
         >
           <span className="text-sm font-bold text-textMain uppercase tracking-wider">{displayName}</span>
@@ -187,14 +187,14 @@ export function Topbar() {
           <button
             onClick={minimize}
             title={t("topbar.minimize")}
-            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-black/8 transition-colors mc-cutout-small text-lg leading-none"
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-white/8 transition-colors mc-cutout-small text-lg leading-none"
           >
             <span className="block w-3 h-[2px] bg-current mt-1" />
           </button>
           <button
             onClick={maximize}
             title={t("topbar.maximize")}
-            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-black/8 transition-colors mc-cutout-small"
+            className="w-8 h-8 flex items-center justify-center text-textMuted hover:text-textMain hover:bg-white/8 transition-colors mc-cutout-small"
           >
             <span className="block w-3 h-3 border-2 border-current" style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }} />
           </button>

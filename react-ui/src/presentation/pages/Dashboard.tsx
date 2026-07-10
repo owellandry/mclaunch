@@ -88,7 +88,7 @@ export function Dashboard() {
   return (
     <div className="flex flex-col gap-6 h-full">
       {/* Hero Section matching Image 1 */}
-      <div className="relative w-full h-[65%] overflow-hidden bg-surface rounded-2xl border border-black/10 shadow-xl">
+      <div className="relative w-full h-[65%] overflow-hidden bg-surface rounded-2xl border border-white/10 shadow-xl">
         {/* Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
@@ -126,7 +126,7 @@ export function Dashboard() {
             <button
               type="button"
               onClick={handleFeaturedBannerClick}
-              className="mt-5 inline-flex items-center border border-white/20 bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-black/55 mc-cutout-small"
+              className="mt-5 inline-flex items-center border border-white/20 bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/55 mc-cutout-small"
             >
               {t("dashboard.open_banner")}
             </button>
@@ -141,7 +141,7 @@ export function Dashboard() {
           <Button
             onClick={handleMainAction}
             disabled={isRunning || isPlaying}
-            className={`py-4 px-10 text-lg shadow-[0_0_20px_var(--color-primary-shadow)] relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
+            className={`py-4 px-10 text-lg shadow-[0_0_20px_var(--color-primary-shadow)] animate-glow-pulse relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
           >
             {/* Progress Bar Background */}
             {isRunning && progress && (
@@ -201,7 +201,7 @@ export function Dashboard() {
           <button
             type="button"
             onClick={() => navigate("/dashboard/activity")}
-            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-white/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
           >
             {t("dashboard.see_full_activity")}
           </button>
@@ -215,7 +215,7 @@ export function Dashboard() {
               { key: "mob_kills",    value: statistics.mob_kills.toLocaleString()   },
               { key: "hours_played", value: formatPlaytime(statistics.play_seconds)   },
             ] as const).map(({ key, value }) => (
-              <div key={key} className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-black/5 mc-cutout-small p-2">
+              <div key={key} className="bg-surfaceLight/50 flex flex-col justify-center items-center border border-white/5 mc-cutout-small p-2">
                 <span className="text-2xl font-black text-textMain leading-none">{value}</span>
                 <span className="text-[9px] text-textMuted uppercase tracking-widest text-center mt-2">{t(`dashboard.${key}`)}</span>
               </div>
@@ -224,7 +224,7 @@ export function Dashboard() {
           <button
             type="button"
             onClick={() => navigate("/dashboard/statistics")}
-            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-white/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
           >
             {t("dashboard.see_stats")}
           </button>
@@ -244,7 +244,7 @@ export function Dashboard() {
                   className={`px-4 py-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small shrink-0 ${
                     selectedVersion === v.id
                       ? "border-primary bg-primary/10"
-                      : "border-black/5 bg-surfaceLight/50 hover:bg-surfaceLight"
+                      : "border-white/5 bg-surfaceLight/50 hover:bg-surfaceLight"
                   }`}
                 >
                   <div>
@@ -256,7 +256,7 @@ export function Dashboard() {
                     </span>
                   </div>
                   <div
-                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_var(--color-primary-shadow)]' : 'bg-surfaceLight border border-black/20'}`}
+                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_var(--color-primary-shadow)]' : 'bg-surfaceLight border border-white/20'}`}
                     style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
                   />
                 </div>
@@ -266,7 +266,7 @@ export function Dashboard() {
           <button
             type="button"
             onClick={() => navigate("/dashboard/versions")}
-            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-black/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-white/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
           >
             {t("dashboard.see_all_versions")}
           </button>

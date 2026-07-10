@@ -83,7 +83,7 @@ export function Onboarding() {
           </div>
         </div>
 
-        <div className="bg-surfaceLight/80 backdrop-blur-2xl border border-black/10 p-10 mc-cutout shadow-2xl flex flex-col justify-center relative">
+        <div className="bg-surfaceLight/80 backdrop-blur-2xl border border-white/10 p-10 mc-cutout shadow-2xl flex flex-col justify-center relative">
           <div className="absolute -top-4 -right-4 w-24 h-24 bg-primary/20 blur-3xl rounded-full pointer-events-none" />
           
           <div className="space-y-8 relative z-10">

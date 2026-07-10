@@ -48,8 +48,8 @@ export function StatisticsDetails() {
         <div className="grid grid-cols-4 gap-4">
           {[0, 1, 2, 3].map((i) => (
             <Card key={i} className="flex flex-col gap-2">
-              <div className="h-3 w-24 animate-pulse rounded bg-black/10" />
-              <div className="h-8 w-16 animate-pulse rounded bg-black/10" />
+              <div className="h-3 w-24 animate-pulse rounded bg-white/10" />
+              <div className="h-8 w-16 animate-pulse rounded bg-white/10" />
             </Card>
           ))}
         </div>
@@ -142,14 +142,14 @@ export function StatisticsDetails() {
 
         <div className="flex flex-col gap-3">
           {worlds.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-black/10 bg-surfaceLight/50 px-4 py-6 text-sm text-textMuted">
+            <div className="rounded-2xl border border-dashed border-white/10 bg-surfaceLight/50 px-4 py-6 text-sm text-textMuted">
               {t("dashboard.no_world_stats")}
             </div>
           ) : (
             worlds.map((world) => (
               <div
                 key={world.world_name}
-                className="grid grid-cols-[1.2fr,0.8fr,0.8fr,0.8fr,0.8fr] items-center gap-4 rounded-2xl border border-black/5 bg-surfaceLight/60 px-4 py-4"
+                className="grid grid-cols-[1.2fr,0.8fr,0.8fr,0.8fr,0.8fr] items-center gap-4 rounded-2xl border border-white/5 bg-surfaceLight/60 px-4 py-4"
               >
                 <div>
                   <div className="text-sm font-black uppercase tracking-[0.18em] text-textMain">

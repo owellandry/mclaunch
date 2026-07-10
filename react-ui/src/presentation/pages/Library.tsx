@@ -35,9 +35,9 @@ export function Library() {
         />
         <div className="grid grid-cols-3 gap-6 mt-8 relative z-10">
           {INSTALLATIONS.map((inst) => (
-            <div key={inst.id} className="bg-surfaceLight/40 border border-black/5 p-6 hover:bg-surfaceLight/80 hover:border-primary/30 transition-all group mc-cutout">
+            <div key={inst.id} className="bg-surfaceLight/40 border border-white/5 p-6 hover:bg-surfaceLight/80 hover:border-primary/30 transition-all group mc-cutout">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-bold px-3 py-1 bg-black/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
+                <span className="text-xs font-bold px-3 py-1 bg-white/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
                 <span className="w-2 h-2 bg-primary shadow-[0_0_8px_var(--color-primary-shadow)] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <h3 className="text-xl font-black text-textMain mb-2 uppercase tracking-tight">{inst.label}</h3>
@@ -59,7 +59,7 @@ export function Library() {
             subtitle={t("library.featured_desc")}
             icon={<FiCompass />}
           />
-          <div className="mt-6 bg-surfaceLight/30 border border-black/5 p-12 text-center text-textMuted uppercase tracking-widest text-sm font-bold mc-cutout border-dashed">
+          <div className="mt-6 bg-surfaceLight/30 border border-white/5 p-12 text-center text-textMuted uppercase tracking-widest text-sm font-bold mc-cutout border-dashed">
             [ {t("library.wip")} ]
           </div>
         </Card>

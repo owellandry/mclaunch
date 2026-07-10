@@ -89,14 +89,14 @@ export function VersionsDetails() {
           </h2>
           <div className="flex flex-col gap-3">
             {installedVersions.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-black/10 bg-surfaceLight/50 px-4 py-6 text-sm text-textMuted">
+              <div className="rounded-2xl border border-dashed border-white/10 bg-surfaceLight/50 px-4 py-6 text-sm text-textMuted">
                 {t("dashboard.no_versions_downloaded")}
               </div>
             ) : (
               installedVersions.slice(0, 10).map((version) => (
                 <div
                   key={version.id}
-                  className="flex items-center justify-between rounded-2xl border border-black/5 bg-surfaceLight/60 px-4 py-3"
+                  className="flex items-center justify-between rounded-2xl border border-white/5 bg-surfaceLight/60 px-4 py-3"
                 >
                   <div>
                     <div className="text-sm font-black uppercase tracking-[0.18em] text-textMain">{version.id}</div>
@@ -131,7 +131,7 @@ export function VersionsDetails() {
                   className={`grid grid-cols-[1fr,auto,auto] items-center gap-4 rounded-2xl border px-4 py-4 text-left transition-colors ${
                     isSelected
                       ? "border-primary bg-primary/10"
-                      : "border-black/5 bg-surfaceLight/60 hover:bg-surfaceLight"
+                      : "border-white/5 bg-surfaceLight/60 hover:bg-surfaceLight"
                   }`}
                 >
                   <div>
@@ -150,7 +150,7 @@ export function VersionsDetails() {
                     className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] ${
                       version.installed
                         ? "bg-primary/15 text-primary"
-                        : "bg-black/5 text-textMuted"
+                        : "bg-white/5 text-textMuted"
                     }`}
                   >
                     {version.installed ? <FiDownloadCloud /> : null}

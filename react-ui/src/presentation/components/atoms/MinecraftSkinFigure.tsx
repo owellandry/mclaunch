@@ -353,7 +353,7 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   if (!deferredTextureUrl || !textureInfo) {
     return (
       <div
-        className={`mc-cutout bg-surfaceLight/70 border border-black/5 flex items-center justify-center text-textMuted ${className}`}
+        className={`mc-cutout bg-surfaceLight/70 border border-white/5 flex items-center justify-center text-textMuted ${className}`}
         style={{ width: 30 * pixelSize, height: 42 * pixelSize }}
       >
         Skin no disponible

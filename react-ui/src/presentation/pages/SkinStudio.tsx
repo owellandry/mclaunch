@@ -144,14 +144,14 @@ export function SkinStudio() {
               <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-50" />
               <div className="relative z-10 flex flex-col items-center">
                 <div
-                  className="relative flex min-h-[430px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-black/10 px-6 py-10 shadow-[0_30px_90px_rgba(0,0,0,0.18)]"
+                  className="relative flex min-h-[430px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/10 px-6 py-10 shadow-[0_30px_90px_rgba(0,0,0,0.18)]"
                 >
                   <div className="absolute inset-x-10 bottom-8 h-10 rounded-full bg-primary/20 blur-2xl" />
                   <MinecraftSkinFigure textureUrl={activeSkinUrl} pixelSize={11} className="drop-shadow-[0_22px_26px_rgba(0,0,0,0.22)]" />
                 </div>
 
                 <div
-                  className="mt-6 flex items-center gap-4 rounded-full border border-black/10 bg-surfaceLight/70 px-4 py-3 backdrop-blur"
+                  className="mt-6 flex items-center gap-4 rounded-full border border-white/10 bg-surfaceLight/70 px-4 py-3 backdrop-blur"
                   style={{ viewTransitionName: PLAYER_PROFILE_CHIP_TRANSITION_NAME }}
                 >
                   <MinecraftAvatar
@@ -177,7 +177,7 @@ export function SkinStudio() {
               subtitle={t("skin_studio.texture_subtitle")}
               icon={<FiImage />}
             />
-            <div className="overflow-hidden border border-black/10 bg-surfaceLight/40 p-4 mc-cutout-small">
+            <div className="overflow-hidden border border-white/10 bg-surfaceLight/40 p-4 mc-cutout-small">
               {activeSkinUrl ? (
                 <img
                   src={activeSkinUrl}
@@ -210,7 +210,7 @@ export function SkinStudio() {
               <Button className="w-full py-4" variant="secondary" icon={<FiRefreshCw />} onClick={handleResetToOfficial} disabled={!usingDraftSkin}>
                 {t("skin_studio.reset")}
               </Button>
-              <div className="mc-cutout-small border border-black/5 bg-surfaceLight/30 p-4 text-sm text-textMuted">
+              <div className="mc-cutout-small border border-white/5 bg-surfaceLight/30 p-4 text-sm text-textMuted">
                 <p className="font-bold uppercase tracking-wider text-textMain">{t("skin_studio.compatibility")}</p>
                 <p className="mt-2">{t("skin_studio.compatibility_desc")}</p>
               </div>
@@ -225,11 +225,11 @@ export function SkinStudio() {
               icon={<FiImage />}
             />
             <div className="space-y-3 text-sm">
-              <div className="mc-cutout-small border border-black/5 bg-surfaceLight/20 p-4">
+              <div className="mc-cutout-small border border-white/5 bg-surfaceLight/20 p-4">
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{t("skin_studio.step_one")}</span>
                 <p className="mt-2 text-textMain">{t("skin_studio.step_one_desc")}</p>
               </div>
-              <div className="mc-cutout-small border border-black/5 bg-surfaceLight/20 p-4">
+              <div className="mc-cutout-small border border-white/5 bg-surfaceLight/20 p-4">
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{t("skin_studio.step_two")}</span>
                 <p className="mt-2 text-textMain">{t("skin_studio.step_two_desc")}</p>
               </div>
