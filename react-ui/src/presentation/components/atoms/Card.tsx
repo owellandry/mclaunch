@@ -14,7 +14,7 @@ interface CardProps {
 
 export function Card({ children, className = "", cutout = true }: CardProps) {
   return (
-    <div className={`glass-panel p-6 ${cutout ? 'mc-cutout' : 'rounded-2xl'} ${className}`}>
+    <div className={`glass-panel p-6 card-lift ${cutout ? 'mc-cutout' : 'rounded-2xl'} ${className}`}>
       {children}
     </div>
   );

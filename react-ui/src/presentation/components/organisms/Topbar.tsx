@@ -112,7 +112,7 @@ export function Topbar() {
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-12 w-80 bg-surfaceLight border border-white/5 shadow-2xl mc-cutout-small z-50 overflow-hidden flex flex-col">
+            <div className="absolute right-0 top-12 w-80 bg-surfaceLight border border-white/5 shadow-2xl mc-cutout-small z-50 overflow-hidden flex flex-col animate-fade-in">
               <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
                 <h3 className="text-sm font-bold text-textMain uppercase tracking-widest">{t("topbar.notifications")}</h3>
                 <div className="flex gap-2">
@@ -132,8 +132,8 @@ export function Topbar() {
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div 
-                      key={notif.id} 
+                    <div
+                      key={notif.id}
                       onClick={() => markAsRead(notif.id)}
                       className={`p-4 border-b border-white/5 flex gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notif.read ? 'bg-primary/5' : ''}`}
                     >

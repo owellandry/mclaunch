@@ -42,7 +42,7 @@ const mapAccountToProfile = (account: BackendAccount): UserProfile => ({
 });
 
 const DEFAULT_CONFIG: LauncherConfig = {
-  version: "1.21.5",
+  version: "",
   memoryMb: 4096,
   gameDir: "C:\\Users\\Public\\Games\\.minecraft",
 };

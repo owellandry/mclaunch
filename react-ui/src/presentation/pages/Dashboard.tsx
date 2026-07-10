@@ -11,6 +11,7 @@ import { useLauncherStore } from "../../application/store/useLauncherStore";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { getLatestRelease } from "../../core/domain/launcher";
+import { getVersionArt } from "../../core/domain/versionArt";
 import { Card } from "../components/atoms/Card";
 import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
@@ -56,6 +57,8 @@ export function Dashboard() {
   const heroTitle = featuredBanner?.title || `Minecraft ${latestRelease}`;
   const heroDescription = featuredBanner?.subtitle || t("dashboard.hero_desc");
   const heroImageUrl = featuredBanner?.imageUrl || heroImage;
+  const selectedVersionArt = config.version ? getVersionArt(config.version) : null;
+  const heroBgImage = selectedVersionArt || heroImageUrl;
   
   let buttonText = isDownloaded ? t("dashboard.play") : t("dashboard.download");
   if (isRunning) {
@@ -86,85 +89,84 @@ export function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-6 h-full">
-      {/* Hero Section matching Image 1 */}
-      <div className="relative w-full h-[65%] overflow-hidden bg-surface rounded-2xl border border-white/10 shadow-xl">
-        {/* Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-[2s] hover:scale-105"
-          style={{ backgroundImage: `url(${heroImageUrl})` }}
-        />
-        {/* Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        
-        {/* Top Nav (Optional, matching image 1's pill buttons) */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
-          {[
-            { key: 'games', label: 'JUEGOS' },
-            { key: 'store', label: 'TIENDA' },
-            { key: 'community', label: 'COMUNIDAD' },
-            { key: 'support', label: 'SOPORTE' }
-          ].map(nav => (
-            <div key={nav.key} className="px-5 py-1.5 border border-white/40 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/40 hover:bg-white/20 cursor-pointer transition-colors shadow-sm">
-              {t(`dashboard.${nav.key}`, nav.label)}
-            </div>
-          ))}
-        </div>
+    <div className="flex gap-6 h-full animate-fade-in">
+      {/* Columna izquierda: Hero + Actividad + Estadísticas */}
+      <div className="flex flex-col gap-6 flex-[5] min-h-0 stagger-children">
 
-        {/* Bottom Content */}
-        <div className="absolute bottom-10 left-10 max-w-xl">
-          <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_var(--color-primary-shadow)]">
-            {featuredBanner?.placement ? `${t("dashboard.featured_banner")} · ${featuredBanner.placement}` : t("dashboard.vanilla_release")}
-          </span>
-          <h1 className="text-5xl font-black text-textMain mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
-            {heroTitle}
-          </h1>
-          <p className="text-textMuted font-bold leading-relaxed max-w-md text-sm drop-shadow-md">
-            {heroDescription}
-          </p>
-          {featuredBanner?.targetUrl ? (
-            <button
-              type="button"
-              onClick={handleFeaturedBannerClick}
-              className="mt-5 inline-flex items-center border border-white/20 bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/55 mc-cutout-small"
-            >
-              {t("dashboard.open_banner")}
-            </button>
-          ) : null}
-        </div>
+        {/* Hero Section — misma altura que antes, ahora con ancho reducido */}
+        <div className="relative w-full h-[60%] shrink-0 overflow-hidden bg-surface rounded-2xl border border-white/10 shadow-xl">
+          {/* Image - parallax lento estilo Minecraft */}
+          <div
+            className="absolute inset-0 bg-cover bg-center hero-parallax"
+            style={{ backgroundImage: `url(${heroBgImage})` }}
+          />
+          {/* Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
 
-        {/* The Cutout Button Container */}
-        <div 
-          className="absolute bottom-0 right-0 bg-background p-6 pl-8 pt-8"
-          style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%, 0 100%, 40px 0)' }}
-        >
-          <Button
-            onClick={handleMainAction}
-            disabled={isRunning || isPlaying}
-            className={`py-4 px-10 text-lg shadow-[0_0_20px_var(--color-primary-shadow)] animate-glow-pulse relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
-          >
-            {/* Progress Bar Background */}
-            {isRunning && progress && (
-              <div 
-                className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300"
-                style={{ width: `${progress.percentage}%` }}
-              />
-            )}
-            
-            <span className="relative z-10 flex items-center">
-              {buttonText}
-              {!isRunning && !isPlaying && <FiPlay className="ml-2 fill-current" />}
+          {/* Top Nav */}
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2">
+            {[
+              { key: 'games', label: 'JUEGOS' },
+              { key: 'store', label: 'TIENDA' },
+              { key: 'community', label: 'COMUNIDAD' },
+              { key: 'support', label: 'SOPORTE' }
+            ].map(nav => (
+              <div key={nav.key} className="px-5 py-1.5 border border-white/40 rounded-full text-white text-xs font-bold tracking-wider backdrop-blur-md bg-black/40 hover:bg-white/20 cursor-pointer transition-colors shadow-sm">
+                {t(`dashboard.${nav.key}`, nav.label)}
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Content */}
+          <div className="absolute bottom-10 left-10 max-w-xl">
+            <span className="px-3 py-1 bg-primary text-white text-[10px] font-black uppercase tracking-widest mb-4 inline-block mc-cutout-small shadow-[0_0_10px_var(--color-primary-shadow)]">
+              {featuredBanner?.placement ? `${t("dashboard.featured_banner")} · ${featuredBanner.placement}` : t("dashboard.vanilla_release")}
             </span>
-          </Button>
-        </div>
-      </div>
+            <h1 className="text-5xl font-black text-textMain mb-3 uppercase tracking-tight leading-none drop-shadow-xl">
+              {heroTitle}
+            </h1>
+            <p className="text-textMuted font-bold leading-relaxed max-w-md text-sm drop-shadow-md">
+              {heroDescription}
+            </p>
+            {featuredBanner?.targetUrl ? (
+              <button
+                type="button"
+                onClick={handleFeaturedBannerClick}
+                className="mt-5 inline-flex items-center border border-white/20 bg-black/40 px-4 py-2 text-[11px] font-black uppercase tracking-[0.25em] text-white transition-colors hover:bg-white/55 mc-cutout-small"
+              >
+                {t("dashboard.open_banner")}
+              </button>
+            ) : null}
+          </div>
 
-      {/* Bottom Panels */}
-      <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
+          {/* The Cutout Button Container */}
+          <div
+            className="absolute bottom-0 right-0 bg-background p-6 pl-8 pt-8"
+            style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%, 0 100%, 40px 0)' }}
+          >
+            <Button
+              onClick={handleMainAction}
+              disabled={isRunning || isPlaying}
+              className={`py-4 px-10 text-lg shadow-[0_0_20px_var(--color-primary-shadow)] animate-glow-pulse relative overflow-hidden ${isRunning || isPlaying ? 'cursor-not-allowed' : ''}`}
+            >
+              {isRunning && progress && (
+                <div
+                  className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300 progress-sheen"
+                  style={{ width: `${progress.percentage}%` }}
+                />
+              )}
+
+              <span className="relative z-10 flex items-center">
+                {buttonText}
+                {!isRunning && !isPlaying && <FiPlay className="ml-2 fill-current" />}
+              </span>
+            </Button>
+          </div>
+        </div>
 
         {/* Actividad Semanal */}
-        <Card className="flex flex-col min-h-0">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.weekly_activity")}</h3>
+        <Card className="flex-1 flex flex-col min-h-0">
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 shrink-0">{t("dashboard.weekly_activity")}</h3>
           <div className="flex items-end gap-2 flex-1 mb-3 min-h-0">
             {(() => {
               const maxSec = Math.max(...weeklyActivity, 1);
@@ -208,8 +210,8 @@ export function Dashboard() {
         </Card>
 
         {/* Tus Estadísticas */}
-        <Card className="flex flex-col min-h-0">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.your_stats")}</h3>
+        <Card className="flex-1 flex flex-col min-h-0">
+          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 shrink-0">{t("dashboard.your_stats")}</h3>
           <div className="grid grid-cols-2 gap-3 flex-1 min-h-0">
             {([
               { key: "mob_kills",    value: statistics.mob_kills.toLocaleString()   },
@@ -230,49 +232,50 @@ export function Dashboard() {
           </button>
         </Card>
 
-        {/* Selector de Versión */}
-        <Card className="flex flex-col min-h-0">
-          <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4">{t("dashboard.select_version")}</h3>
-          <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-2 min-h-0">
-            {filteredVersions.length === 0 ? (
-              <div className="text-textMuted text-xs flex items-center justify-center h-full">{t("dashboard.loading_versions")}</div>
-            ) : (
-              filteredVersions.map(v => (
-                <div
-                  key={v.id}
-                  onClick={() => setConfig({ ...config, version: v.id })}
-                  className={`px-4 py-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small shrink-0 ${
-                    selectedVersion === v.id
-                      ? "border-primary bg-primary/10"
-                      : "border-white/5 bg-surfaceLight/50 hover:bg-surfaceLight"
-                  }`}
-                >
-                  <div>
-                    <h4 className={`font-bold text-sm uppercase leading-tight ${selectedVersion === v.id ? 'text-primary' : 'text-textMain'}`}>
-                      Minecraft {v.id}
-                    </h4>
-                    <span className="text-xs text-textMuted tracking-wide">
-                      {new Date(v.releaseTime).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div
-                    className={`w-4 h-4 shrink-0 ${selectedVersion === v.id ? 'bg-primary shadow-[0_0_10px_var(--color-primary-shadow)]' : 'bg-surfaceLight border border-white/20'}`}
-                    style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
-                  />
-                </div>
-              ))
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => navigate("/dashboard/versions")}
-            className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-white/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
-          >
-            {t("dashboard.see_all_versions")}
-          </button>
-        </Card>
-
       </div>
+
+      {/* Columna derecha: Selector de Versión a altura completa */}
+      <Card className="flex-[1.5] flex flex-col min-h-0">
+        <h3 className="text-xs font-bold text-textMuted uppercase tracking-wider mb-4 shrink-0">{t("dashboard.select_version")}</h3>
+        <div className="flex flex-col gap-2 flex-1 overflow-y-auto pr-2 min-h-0">
+          {filteredVersions.length === 0 ? (
+            <div className="text-textMuted text-xs flex items-center justify-center h-full">{t("dashboard.loading_versions")}</div>
+          ) : (
+            filteredVersions.map(v => (
+              <div
+                key={v.id}
+                onClick={() => setConfig({ ...config, version: v.id })}
+                className={`px-4 py-3 border cursor-pointer transition-all flex justify-between items-center mc-cutout-small shrink-0 ${
+                  config.version === v.id
+                    ? "border-primary bg-primary/10"
+                    : "border-white/5 bg-surfaceLight/50 hover:bg-surfaceLight"
+                }`}
+              >
+                <div>
+                  <h4 className={`font-bold text-sm uppercase leading-tight ${config.version === v.id ? 'text-primary' : 'text-textMain'}`}>
+                    Minecraft {v.id}
+                  </h4>
+                  <span className="text-xs text-textMuted tracking-wide">
+                    {new Date(v.releaseTime).toLocaleDateString()}
+                  </span>
+                </div>
+                <div
+                  className={`w-4 h-4 shrink-0 ${config.version === v.id ? 'bg-primary shadow-[0_0_10px_var(--color-primary-shadow)]' : 'bg-surfaceLight border border-white/20'}`}
+                  style={{ clipPath: 'polygon(3px 0, 100% 0, 100% calc(100% - 3px), calc(100% - 3px) 100%, 0 100%, 0 3px)' }}
+                />
+              </div>
+            ))
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/dashboard/versions")}
+          className="w-full mt-4 py-2 bg-surfaceLight text-xs font-bold text-textMain hover:bg-white/5 transition-colors uppercase tracking-wider mc-cutout-small shrink-0"
+        >
+          {t("dashboard.see_all_versions")}
+        </button>
+      </Card>
+
     </div>
   );
 }
