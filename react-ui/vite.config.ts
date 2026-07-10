@@ -3,7 +3,30 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   base: './',
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'api-mock-dev',
+      configureServer(server) {
+        server.middlewares.use('/api/v1', (_req, res, next) => {
+          // En desarrollo, si el backend remoto está caído (522),
+          // devolvemos respuestas vacías exitosas para no contaminar la consola.
+          // Todas las rutas GET de colección devuelven arrays vacíos.
+          const emptyResponse = (data: unknown) =>
+            JSON.stringify({ ok: true, data })
+
+          const url = _req.url ?? ''
+          if (_req.method === 'GET' && url.includes('/banners')) {
+            res.setHeader('Content-Type', 'application/json')
+            res.end(emptyResponse([]))
+            return
+          }
+
+          next()
+        })
+      },
+    },
+  ],
 
   server: {
     port: 5173,

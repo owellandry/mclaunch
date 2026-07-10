@@ -82,7 +82,16 @@ const getHotupdateRootDir = (): string => path.join(app.getPath("userData"), HOT
 
 const getCurrentStatePath = (): string => path.join(getHotupdateRootDir(), HOTUPDATE_CURRENT_FILE);
 
-const getBundledAppRoot = (): string => app.getAppPath();
+const getBundledAppRoot = (): string => {
+  const appPath = app.getAppPath();
+  // En desarrollo app.getAppPath() apunta a dist-electron/
+  // (directorio de main.js). La raíz del proyecto es un nivel arriba.
+  if (!app.isPackaged) {
+    const parent = path.resolve(appPath, "..");
+    return parent;
+  }
+  return appPath;
+};
 
 const normalizeRuntimeLayout = (
   runtime: Partial<HotupdateRuntimeLayout> | undefined,

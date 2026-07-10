@@ -1,4 +1,6 @@
-export type BackendApiError = {
+import { ApiError, ApiErrorCode } from "../../core/errors/ApiError";
+
+type BackendApiError = {
   code: string;
   message: string;
 };
@@ -74,24 +76,57 @@ const DEFAULT_API_BASE_URL = "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
 const trimTrailingSlashes = (value: string): string => value.replace(/\/+$/, "");
 
 export const getBackendApiBaseUrl = (): string => {
-  const runtimeValue = window.api?.getApiBaseUrl?.();
-  if (runtimeValue?.trim()) return trimTrailingSlashes(runtimeValue.trim());
-
+  // En desarrollo: VITE_MCLAUNCH_API_BASE_URL="" → usa current origin (proxy de Vite)
+  // En producción: Electron preload (window.api) tiene la URL real
   const viteValue =
     typeof import.meta !== "undefined" && typeof import.meta.env?.VITE_MCLAUNCH_API_BASE_URL === "string"
       ? import.meta.env.VITE_MCLAUNCH_API_BASE_URL
-      : "";
+      : undefined;
 
-  if (viteValue.trim()) return trimTrailingSlashes(viteValue.trim());
+  if (viteValue !== undefined) {
+    if (viteValue.trim()) return trimTrailingSlashes(viteValue.trim());
+    return ""; // explícitamente vacío → URL relativa (proxy de Vite)
+  }
+
+  const runtimeValue = window.api?.getApiBaseUrl?.();
+  if (runtimeValue?.trim()) return trimTrailingSlashes(runtimeValue.trim());
+
   return DEFAULT_API_BASE_URL;
 };
 
+const codeForStatus = (status: number): ApiErrorCode => {
+  if (status >= 500) return ApiErrorCode.REMOTE_SERVER_ERROR;
+  if (status === 401) return ApiErrorCode.AUTH_ERROR;
+  if (status >= 400) return ApiErrorCode.REQUEST_REJECTED;
+  return ApiErrorCode.REMOTE_SERVER_ERROR;
+};
+
 const parseEnvelope = async <T>(response: Response): Promise<T> => {
-  const payload = (await response.json()) as BackendEnvelope<T>;
+  const contentType = response.headers.get("content-type") || "";
+
+  let payload: BackendEnvelope<T>;
+  try {
+    if (!contentType.includes("application/json")) {
+      throw new Error("Not JSON");
+    }
+    payload = (await response.json()) as BackendEnvelope<T>;
+  } catch {
+    const text = await response.text().catch(() => "");
+    const snippet = text.slice(0, 120).replace(/\s+/g, " ").trim();
+    const code =
+      response.status >= 500
+        ? ApiErrorCode.REMOTE_SERVER_ERROR
+        : ApiErrorCode.UNEXPECTED_RESPONSE;
+    throw new ApiError(
+      code,
+      `La API respondió ${response.status} (${response.statusText}) con contenido inesperado: "${snippet}"`,
+      response.status,
+    );
+  }
 
   if (!response.ok || !payload.ok || !payload.data) {
-    const message = payload.error?.message || `La API respondio con estado ${response.status}.`;
-    throw new Error(message);
+    const message = payload.error?.message || `La API respondió con estado ${response.status}.`;
+    throw new ApiError(codeForStatus(response.status), message, response.status);
   }
 
   return payload.data;
@@ -114,12 +149,21 @@ export const backendRequest = async <T>(
     headers.set("Authorization", `Bearer ${options.token.trim()}`);
   }
 
-  const response = await fetch(`${getBackendApiBaseUrl()}${path}`, {
-    method: options?.method || "GET",
-    headers,
-    body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
-    signal: options?.signal,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${getBackendApiBaseUrl()}${path}`, {
+      method: options?.method || "GET",
+      headers,
+      body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
+      signal: options?.signal,
+    });
+  } catch (err) {
+    // TypeError de fetch → error de red (DNS, timeout, conexión rechazada, etc.)
+    throw new ApiError(
+      ApiErrorCode.NETWORK_ERROR,
+      `No se pudo conectar con el servidor: ${err instanceof Error ? err.message : "error desconocido"}`,
+    );
+  }
 
   return parseEnvelope<T>(response);
 };

@@ -6,9 +6,11 @@
  */
 import { create } from "zustand";
 import type { ActivityDetails, DetailedMinecraftStats, LauncherStatus, MinecraftVersion, VersionCatalog } from "../../core/domain/launcher";
+import { getLatestRelease } from "../../core/domain/launcher";
 import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
 import { contentApi } from "../../infrastructure/api/contentApi";
 import type { BackendBanner } from "../../infrastructure/api/backendClient";
+import { ApiError } from "../../core/errors/ApiError";
 import { useAppStore } from "./useAppStore";
 import { useNotificationStore } from "./useNotificationStore";
 
@@ -136,7 +138,8 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       const homeBanners = await contentApi.getHomeBanners();
       set({ homeBanners });
     } catch (e) {
-      console.error(e);
+      const code = e instanceof ApiError ? e.code : "?";
+      console.warn(`[banners] Error ${code}`);
       set({ homeBanners: [] });
     }
   },
@@ -172,7 +175,7 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
       return;
     }
 
-    const version = config.version || "1.20.1";
+    const version = config.version || getLatestRelease(get().availableVersions);
     const wasDownloaded = downloadedVersions.includes(version);
 
     addLog(`[launcher] Perfil cargado: ${profile.username.trim()}`);

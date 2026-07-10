@@ -1,3 +1,10 @@
+/**
+ * @file launcher.ts
+ * @description Tipos, interfaces y helpers del dominio del launcher Minecraft.
+ *
+ * Patrón: Atomic Design — Core / Domain
+ */
+
 export type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 
 export type LauncherConfig = {
@@ -51,7 +58,6 @@ export type DetailedMinecraftStats = {
     mob_kills: number;
     deaths: number;
     blocks_mined: number;
-    hours_played: number;
     play_seconds: number;
     last_played_at: string | null;
   }>;
@@ -78,3 +84,24 @@ export type InstallationCard = {
   vibe: string;
   description: string;
 };
+
+/** Fallback razonable si el catálogo de versiones está vacío. */
+const FALLBACK_VERSION = "1.21.5";
+
+/**
+ * Retorna la versión "release" más reciente del catálogo.
+ * Útil para reemplazar el quemado "1.20.1" que había antes.
+ */
+export function getLatestRelease(
+  versions: MinecraftVersion[],
+  fallback = FALLBACK_VERSION,
+): string {
+  const releases = versions
+    .filter((v) => v.type === "release")
+    .sort(
+      (a, b) =>
+        new Date(b.releaseTime).getTime() - new Date(a.releaseTime).getTime(),
+    );
+
+  return releases.length > 0 ? releases[0].id : fallback;
+}

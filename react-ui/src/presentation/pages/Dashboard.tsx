@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useLauncherStore } from "../../application/store/useLauncherStore";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
+import { getLatestRelease } from "../../core/domain/launcher";
 import { Card } from "../components/atoms/Card";
 import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
@@ -48,10 +49,11 @@ export function Dashboard() {
   const isPlaying = status === "playing";
   const deferredSearchQuery = useDeferredValue(searchQuery);
 
-  const selectedVersion = config.version || "1.20.1";
+  const selectedVersion = config.version || getLatestRelease(availableVersions);
+  const latestRelease = getLatestRelease(availableVersions);
   const isDownloaded = downloadedVersions.includes(selectedVersion);
   const featuredBanner = homeBanners[0] ?? null;
-  const heroTitle = featuredBanner?.title || `Minecraft ${selectedVersion}`;
+  const heroTitle = featuredBanner?.title || `Minecraft ${latestRelease}`;
   const heroDescription = featuredBanner?.subtitle || t("dashboard.hero_desc");
   const heroImageUrl = featuredBanner?.imageUrl || heroImage;
   
