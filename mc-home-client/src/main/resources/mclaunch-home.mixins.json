@@ -3,7 +3,9 @@
   "package": "com.mclaunch.home.mixin.client",
   "compatibilityLevel": "JAVA_17",
   "client": [
-    "TitleScreenMixin"
+    "TitleScreenMixin",
+    "PlayerEntityRendererMixin",
+    "LivingEntityRendererInvoker"
   ],
   "injectors": {
     "defaultRequire": 1

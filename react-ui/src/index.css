@@ -331,6 +331,10 @@
   from { transform: rotateX(28deg); }
   to   { transform: rotateX(-26deg); }
 }
+@keyframes skin-3d-cape-sway {
+  from { transform: rotateX(-12deg); }
+  to   { transform: rotateX(-6deg); }
+}
 
 /* ============================================================
    PAGE TRANSITIONS

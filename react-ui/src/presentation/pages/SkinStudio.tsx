@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiDownload, FiImage, FiRefreshCw, FiUpload } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import capeTexture from "../../assets/cape.png";
 import { Card } from "../components/atoms/Card";
 import { SectionTitle } from "../components/atoms/SectionTitle";
 import { Button } from "../components/atoms/Button";
@@ -40,6 +41,9 @@ export function SkinStudio() {
   const officialSkinUrl = normalizeSkinUrl(profile?.skinUrl);
   const activeSkinUrl = draftSkinUrl || officialSkinUrl;
   const usingDraftSkin = Boolean(draftSkinUrl);
+
+  // Cape exclusiva del launcher
+  const capeUrl = capeTexture;
 
   useEffect(() => {
     if (draftSkinUrl) {
@@ -147,7 +151,7 @@ export function SkinStudio() {
                   className="relative flex min-h-[430px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/10 px-6 py-10 shadow-[0_30px_90px_rgba(0,0,0,0.18)]"
                 >
                   <div className="absolute inset-x-10 bottom-8 h-10 rounded-full bg-primary/20 blur-2xl" />
-                  <MinecraftSkinFigure textureUrl={activeSkinUrl} pixelSize={11} className="drop-shadow-[0_22px_26px_rgba(0,0,0,0.22)]" />
+                  <MinecraftSkinFigure textureUrl={activeSkinUrl} capeUrl={capeUrl} pixelSize={11} className="drop-shadow-[0_22px_26px_rgba(0,0,0,0.22)]" />
                 </div>
 
                 <div
@@ -207,7 +211,7 @@ export function SkinStudio() {
               <Button className="w-full py-4" icon={<FiDownload />} onClick={handleOpenPicker}>
                 {t("skin_studio.import")}
               </Button>
-              <Button className="w-full py-4" variant="secondary" icon={<FiRefreshCw />} onClick={handleResetToOfficial} disabled={!usingDraftSkin}>
+              <Button className="w-full py-4" variant="secondary" icon={<FiRefreshCw />} onClick={handleResetToOfficial}>
                 {t("skin_studio.reset")}
               </Button>
               <div className="mc-cutout-small border border-white/5 bg-surfaceLight/30 p-4 text-sm text-textMuted">

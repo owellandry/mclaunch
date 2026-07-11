@@ -1,13 +1,14 @@
 /**
  * @file MinecraftSkinFigure.tsx
- * @description Componente atómico MinecraftSkinFigure. Renderiza el cuerpo completo 2D de una skin de Minecraft.
- * 
+ * @description Componente atómico MinecraftSkinFigure. Renderiza el cuerpo completo 3D de una skin de Minecraft.
+ *
  * Patrón: Atomic Design
  */
 import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 type MinecraftSkinFigureProps = {
   textureUrl?: string | null;
+  capeUrl?: string | null;
   className?: string;
   pixelSize?: number;
 };
@@ -102,6 +103,22 @@ function makeLimbMap(baseX: number, baseY: number): FaceMap {
   };
 }
 
+const CAPE_WIDTH = 10;
+const CAPE_HEIGHT = 16;
+const CAPE_DEPTH = 1;
+const CAPE_THICKNESS = 1;
+
+function makeCapeMap(): FaceMap {
+  return {
+    front:  { x: 11, y: 0, width: CAPE_WIDTH, height: CAPE_HEIGHT },
+    back:   { x: 0,  y: 0, width: CAPE_WIDTH, height: CAPE_HEIGHT },
+    left:   { x: 0,  y: 0, width: CAPE_THICKNESS, height: CAPE_HEIGHT },
+    right:  { x: CAPE_WIDTH - CAPE_THICKNESS, y: 0, width: CAPE_THICKNESS, height: CAPE_HEIGHT },
+    top:    { x: 0,  y: 0, width: CAPE_WIDTH, height: CAPE_THICKNESS },
+    bottom: { x: 0,  y: CAPE_HEIGHT - CAPE_THICKNESS, width: CAPE_WIDTH, height: CAPE_THICKNESS },
+  };
+}
+
 function getSkinMaps(isLegacySkin: boolean) {
   const rightArm = makeLimbMap(40, 16);
   const rightArmOverlay = makeLimbMap(40, 32);
@@ -142,8 +159,8 @@ function Cuboid({
   const faceStyles = [
     { key: "front", slice: faces.front, width, height, transform: `rotateY(0deg) translateZ(${halfDepth}px)` },
     { key: "back", slice: faces.back, width, height, transform: `rotateY(180deg) translateZ(${halfDepth}px)` },
-    { key: "left", slice: faces.left, width: depth, height, transform: `rotateY(-90deg) translateZ(${halfWidth}px)` },
-    { key: "right", slice: faces.right, width: depth, height, transform: `rotateY(90deg) translateZ(${halfWidth}px)` },
+    { key: "left", slice: faces.left, width: depth, height, transform: `rotateY(90deg) translateZ(${halfWidth}px)` },
+    { key: "right", slice: faces.right, width: depth, height, transform: `rotateY(-90deg) translateZ(${halfWidth}px)` },
     { key: "top", slice: faces.top, width, height: depth, transform: `rotateX(90deg) translateZ(${halfHeight}px)` },
     { key: "bottom", slice: faces.bottom, width, height: depth, transform: `rotateX(-90deg) translateZ(${halfHeight}px)` },
   ];
@@ -179,6 +196,7 @@ function Limb({
   pixelSize,
   animationName,
 }: LimbProps) {
+  const halfH = toPixels(dimensions.height / 2, pixelSize);
   return (
     <div
       className="absolute left-1/2 top-1/2"
@@ -197,7 +215,7 @@ function Limb({
         <div
           style={{
             transformStyle: "preserve-3d",
-            transform: `translate3d(0px, ${toPixels(dimensions.height / 2, pixelSize)}px, 0px)`,
+            transform: `translate3d(0px, ${halfH}px, 0px)`,
           }}
         >
           <Cuboid
@@ -225,18 +243,39 @@ function Limb({
 
 export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   textureUrl,
+  capeUrl,
   className = "",
   pixelSize = 8,
 }: MinecraftSkinFigureProps) {
   const deferredTextureUrl = useDeferredValue(textureUrl);
+  const deferredCapeUrl = useDeferredValue(capeUrl);
   const [textureInfo, setTextureInfo] = useState<TextureInfo | null>(() =>
     deferredTextureUrl ? textureInfoCache.get(deferredTextureUrl) ?? null : null
   );
+  const [capeTextureInfo, setCapeTextureInfo] = useState<TextureInfo | null>(null);
+
+  useEffect(() => {
+    if (!deferredCapeUrl) { setCapeTextureInfo(null); return; }
+    const img = new Image();
+    img.onload = () => setCapeTextureInfo({ width: img.naturalWidth || 64, height: img.naturalHeight || 32 });
+    img.onerror = () => setCapeTextureInfo(null);
+    img.decoding = "async";
+    img.src = deferredCapeUrl;
+  }, [deferredCapeUrl]);
+
   const [rotation, setRotation] = useState({ x: -18, y: -32 });
   const [isDragging, setIsDragging] = useState(false);
   const dragState = useRef<{ x: number; y: number } | null>(null);
   const rotationRef = useRef(rotation);
   const frameRef = useRef<number | null>(null);
+  const rotationGroupRef = useRef<HTMLDivElement | null>(null);
+
+  const applyTransform = (rot: { x: number; y: number }) => {
+    if (rotationGroupRef.current) {
+      rotationGroupRef.current.style.transform =
+        `translate3d(-50%, -42%, 0px) rotateX(${rot.x}deg) rotateY(${rot.y}deg)`;
+    }
+  };
 
   useEffect(() => {
     rotationRef.current = rotation;
@@ -284,14 +323,10 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   }, [deferredTextureUrl]);
 
   useEffect(() => {
-    if (!isDragging) {
-      return;
-    }
+    if (!isDragging) return;
 
     const handlePointerMove = (event: PointerEvent) => {
-      if (!dragState.current) {
-        return;
-      }
+      if (!dragState.current) return;
 
       const deltaX = event.clientX - dragState.current.x;
       const deltaY = event.clientY - dragState.current.y;
@@ -303,13 +338,11 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
       };
       rotationRef.current = nextRotation;
 
-      if (frameRef.current !== null) {
-        return;
-      }
+      if (frameRef.current !== null) return;
 
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = null;
-        setRotation(rotationRef.current);
+        applyTransform(rotationRef.current);
       });
     };
 
@@ -320,6 +353,7 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
         window.cancelAnimationFrame(frameRef.current);
         frameRef.current = null;
       }
+      setRotation(rotationRef.current);
     };
 
     window.addEventListener("pointermove", handlePointerMove);
@@ -349,6 +383,7 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   };
 
   const skinMaps = useMemo(() => getSkinMaps(textureInfo?.height === 32), [textureInfo?.height]);
+  const capeFaceMap = useMemo(() => makeCapeMap(), []);
 
   if (!deferredTextureUrl || !textureInfo) {
     return (
@@ -361,12 +396,14 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
     );
   }
 
+  const p = pixelSize;
+
   return (
     <div
       className={`skin-3d-stage relative ${isDragging ? "is-dragging" : ""} ${className}`}
       style={{
-        width: 30 * pixelSize,
-        height: 42 * pixelSize,
+        width: 30 * p,
+        height: 42 * p,
       }}
       aria-label="Vista completa de la skin 3D"
       onPointerDown={handlePointerDown}
@@ -376,9 +413,11 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
         Arrastra
       </div>
       <div
+        ref={rotationGroupRef}
         className="absolute left-1/2 top-1/2"
         style={{
           transformStyle: "preserve-3d",
+          willChange: "transform",
           transform: `translate3d(-50%, -42%, 0px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
         }}
       >
@@ -392,94 +431,133 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
             animation: "skin-3d-bob 1.2s ease-in-out infinite alternate",
           }}
         >
-            <div
-              className="absolute left-1/2 top-1/2"
-              style={{
-                transformStyle: "preserve-3d",
-                transform: `translate3d(0px, ${toPixels(-10, pixelSize)}px, 0px)`,
-              }}
-            >
-              <Cuboid
-                dimensions={{ width: 8, height: 8, depth: 8 }}
-                faces={skinMaps.head}
-                textureUrl={deferredTextureUrl}
-                textureInfo={textureInfo}
-                pixelSize={pixelSize}
-              />
-              <Cuboid
-                dimensions={{ width: 8, height: 8, depth: 8 }}
-                faces={skinMaps.headOverlay}
-                textureUrl={deferredTextureUrl}
-                textureInfo={textureInfo}
-                pixelSize={pixelSize}
-                inflate={0.75}
-              />
-            </div>
+          {/* Cabeza */}
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{
+              transformStyle: "preserve-3d",
+              transform: `translate3d(0px, ${toPixels(-10, p)}px, 0px)`,
+            }}
+          >
+            <Cuboid
+              dimensions={{ width: 8, height: 8, depth: 8 }}
+              faces={skinMaps.head}
+              textureUrl={deferredTextureUrl}
+              textureInfo={textureInfo}
+              pixelSize={p}
+            />
+            <Cuboid
+              dimensions={{ width: 8, height: 8, depth: 8 }}
+              faces={skinMaps.headOverlay}
+              textureUrl={deferredTextureUrl}
+              textureInfo={textureInfo}
+              pixelSize={p}
+              inflate={0.75}
+            />
+          </div>
 
-            <div
-              className="absolute left-1/2 top-1/2"
-              style={{
-                transformStyle: "preserve-3d",
-                transform: "translate3d(0px, 0px, 0px)",
-              }}
-            >
-              <Cuboid
-                dimensions={{ width: 8, height: 12, depth: 4 }}
-                faces={skinMaps.body}
-                textureUrl={deferredTextureUrl}
-                textureInfo={textureInfo}
-                pixelSize={pixelSize}
-              />
-              <Cuboid
-                dimensions={{ width: 8, height: 12, depth: 4 }}
-                faces={skinMaps.bodyOverlay}
-                textureUrl={deferredTextureUrl}
-                textureInfo={textureInfo}
-                pixelSize={pixelSize}
-                inflate={0.7}
-              />
-            </div>
+          {/* Torso + Capa */}
+          <div
+            className="absolute left-1/2 top-1/2"
+            style={{
+              transformStyle: "preserve-3d",
+              transform: "translate3d(0px, 0px, 0px)",
+            }}
+          >
+            {/* Capa — cuboide 3D con grosor real, pivotada en los hombros detrás del torso */}
+            {deferredCapeUrl && capeTextureInfo ? (
+              <div
+                className="absolute left-1/2 top-1/2"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: `translate3d(0px, ${toPixels(-6, p)}px, ${toPixels(-(2 + CAPE_DEPTH / 2), p)}px)`,
+                }}
+              >
+                <div
+                  className="skin-3d-limb"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transformOrigin: "50% 0%",
+                    animation: "skin-3d-cape-sway 2.6s ease-in-out infinite alternate",
+                  }}
+                >
+                  <div
+                    style={{
+                      transformStyle: "preserve-3d",
+                      transform: `translate3d(0px, ${toPixels(CAPE_HEIGHT / 2, p)}px, 0px)`,
+                    }}
+                  >
+                    <Cuboid
+                      dimensions={{ width: CAPE_WIDTH, height: CAPE_HEIGHT, depth: CAPE_DEPTH }}
+                      faces={capeFaceMap}
+                      textureUrl={deferredCapeUrl}
+                      textureInfo={capeTextureInfo}
+                      pixelSize={p}
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
-            <Limb
-              pivot={{ x: -6, y: -6, z: 0 }}
-              dimensions={{ width: 4, height: 12, depth: 4 }}
-              faces={skinMaps.rightArm}
-              overlayFaces={skinMaps.rightArmOverlay}
+            <Cuboid
+              dimensions={{ width: 8, height: 12, depth: 4 }}
+              faces={skinMaps.body}
               textureUrl={deferredTextureUrl}
               textureInfo={textureInfo}
-              pixelSize={pixelSize}
-              animationName="skin-3d-arm-right"
+              pixelSize={p}
             />
-            <Limb
-              pivot={{ x: 6, y: -6, z: 0 }}
-              dimensions={{ width: 4, height: 12, depth: 4 }}
-              faces={skinMaps.leftArm}
-              overlayFaces={skinMaps.leftArmOverlay}
+            <Cuboid
+              dimensions={{ width: 8, height: 12, depth: 4 }}
+              faces={skinMaps.bodyOverlay}
               textureUrl={deferredTextureUrl}
               textureInfo={textureInfo}
-              pixelSize={pixelSize}
-              animationName="skin-3d-arm-left"
+              pixelSize={p}
+              inflate={0.7}
             />
-            <Limb
-              pivot={{ x: -2, y: 6, z: 0 }}
-              dimensions={{ width: 4, height: 12, depth: 4 }}
-              faces={skinMaps.rightLeg}
-              overlayFaces={skinMaps.rightLegOverlay}
-              textureUrl={deferredTextureUrl}
-              textureInfo={textureInfo}
-              pixelSize={pixelSize}
-              animationName="skin-3d-leg-right"
-            />
-            <Limb
-              pivot={{ x: 2, y: 6, z: 0 }}
-              dimensions={{ width: 4, height: 12, depth: 4 }}
-              faces={skinMaps.leftLeg}
-              overlayFaces={skinMaps.leftLegOverlay}
-              textureUrl={deferredTextureUrl}
-              textureInfo={textureInfo}
-              pixelSize={pixelSize}
-              animationName="skin-3d-leg-left"
-            />
+          </div>
+
+          {/* Brazos */}
+          <Limb
+            pivot={{ x: -6, y: -6, z: 0 }}
+            dimensions={{ width: 4, height: 12, depth: 4 }}
+            faces={skinMaps.rightArm}
+            overlayFaces={skinMaps.rightArmOverlay}
+            textureUrl={deferredTextureUrl}
+            textureInfo={textureInfo}
+            pixelSize={p}
+            animationName="skin-3d-arm-right"
+          />
+          <Limb
+            pivot={{ x: 6, y: -6, z: 0 }}
+            dimensions={{ width: 4, height: 12, depth: 4 }}
+            faces={skinMaps.leftArm}
+            overlayFaces={skinMaps.leftArmOverlay}
+            textureUrl={deferredTextureUrl}
+            textureInfo={textureInfo}
+            pixelSize={p}
+            animationName="skin-3d-arm-left"
+          />
+          {/* Piernas */}
+          <Limb
+            pivot={{ x: -2, y: 6, z: 0 }}
+            dimensions={{ width: 4, height: 12, depth: 4 }}
+            faces={skinMaps.rightLeg}
+            overlayFaces={skinMaps.rightLegOverlay}
+            textureUrl={deferredTextureUrl}
+            textureInfo={textureInfo}
+            pixelSize={p}
+            animationName="skin-3d-leg-right"
+          />
+          <Limb
+            pivot={{ x: 2, y: 6, z: 0 }}
+            dimensions={{ width: 4, height: 12, depth: 4 }}
+            faces={skinMaps.leftLeg}
+            overlayFaces={skinMaps.leftLegOverlay}
+            textureUrl={deferredTextureUrl}
+            textureInfo={textureInfo}
+            pixelSize={p}
+            animationName="skin-3d-leg-left"
+          />
         </div>
       </div>
     </div>
