@@ -109,13 +109,15 @@ const CAPE_DEPTH = 1;
 const CAPE_THICKNESS = 1;
 
 function makeCapeMap(): FaceMap {
+  const backX = 1;
+  const backY = 1;
   return {
-    front:  { x: 11, y: 0, width: CAPE_WIDTH, height: CAPE_HEIGHT },
-    back:   { x: 0,  y: 0, width: CAPE_WIDTH, height: CAPE_HEIGHT },
-    left:   { x: 0,  y: 0, width: CAPE_THICKNESS, height: CAPE_HEIGHT },
-    right:  { x: CAPE_WIDTH - CAPE_THICKNESS, y: 0, width: CAPE_THICKNESS, height: CAPE_HEIGHT },
-    top:    { x: 0,  y: 0, width: CAPE_WIDTH, height: CAPE_THICKNESS },
-    bottom: { x: 0,  y: CAPE_HEIGHT - CAPE_THICKNESS, width: CAPE_WIDTH, height: CAPE_THICKNESS },
+    front:  { x: 13, y: backY, width: CAPE_WIDTH, height: CAPE_HEIGHT },
+    back:   { x: backX, y: backY, width: CAPE_WIDTH, height: CAPE_HEIGHT },
+    left:   { x: backX, y: backY, width: CAPE_THICKNESS, height: CAPE_HEIGHT },
+    right:  { x: backX + CAPE_WIDTH - CAPE_THICKNESS, y: backY, width: CAPE_THICKNESS, height: CAPE_HEIGHT },
+    top:    { x: backX, y: backY, width: CAPE_WIDTH, height: CAPE_THICKNESS },
+    bottom: { x: backX, y: backY + CAPE_HEIGHT - CAPE_THICKNESS, width: CAPE_WIDTH, height: CAPE_THICKNESS },
   };
 }
 
@@ -273,7 +275,7 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   const applyTransform = (rot: { x: number; y: number }) => {
     if (rotationGroupRef.current) {
       rotationGroupRef.current.style.transform =
-        `translate3d(-50%, -42%, 0px) rotateX(${rot.x}deg) rotateY(${rot.y}deg)`;
+        `translate3d(calc(-50% - 4px), -42%, 0px) rotateX(${rot.x}deg) rotateY(${rot.y}deg)`;
     }
   };
 
@@ -418,7 +420,7 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
         style={{
           transformStyle: "preserve-3d",
           willChange: "transform",
-          transform: `translate3d(-50%, -42%, 0px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
+          transform: `translate3d(calc(-50% - 4px), -42%, 0px) rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
         }}
       >
         <div
