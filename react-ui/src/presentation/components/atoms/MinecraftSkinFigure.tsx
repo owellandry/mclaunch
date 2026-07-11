@@ -6,11 +6,75 @@
  */
 import { memo, useDeferredValue, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
+export type ViewerMode = 'walking' | 'running' | 'idle' | 'waving' | 'sitting' | 'standing';
+
 type MinecraftSkinFigureProps = {
   textureUrl?: string | null;
   capeUrl?: string | null;
   className?: string;
   pixelSize?: number;
+  viewerMode?: ViewerMode;
+};
+
+type ModeConfig = {
+  characterAnim?: string;
+  characterTransform?: string;
+  armRightAnim?: string;
+  armRightTransform?: string;
+  armLeftAnim?: string;
+  armLeftTransform?: string;
+  legRightAnim?: string;
+  legRightTransform?: string;
+  legLeftAnim?: string;
+  legLeftTransform?: string;
+  capeAnim?: string;
+  capeTransform?: string;
+};
+
+const MODE_CONFIGS: Record<ViewerMode, ModeConfig> = {
+  walking: {
+    characterAnim: 'skin-3d-bob 0.7s ease-in-out infinite alternate',
+    armRightAnim: 'skin-3d-arm-right 0.7s ease-in-out infinite alternate',
+    armLeftAnim: 'skin-3d-arm-left 0.7s ease-in-out infinite alternate',
+    legRightAnim: 'skin-3d-leg-right 0.7s ease-in-out infinite alternate',
+    legLeftAnim: 'skin-3d-leg-left 0.7s ease-in-out infinite alternate',
+    capeAnim: 'skin-3d-cape-sway 1.5s ease-in-out infinite alternate',
+  },
+  running: {
+    characterAnim: 'skin-3d-run-bob 0.35s ease-in-out infinite alternate',
+    armRightAnim: 'skin-3d-run-arm-right 0.35s ease-in-out infinite alternate',
+    armLeftAnim: 'skin-3d-run-arm-left 0.35s ease-in-out infinite alternate',
+    legRightAnim: 'skin-3d-run-leg-right 0.35s ease-in-out infinite alternate',
+    legLeftAnim: 'skin-3d-run-leg-left 0.35s ease-in-out infinite alternate',
+    capeAnim: 'skin-3d-run-cape-sway 0.7s ease-in-out infinite alternate',
+  },
+  idle: {
+    characterAnim: 'skin-3d-idle-bob 1.5s ease-in-out infinite alternate',
+    armRightAnim: 'skin-3d-idle-arm-right 1.5s ease-in-out infinite alternate',
+    armLeftAnim: 'skin-3d-idle-arm-left 1.5s ease-in-out infinite alternate',
+    capeAnim: 'skin-3d-idle-cape-sway 2s ease-in-out infinite alternate',
+  },
+  waving: {
+    characterAnim: 'skin-3d-idle-bob 1.5s ease-in-out infinite alternate',
+    armRightAnim: 'skin-3d-wave-arm-right 0.4s ease-in-out infinite alternate',
+    armLeftTransform: 'rotateX(0deg) rotateZ(0deg)',
+    capeAnim: 'skin-3d-cape-sway 1.5s ease-in-out infinite alternate',
+  },
+  sitting: {
+    characterTransform: 'translateY(8px)',
+    armRightTransform: 'rotateX(10deg)',
+    armLeftTransform: 'rotateX(10deg)',
+    legRightTransform: 'rotateX(80deg)',
+    legLeftTransform: 'rotateX(80deg)',
+    capeTransform: 'rotateX(-6deg)',
+  },
+  standing: {
+    armRightTransform: 'rotateX(0deg) rotateZ(0deg)',
+    armLeftTransform: 'rotateX(0deg) rotateZ(0deg)',
+    legRightTransform: 'rotateX(0deg)',
+    legLeftTransform: 'rotateX(0deg)',
+    capeTransform: 'rotateX(-6deg)',
+  },
 };
 
 type TextureInfo = {
@@ -51,7 +115,8 @@ type LimbProps = {
   textureUrl: string;
   textureInfo: TextureInfo;
   pixelSize: number;
-  animationName: string;
+  animation?: string;
+  staticTransform?: string;
 };
 
 const textureInfoCache = new Map<string, TextureInfo | null>();
@@ -196,9 +261,15 @@ function Limb({
   textureUrl,
   textureInfo,
   pixelSize,
-  animationName,
+  animation,
+  staticTransform,
 }: LimbProps) {
   const halfH = toPixels(dimensions.height / 2, pixelSize);
+  const limbStyle = staticTransform
+    ? { transformStyle: "preserve-3d" as const, transform: staticTransform }
+    : animation
+      ? { transformStyle: "preserve-3d" as const, animation }
+      : { transformStyle: "preserve-3d" as const };
   return (
     <div
       className="absolute left-1/2 top-1/2"
@@ -209,10 +280,7 @@ function Limb({
     >
       <div
         className="skin-3d-limb"
-        style={{
-          transformStyle: "preserve-3d",
-          animation: `${animationName} 1.2s ease-in-out infinite alternate`,
-        }}
+        style={limbStyle}
       >
         <div
           style={{
@@ -248,21 +316,60 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   capeUrl,
   className = "",
   pixelSize = 8,
+  viewerMode = 'walking',
 }: MinecraftSkinFigureProps) {
   const deferredTextureUrl = useDeferredValue(textureUrl);
   const deferredCapeUrl = useDeferredValue(capeUrl);
-  const [textureInfo, setTextureInfo] = useState<TextureInfo | null>(() =>
-    deferredTextureUrl ? textureInfoCache.get(deferredTextureUrl) ?? null : null
-  );
-  const [capeTextureInfo, setCapeTextureInfo] = useState<TextureInfo | null>(null);
+  const [loadVersion, setLoadVersion] = useState(0);
+
+  const textureInfo = useMemo((): TextureInfo | null => {
+    if (!deferredTextureUrl) return null;
+    const cached = textureInfoCache.get(deferredTextureUrl);
+    return cached !== undefined ? cached : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deferredTextureUrl, loadVersion]);
+
+  const capeTextureInfo = useMemo((): TextureInfo | null => {
+    if (!deferredCapeUrl) return null;
+    const cached = textureInfoCache.get(deferredCapeUrl);
+    return cached !== undefined ? cached : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deferredCapeUrl, loadVersion]);
 
   useEffect(() => {
-    if (!deferredCapeUrl) { setCapeTextureInfo(null); return; }
+    if (!deferredTextureUrl) return;
+    if (textureInfoCache.has(deferredTextureUrl)) return;
+    let cancelled = false;
     const img = new Image();
-    img.onload = () => setCapeTextureInfo({ width: img.naturalWidth || 64, height: img.naturalHeight || 32 });
-    img.onerror = () => setCapeTextureInfo(null);
+    img.onload = () => {
+      textureInfoCache.set(deferredTextureUrl, { width: img.naturalWidth || 64, height: img.naturalHeight || 64 });
+      if (!cancelled) setLoadVersion(n => n + 1);
+    };
+    img.onerror = () => {
+      textureInfoCache.set(deferredTextureUrl, null);
+      if (!cancelled) setLoadVersion(n => n + 1);
+    };
+    img.decoding = "async";
+    img.src = deferredTextureUrl;
+    return () => { cancelled = true; };
+  }, [deferredTextureUrl]);
+
+  useEffect(() => {
+    if (!deferredCapeUrl) return;
+    if (textureInfoCache.has(deferredCapeUrl)) return;
+    let cancelled = false;
+    const img = new Image();
+    img.onload = () => {
+      textureInfoCache.set(deferredCapeUrl, { width: img.naturalWidth || 64, height: img.naturalHeight || 32 });
+      if (!cancelled) setLoadVersion(n => n + 1);
+    };
+    img.onerror = () => {
+      textureInfoCache.set(deferredCapeUrl, null);
+      if (!cancelled) setLoadVersion(n => n + 1);
+    };
     img.decoding = "async";
     img.src = deferredCapeUrl;
+    return () => { cancelled = true; };
   }, [deferredCapeUrl]);
 
   const [rotation, setRotation] = useState({ x: -18, y: -32 });
@@ -282,47 +389,6 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   useEffect(() => {
     rotationRef.current = rotation;
   }, [rotation]);
-
-  useEffect(() => {
-    if (!deferredTextureUrl) {
-      setTextureInfo(null);
-      return;
-    }
-
-    const cachedTextureInfo = textureInfoCache.get(deferredTextureUrl);
-    if (cachedTextureInfo !== undefined) {
-      setTextureInfo(cachedTextureInfo);
-      return;
-    }
-
-    let isCancelled = false;
-    const image = new Image();
-
-    image.onload = () => {
-      const nextTextureInfo = {
-        width: image.naturalWidth || 64,
-        height: image.naturalHeight || 64,
-      };
-      textureInfoCache.set(deferredTextureUrl, nextTextureInfo);
-      if (!isCancelled) {
-        setTextureInfo(nextTextureInfo);
-      }
-    };
-
-    image.onerror = () => {
-      textureInfoCache.set(deferredTextureUrl, null);
-      if (!isCancelled) {
-        setTextureInfo(null);
-      }
-    };
-
-    image.decoding = "async";
-    image.src = deferredTextureUrl;
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [deferredTextureUrl]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -386,6 +452,7 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
 
   const skinMaps = useMemo(() => getSkinMaps(textureInfo?.height === 32), [textureInfo?.height]);
   const capeFaceMap = useMemo(() => makeCapeMap(), []);
+  const modeConfig = useMemo(() => MODE_CONFIGS[viewerMode], [viewerMode]);
 
   if (!deferredTextureUrl || !textureInfo) {
     return (
@@ -430,7 +497,11 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
             width: 0,
             height: 0,
             transformStyle: "preserve-3d",
-            animation: "skin-3d-bob 1.2s ease-in-out infinite alternate",
+            ...(modeConfig.characterTransform
+              ? { transform: modeConfig.characterTransform }
+              : modeConfig.characterAnim
+                ? { animation: modeConfig.characterAnim }
+                : {}),
           }}
         >
           {/* Cabeza */}
@@ -480,7 +551,11 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
                   style={{
                     transformStyle: "preserve-3d",
                     transformOrigin: "50% 0%",
-                    animation: "skin-3d-cape-sway 2.6s ease-in-out infinite alternate",
+                    ...(modeConfig.capeTransform
+                      ? { transform: modeConfig.capeTransform }
+                      : modeConfig.capeAnim
+                        ? { animation: modeConfig.capeAnim }
+                        : {}),
                   }}
                 >
                   <div
@@ -527,7 +602,8 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
             textureUrl={deferredTextureUrl}
             textureInfo={textureInfo}
             pixelSize={p}
-            animationName="skin-3d-arm-right"
+            animation={modeConfig.armRightAnim}
+            staticTransform={modeConfig.armRightTransform}
           />
           <Limb
             pivot={{ x: 6, y: -6, z: 0 }}
@@ -537,7 +613,8 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
             textureUrl={deferredTextureUrl}
             textureInfo={textureInfo}
             pixelSize={p}
-            animationName="skin-3d-arm-left"
+            animation={modeConfig.armLeftAnim}
+            staticTransform={modeConfig.armLeftTransform}
           />
           {/* Piernas */}
           <Limb
@@ -548,7 +625,8 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
             textureUrl={deferredTextureUrl}
             textureInfo={textureInfo}
             pixelSize={p}
-            animationName="skin-3d-leg-right"
+            animation={modeConfig.legRightAnim}
+            staticTransform={modeConfig.legRightTransform}
           />
           <Limb
             pivot={{ x: 2, y: 6, z: 0 }}
@@ -558,7 +636,8 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
             textureUrl={deferredTextureUrl}
             textureInfo={textureInfo}
             pixelSize={p}
-            animationName="skin-3d-leg-left"
+            animation={modeConfig.legLeftAnim}
+            staticTransform={modeConfig.legLeftTransform}
           />
         </div>
       </div>

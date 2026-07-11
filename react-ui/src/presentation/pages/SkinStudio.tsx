@@ -14,20 +14,56 @@ import { SectionTitle } from "../components/atoms/SectionTitle";
 import { Button } from "../components/atoms/Button";
 import { MinecraftAvatar } from "../components/atoms/MinecraftAvatar";
 import { MinecraftSkinFigure } from "../components/atoms/MinecraftSkinFigure";
+import { SkinViewerControls } from "../components/atoms/SkinViewerControls";
 import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { PLAYER_AVATAR_TRANSITION_NAME, PLAYER_PROFILE_CHIP_TRANSITION_NAME, startViewTransition } from "../lib/viewTransition";
+import type { ViewerMode } from "../components/atoms/MinecraftSkinFigure";
 
 const SKIN_DRAFT_STORAGE_KEY = "nebula_skin_draft";
 const SKIN_DRAFT_NAME_STORAGE_KEY = "nebula_skin_draft_name";
 
-function normalizeSkinUrl(skinUrl?: string | null): string | null {
-  if (!skinUrl) {
-    return null;
-  }
+const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 
+function normalizeSkinUrl(skinUrl?: string | null): string | null {
+  if (!skinUrl) return null;
   return skinUrl.replace(/^http:\/\//i, "https://");
 }
+
+async function fetchSessionProfile(uuid: string): Promise<Record<string, unknown> | null> {
+  const urls = [
+    `https://sessionserver.mojang.com/session/minecraft/profile/${uuid}?unsigned=false`,
+    `${CORS_PROXY}${encodeURIComponent(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}?unsigned=false`)}`,
+  ];
+  for (const url of urls) {
+    try {
+      const res = await fetch(url);
+      if (res.ok) return await res.json();
+    } catch { continue; }
+  }
+  return null;
+}
+
+async function findCapeUrl(uuid: string): Promise<string | null> {
+  const data = await fetchSessionProfile(uuid);
+  if (!data) return null;
+  const texturesProp = (data.properties as Array<{ name: string; value: string }> | undefined)
+    ?.find((p) => p.name === "textures");
+  if (!texturesProp?.value) return null;
+  try {
+    const decoded = JSON.parse(atob(texturesProp.value));
+    const capeUrl: string | undefined = decoded.textures?.CAPE?.url;
+    if (!capeUrl) return null;
+    return capeUrl.replace(/^http:\/\//i, "https://");
+  } catch {
+    return null;
+  }
+}
+
+type CapeEntry = {
+  id: string;
+  textureUrl: string | null;
+};
 
 export function SkinStudio() {
   const navigate = useNavigate();
@@ -37,13 +73,43 @@ export function SkinStudio() {
   const { t } = useTranslation();
   const [draftSkinUrl, setDraftSkinUrl] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_STORAGE_KEY));
   const [draftSkinName, setDraftSkinName] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_NAME_STORAGE_KEY));
+  const [viewerMode, setViewerMode] = useState<ViewerMode>('walking');
+  const [selectedCapeId, setSelectedCapeId] = useState<string>('launcher');
+  const [accountCapeUrl, setAccountCapeUrl] = useState<string | null>(null);
 
   const officialSkinUrl = normalizeSkinUrl(profile?.skinUrl);
   const activeSkinUrl = draftSkinUrl || officialSkinUrl;
   const usingDraftSkin = Boolean(draftSkinUrl);
 
-  // Cape exclusiva del launcher
-  const capeUrl = capeTexture;
+  useEffect(() => {
+    if (!profile?.uuid) { setAccountCapeUrl(null); return; }
+    let cancelled = false;
+    findCapeUrl(profile.uuid).then((url) => { if (!cancelled) setAccountCapeUrl(url); });
+    return () => { cancelled = true; };
+  }, [profile?.uuid]);
+
+  const capeEntries = useMemo((): CapeEntry[] => {
+    const entries: CapeEntry[] = [
+      { id: 'launcher', textureUrl: capeTexture },
+    ];
+    if (accountCapeUrl) {
+      entries.push({ id: 'account', textureUrl: accountCapeUrl });
+    }
+    return entries;
+  }, [accountCapeUrl]);
+
+  const capeUrl = useMemo(() => {
+    if (selectedCapeId === 'none') return null;
+    const entry = capeEntries.find((e) => e.id === selectedCapeId);
+    return entry?.textureUrl ?? null;
+  }, [selectedCapeId, capeEntries]);
+
+  useEffect(() => {
+    const stillExists = capeEntries.some((e) => e.id === selectedCapeId);
+    if (!stillExists && selectedCapeId !== 'none') {
+      setSelectedCapeId('launcher');
+    }
+  }, [capeEntries, selectedCapeId]);
 
   useEffect(() => {
     if (draftSkinUrl) {
@@ -151,7 +217,20 @@ export function SkinStudio() {
                   className="relative flex min-h-[430px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/10 px-6 py-10 shadow-[0_30px_90px_rgba(0,0,0,0.18)]"
                 >
                   <div className="absolute inset-x-10 bottom-8 h-10 rounded-full bg-primary/20 blur-2xl" />
-                  <MinecraftSkinFigure textureUrl={activeSkinUrl} capeUrl={capeUrl} pixelSize={11} className="drop-shadow-[0_22px_26px_rgba(0,0,0,0.22)]" />
+                  <MinecraftSkinFigure
+                    textureUrl={activeSkinUrl}
+                    capeUrl={capeUrl}
+                    pixelSize={11}
+                    className="drop-shadow-[0_22px_26px_rgba(0,0,0,0.22)]"
+                    viewerMode={viewerMode}
+                  />
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                  <SkinViewerControls
+                    viewerMode={viewerMode}
+                    onChange={setViewerMode}
+                  />
                 </div>
 
                 <div
@@ -218,6 +297,45 @@ export function SkinStudio() {
                 <p className="font-bold uppercase tracking-wider text-textMain">{t("skin_studio.compatibility")}</p>
                 <p className="mt-2">{t("skin_studio.compatibility_desc")}</p>
               </div>
+            </div>
+          </Card>
+
+          <Card>
+            <SectionTitle
+              eyebrow={t("skin_studio.capes")}
+              title={t("skin_studio.capes_title")}
+              subtitle={t("skin_studio.capes_subtitle")}
+              icon={<FiImage />}
+            />
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              {capeEntries.map((cape) => (
+                <button
+                  key={cape.id}
+                  onClick={() => setSelectedCapeId(cape.id)}
+                  className={`overflow-hidden rounded-xl border-2 transition-all ${
+                    selectedCapeId === cape.id
+                      ? 'border-primary shadow-sm'
+                      : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={cape.textureUrl!}
+                    alt=""
+                    className="h-12 w-24 object-cover"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                </button>
+              ))}
+              <button
+                onClick={() => setSelectedCapeId('none')}
+                className={`flex items-center justify-center rounded-xl border-2 transition-all h-12 w-24 ${
+                  selectedCapeId === 'none'
+                    ? 'border-primary bg-primary/10 shadow-sm'
+                    : 'border-dashed border-white/15 text-textMuted hover:border-white/30'
+                }`}
+              >
+                <span className="text-xs font-bold uppercase tracking-wider">—</span>
+              </button>
             </div>
           </Card>
 

@@ -172,7 +172,16 @@
     "invalid_dimensions": "Medidas no compatibles",
     "invalid_dimensions_desc": "La skin debe medir 64x64 o 64x32 píxeles.",
     "skin_loaded": "Skin importada",
-    "skin_loaded_desc": "La vista previa ahora usa tu archivo local."
+    "skin_loaded_desc": "La vista previa ahora usa tu archivo local.",
+    "viewer_walk": "Caminar",
+    "viewer_run": "Correr",
+    "viewer_idle": "Quieto",
+    "viewer_wave": "Saludar",
+    "viewer_sit": "Sentado",
+    "viewer_stand": "Parado",
+    "capes": "Capas",
+    "capes_title": "Capas disponibles",
+    "capes_subtitle": "Selecciona qué capa mostrar en la vista previa 3D."
   },
   "onboarding": {
     "sys_config": "Configuración del Sistema",

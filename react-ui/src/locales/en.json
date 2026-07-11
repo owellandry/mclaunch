@@ -172,7 +172,16 @@
     "invalid_dimensions": "Unsupported dimensions",
     "invalid_dimensions_desc": "The skin must be 64x64 or 64x32 pixels.",
     "skin_loaded": "Skin imported",
-    "skin_loaded_desc": "The preview now uses your local file."
+    "skin_loaded_desc": "The preview now uses your local file.",
+    "viewer_walk": "Walk",
+    "viewer_run": "Run",
+    "viewer_idle": "Idle",
+    "viewer_wave": "Wave",
+    "viewer_sit": "Sit",
+    "viewer_stand": "Stand",
+    "capes": "Capes",
+    "capes_title": "Available capes",
+    "capes_subtitle": "Select which cape to display on the 3D preview."
   },
   "onboarding": {
     "sys_config": "System Configuration",

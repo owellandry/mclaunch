@@ -142,13 +142,16 @@ const registerAuthPopupSupport = (window: BrowserWindow): void => {
   });
 };
 
+const SESSION_SERVER = "https://sessionserver.mojang.com";
+const CAPE_PROXY = "https://api.allorigins.win";
+
 const DEV_CSP = [
   "default-src 'self' http://localhost:5173 ws://localhost:5173",
   "script-src 'self' 'unsafe-inline' http://localhost:5173",
   "style-src 'self' 'unsafe-inline' http://localhost:5173",
   `img-src 'self' data: blob: http://localhost:5173 https: ${configuredApiOrigin}`,
   "font-src 'self' data:",
-  `connect-src 'self' http://localhost:5173 ws://localhost:5173 ${configuredApiOrigin} ${configuredApiWsOrigin}`,
+  `connect-src 'self' http://localhost:5173 ws://localhost:5173 ${configuredApiOrigin} ${configuredApiWsOrigin} ${SESSION_SERVER} ${CAPE_PROXY}`,
 ].join("; ");
 
 const PROD_CSP = [
@@ -157,7 +160,7 @@ const PROD_CSP = [
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: https: ${configuredApiOrigin}`,
   "font-src 'self' data:",
-  `connect-src 'self' ${configuredApiOrigin} ${configuredApiWsOrigin}`,
+  `connect-src 'self' ${configuredApiOrigin} ${configuredApiWsOrigin} ${SESSION_SERVER} ${CAPE_PROXY}`,
 ].join("; ");
 
 const shouldInjectAppCsp = (url: string): boolean => {
@@ -265,13 +268,19 @@ export const startDesktopApp = async ({ runtimePaths }: { runtimePaths: DesktopR
 
   session.defaultSession.webRequest.onHeadersReceived(
     (details: { url: string; responseHeaders?: Record<string, string[]> }, callback) => {
+      const headers = { ...(details.responseHeaders ?? {}) };
+
+      if (details.url.startsWith(SESSION_SERVER) || details.url.startsWith(CAPE_PROXY)) {
+        headers["Access-Control-Allow-Origin"] = ["*"];
+      }
+
       if (!shouldInjectAppCsp(details.url)) {
-        callback({ responseHeaders: details.responseHeaders ?? {} });
+        callback({ responseHeaders: headers });
         return;
       }
       callback({
         responseHeaders: {
-          ...details.responseHeaders,
+          ...headers,
           "Content-Security-Policy": [isDev ? DEV_CSP : PROD_CSP],
         },
       });

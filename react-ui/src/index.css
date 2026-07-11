@@ -336,6 +336,56 @@
   to   { transform: rotateX(-6deg); }
 }
 
+/* Running */
+@keyframes skin-3d-run-bob {
+  from { transform: translateY(-10px); }
+  to   { transform: translateY(10px); }
+}
+@keyframes skin-3d-run-arm-right {
+  from { transform: rotateX(70deg) rotateZ(8deg); }
+  to   { transform: rotateX(-75deg) rotateZ(-8deg); }
+}
+@keyframes skin-3d-run-arm-left {
+  from { transform: rotateX(-75deg) rotateZ(8deg); }
+  to   { transform: rotateX(70deg) rotateZ(-8deg); }
+}
+@keyframes skin-3d-run-leg-right {
+  from { transform: rotateX(-50deg); }
+  to   { transform: rotateX(55deg); }
+}
+@keyframes skin-3d-run-leg-left {
+  from { transform: rotateX(55deg); }
+  to   { transform: rotateX(-50deg); }
+}
+@keyframes skin-3d-run-cape-sway {
+  from { transform: rotateX(-20deg); }
+  to   { transform: rotateX(-6deg); }
+}
+
+/* Idle */
+@keyframes skin-3d-idle-bob {
+  from { transform: translateY(-1px); }
+  to   { transform: translateY(2px); }
+}
+@keyframes skin-3d-idle-arm-right {
+  from { transform: rotateX(3deg) rotateZ(1deg); }
+  to   { transform: rotateX(-3deg) rotateZ(-1deg); }
+}
+@keyframes skin-3d-idle-arm-left {
+  from { transform: rotateX(-3deg) rotateZ(1deg); }
+  to   { transform: rotateX(3deg) rotateZ(-1deg); }
+}
+@keyframes skin-3d-idle-cape-sway {
+  from { transform: rotateX(-8deg); }
+  to   { transform: rotateX(-4deg); }
+}
+
+/* Waving */
+@keyframes skin-3d-wave-arm-right {
+  from { transform: rotateX(65deg) rotateZ(10deg); }
+  to   { transform: rotateX(45deg) rotateZ(10deg); }
+}
+
 /* ============================================================
    PAGE TRANSITIONS
    ============================================================ */
