@@ -19,6 +19,7 @@ import { useAppStore } from "../../application/store/useAppStore";
 import { useNotificationStore } from "../../application/store/useNotificationStore";
 import { PLAYER_AVATAR_TRANSITION_NAME, PLAYER_PROFILE_CHIP_TRANSITION_NAME, startViewTransition } from "../lib/viewTransition";
 import type { ViewerMode } from "../components/atoms/MinecraftSkinFigure";
+import type { CapeInfo } from "../../core/domain/electron-api";
 
 const SKIN_DRAFT_STORAGE_KEY = "nebula_skin_draft";
 const SKIN_DRAFT_NAME_STORAGE_KEY = "nebula_skin_draft_name";
@@ -63,6 +64,8 @@ async function findCapeUrl(uuid: string): Promise<string | null> {
 type CapeEntry = {
   id: string;
   textureUrl: string | null;
+  label: string;
+  isActive: boolean;
 };
 
 export function SkinStudio() {
@@ -75,28 +78,44 @@ export function SkinStudio() {
   const [draftSkinName, setDraftSkinName] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_NAME_STORAGE_KEY));
   const [viewerMode, setViewerMode] = useState<ViewerMode>('walking');
   const [selectedCapeId, setSelectedCapeId] = useState<string>('launcher');
-  const [accountCapeUrl, setAccountCapeUrl] = useState<string | null>(null);
+  const [accountCapes, setAccountCapes] = useState<CapeInfo[]>([]);
 
   const officialSkinUrl = normalizeSkinUrl(profile?.skinUrl);
   const activeSkinUrl = draftSkinUrl || officialSkinUrl;
   const usingDraftSkin = Boolean(draftSkinUrl);
 
   useEffect(() => {
-    if (!profile?.uuid) { setAccountCapeUrl(null); return; }
+    const uuid = profile?.uuid;
+    if (!uuid) { setAccountCapes([]); return; }
     let cancelled = false;
-    findCapeUrl(profile.uuid).then((url) => { if (!cancelled) setAccountCapeUrl(url); });
+
+    (async () => {
+      try {
+        const capes = await window.api.getCapes();
+        if (!cancelled && capes.length > 0) { setAccountCapes(capes); return; }
+      } catch { /* ignore, fallback */ }
+
+      const single = await findCapeUrl(uuid);
+      if (!cancelled && single) setAccountCapes([{ id: single, url: single, alias: null, state: 'ACTIVE' }]);
+    })();
+
     return () => { cancelled = true; };
   }, [profile?.uuid]);
 
   const capeEntries = useMemo((): CapeEntry[] => {
     const entries: CapeEntry[] = [
-      { id: 'launcher', textureUrl: capeTexture },
+      { id: 'launcher', textureUrl: capeTexture, label: 'Launcher', isActive: true },
     ];
-    if (accountCapeUrl) {
-      entries.push({ id: 'account', textureUrl: accountCapeUrl });
-    }
+    accountCapes.forEach((cape) => {
+      entries.push({
+        id: cape.id,
+        textureUrl: cape.url,
+        label: cape.alias ?? 'Cape',
+        isActive: cape.state === 'ACTIVE',
+      });
+    });
     return entries;
-  }, [accountCapeUrl]);
+  }, [accountCapes]);
 
   const capeUrl = useMemo(() => {
     if (selectedCapeId === 'none') return null;
@@ -307,12 +326,12 @@ export function SkinStudio() {
               subtitle={t("skin_studio.capes_subtitle")}
               icon={<FiImage />}
             />
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-3">
               {capeEntries.map((cape) => (
                 <button
                   key={cape.id}
                   onClick={() => setSelectedCapeId(cape.id)}
-                  className={`overflow-hidden rounded-xl border-2 transition-all ${
+                  className={`group flex flex-col items-center gap-1 overflow-hidden rounded-xl border-2 p-2 transition-all ${
                     selectedCapeId === cape.id
                       ? 'border-primary shadow-sm'
                       : 'border-transparent opacity-60 hover:opacity-100'
@@ -321,20 +340,31 @@ export function SkinStudio() {
                   <img
                     src={cape.textureUrl!}
                     alt=""
-                    className="h-12 w-24 object-cover"
+                    className="h-12 w-24 rounded-lg object-cover"
                     style={{ imageRendering: "pixelated" }}
                   />
+                  <span className="max-w-[6rem] truncate text-[10px] font-semibold uppercase tracking-wider text-textMuted">
+                    {cape.label}
+                  </span>
+                  {cape.isActive && (
+                    <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-primary">
+                      Active
+                    </span>
+                  )}
                 </button>
               ))}
               <button
                 onClick={() => setSelectedCapeId('none')}
-                className={`flex items-center justify-center rounded-xl border-2 transition-all h-12 w-24 ${
+                className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 transition-all ${
                   selectedCapeId === 'none'
                     ? 'border-primary bg-primary/10 shadow-sm'
                     : 'border-dashed border-white/15 text-textMuted hover:border-white/30'
                 }`}
               >
-                <span className="text-xs font-bold uppercase tracking-wider">—</span>
+                <div className="flex h-12 w-24 items-center justify-center rounded-lg bg-surfaceLight/30">
+                  <span className="text-xs font-bold uppercase tracking-wider">—</span>
+                </div>
+                <span className="text-[10px] font-semibold uppercase tracking-wider">None</span>
               </button>
             </div>
           </Card>

@@ -72,6 +72,13 @@ export type VersionCatalog = {
 
 export type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 
+export type CapeInfo = {
+  id: string;
+  url: string;
+  alias: string | null;
+  state: string;
+};
+
 export type ElectronApi = {
   launchMinecraft: (config: LaunchPayload) => void;
   getVersions: () => Promise<MinecraftVersion[]>;
@@ -95,6 +102,7 @@ export type ElectronApi = {
   }) => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean}>;
   logoutMicrosoft: () => Promise<boolean>;
   getProfile: () => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean} | null>;
+  getCapes: () => Promise<CapeInfo[]>;
   clearCache: () => Promise<void>;
   clearAllData: () => Promise<void>;
   restartApp: () => void;

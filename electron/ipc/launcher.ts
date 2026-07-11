@@ -116,6 +116,7 @@ const CHANNELS = {
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
   setBackendSession: "auth:setBackendSession",
+  getCapes: "auth:getCapes",
 } as const;
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
@@ -695,6 +696,49 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       };
     },
   );
+
+  ipcMain.handle(CHANNELS.getCapes, async () => {
+    try {
+      // 1) Try the cached minecraft profile (saved during login)
+      const profileRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mc_profile'").get() as any;
+      if (profileRow) {
+        const p = JSON.parse(profileRow.value);
+        const capes = p.capes as Array<{ id: string; state: string; url: string; alias?: string }> | undefined;
+        if (capes && capes.length > 0) {
+          return capes.map((c) => ({
+            id: c.id,
+            url: c.url.replace(/^http:\/\//i, "https://"),
+            alias: c.alias ?? null,
+            state: c.state,
+          }));
+        }
+      }
+
+      // 2) Fallback: fetch fresh from the API with the Minecraft token
+      const authRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mclc_auth'").get() as any;
+      if (!authRow) return [];
+      const mclc = JSON.parse(authRow.value);
+      const token: string | undefined = mclc.access_token;
+      if (!token) return [];
+
+      const res = await fetch("https://api.minecraftservices.com/minecraft/profile", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return [];
+
+      const data = await res.json() as {
+        capes?: Array<{ id: string; state: string; url: string; alias?: string }>;
+      };
+      return (data.capes ?? []).map((c) => ({
+        id: c.id,
+        url: c.url.replace(/^http:\/\//i, "https://"),
+        alias: c.alias ?? null,
+        state: c.state,
+      }));
+    } catch {
+      return [];
+    }
+  });
 
   // Versiones de Minecraft con caché
   ipcMain.handle(CHANNELS.getVersions, async () => {
