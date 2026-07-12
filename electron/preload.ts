@@ -40,6 +40,7 @@ const CHANNELS = {
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
   setBackendSession: "auth:setBackendSession",
+  ensureBackendToken: "auth:ensureBackendToken",
 } as const;
 
 const DEFAULT_API_BASE_URL = "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
@@ -184,6 +185,10 @@ const api = {
 
   getProfile: (): Promise<any> => {
     return ipcRenderer.invoke(CHANNELS.getProfile);
+  },
+
+  ensureBackendToken: (): Promise<string | null> => {
+    return ipcRenderer.invoke(CHANNELS.ensureBackendToken);
   },
 
   clearCache: (): Promise<void> => {

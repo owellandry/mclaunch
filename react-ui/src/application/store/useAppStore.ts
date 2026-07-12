@@ -22,6 +22,8 @@ interface AppState {
   loginMicrosoft: () => Promise<void>;
   logoutMicrosoft: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  /** Ensures a valid backend JWT exists for Discord/API features (even if only MSMC session is local). */
+  ensureBackendAccessToken: () => Promise<string | null>;
   setConfig: (config: LauncherConfig) => void;
   completeOnboarding: (username: string, memoryMb: number, gameDir: string) => void;
   setSearchQuery: (query: string) => void;
@@ -187,12 +189,61 @@ export const useAppStore = create<AppState>((set, get) => {
           };
           storage.saveProfile(profile);
           set({ profile, backendAccessToken: null });
+
+          // Best-effort: obtain backend JWT from stored MSMC session so Discord/API work.
+          try {
+            const token = await window.api.ensureBackendToken?.();
+            if (token) {
+              storage.saveBackendAccessToken(token);
+              set({ backendAccessToken: token });
+            }
+          } catch (error) {
+            console.warn("No se pudo emitir JWT de backend al restaurar perfil.", error);
+          }
           return;
         }
 
         storage.clearAll?.();
         set({ profile: null, backendAccessToken: null });
       }
+    },
+    ensureBackendAccessToken: async () => {
+      const existing = get().backendAccessToken || storage.getBackendAccessToken();
+      if (existing) {
+        try {
+          await authApi.getCurrentAccount(existing);
+          if (!get().backendAccessToken) {
+            set({ backendAccessToken: existing });
+          }
+          return existing;
+        } catch {
+          storage.clearBackendAccessToken();
+          set({ backendAccessToken: null });
+        }
+      }
+
+      if (typeof window.api?.ensureBackendToken === "function") {
+        try {
+          const token = await window.api.ensureBackendToken();
+          if (token) {
+            storage.saveBackendAccessToken(token);
+            set({ backendAccessToken: token });
+            return token;
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          // Common when Electron main process is stale (UI hot-reloaded but main not restarted).
+          if (message.includes("No handler registered")) {
+            console.warn(
+              "ensureBackendToken: el proceso main de Electron está desactualizado. Cierra TODO el launcher y vuelve a abrir con pnpm dev.",
+            );
+          } else {
+            console.warn("ensureBackendToken fallo.", error);
+          }
+        }
+      }
+
+      return null;
     },
     setConfig: (config) => {
       storage.saveLauncherConfig(config);

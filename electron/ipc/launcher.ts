@@ -116,6 +116,7 @@ const CHANNELS = {
   logoutMicrosoft: "auth:logoutMicrosoft",
   getProfile: "auth:getProfile",
   setBackendSession: "auth:setBackendSession",
+  ensureBackendToken: "auth:ensureBackendToken",
   getCapes: "auth:getCapes",
 } as const;
 
@@ -376,6 +377,38 @@ const resolveSkinUrl = (profile: { skins?: Array<{ state?: string; url?: string 
   return first?.url ?? null;
 };
 
+const getApiBaseUrl = (): string =>
+  process.env.MCLAUNCH_API_BASE_URL?.trim() || "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
+
+/**
+ * Exchanges a local MSMC session for a backend JWT.
+ * Must hit a public /login/from-launcher endpoint (no prior Bearer).
+ */
+const exchangeLauncherSessionForBackendToken = async (
+  msmcToken: string,
+  mclcAuth: unknown,
+  profile: unknown,
+): Promise<string | null> => {
+  try {
+    const apiBase = getApiBaseUrl().replace(/\/+$/, "");
+    const res = await fetch(`${apiBase}/api/v1/login/from-launcher`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ msmcToken, mclcAuth, profile }),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.warn("[auth] from-launcher failed", res.status, text.slice(0, 200));
+      return null;
+    }
+    const data = (await res.json()) as { ok?: boolean; data?: { accessToken?: string } };
+    return data?.data?.accessToken ?? null;
+  } catch (error) {
+    console.warn("[auth] from-launcher network error", error);
+    return null;
+  }
+};
+
 const loginWithMicrosoftPopup = async (parentWindow: BrowserWindow): Promise<any> => {
   const { Auth } = await import("msmc");
   const auth = new Auth("select_account");
@@ -582,31 +615,48 @@ const openBackendLoginInAppView = async (
 };
 
 /* ==================== REGISTRO PRINCIPAL IPC ==================== */
+
+/** Idempotent handle registration (safe if startDesktopApp runs twice / hotupdate reload). */
+const handle = (
+  channel: string,
+  listener: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => any,
+): void => {
+  try {
+    ipcMain.removeHandler(channel);
+  } catch {
+    // ignore
+  }
+  ipcMain.handle(channel, listener);
+};
+
 export const registerLauncherIpc = (getWindow: WindowProvider): void => {
   initDb();
 
   // Handlers de base de datos
-  ipcMain.handle(CHANNELS.getWeeklyActivity, () => getWeeklyActivity());
-  ipcMain.handle(CHANNELS.getActivityDetails, () => getActivityDetails());
-  ipcMain.handle(CHANNELS.getMinecraftStats, (_e, gameDir: string, uuid: string) => getMinecraftStats(gameDir, uuid));
-  ipcMain.handle(CHANNELS.getDetailedMinecraftStats, (_e, gameDir: string, uuid: string) =>
+  handle(CHANNELS.getWeeklyActivity, () => getWeeklyActivity());
+  handle(CHANNELS.getActivityDetails, () => getActivityDetails());
+  handle(CHANNELS.getMinecraftStats, (_e, gameDir: string, uuid: string) => getMinecraftStats(gameDir, uuid));
+  handle(CHANNELS.getDetailedMinecraftStats, (_e, gameDir: string, uuid: string) =>
     getDetailedMinecraftStats(gameDir, uuid),
   );
-  ipcMain.handle(CHANNELS.getStatistics, () => getStatistics());
-  ipcMain.handle(CHANNELS.getDownloadedVersions, () => getDownloadedVersions());
-  ipcMain.handle("db:syncVersions", async (_, gameDir: string) => syncDownloadedVersions(gameDir));
-  ipcMain.handle(CHANNELS.getLogo, () => getLogo());
+  handle(CHANNELS.getStatistics, () => getStatistics());
+  handle(CHANNELS.getDownloadedVersions, () => getDownloadedVersions());
+  handle("db:syncVersions", async (_, gameDir: string) => syncDownloadedVersions(gameDir));
+  handle(CHANNELS.getLogo, () => getLogo());
+  ipcMain.removeAllListeners(CHANNELS.setLogo);
   ipcMain.on(CHANNELS.setLogo, (_, logo: string) => setLogo(logo));
-  ipcMain.handle(CHANNELS.getLanguage, () => getLanguage());
+  handle(CHANNELS.getLanguage, () => getLanguage());
+  ipcMain.removeAllListeners(CHANNELS.setLanguage);
   ipcMain.on(CHANNELS.setLanguage, (_, lang: string) => setLanguage(lang));
-  ipcMain.handle(CHANNELS.clearCache, async () => {
+  handle(CHANNELS.clearCache, async () => {
     await clearCache();
   });
-  ipcMain.handle(CHANNELS.clearAllData, () => clearAllData());
+  handle(CHANNELS.clearAllData, () => clearAllData());
+  ipcMain.removeAllListeners(CHANNELS.restartApp);
   ipcMain.on(CHANNELS.restartApp, () => { app.relaunch(); app.exit(0); });
 
   // Microsoft Auth
-  ipcMain.handle(CHANNELS.loginMicrosoft, async () => {
+  handle(CHANNELS.loginMicrosoft, async () => {
     try {
       const parentWindow = getWindow();
       if (!parentWindow) throw new Error("Ventana principal no disponible");
@@ -621,21 +671,7 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
       db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mc_profile", JSON.stringify(profile));
       db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("mclc_auth", JSON.stringify(mcToken));
 
-      let backendAccessToken: string | null = null;
-      try {
-        const apiBase = process.env.MCLAUNCH_API_BASE_URL?.trim() || "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
-        const res = await fetch(`${apiBase}/api/v1/login/from-launcher`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ msmcToken, mclcAuth: mcToken, profile }),
-        });
-        if (res.ok) {
-          const data = await res.json() as { ok: boolean; data?: { accessToken?: string } };
-          backendAccessToken = data?.data?.accessToken ?? null;
-        }
-      } catch {
-        // Backend no disponible, continua sin JWT
-      }
+      const backendAccessToken = await exchangeLauncherSessionForBackendToken(msmcToken, mcToken, profile);
 
       return {
         username: profile?.name || "Player",
@@ -651,19 +687,19 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     }
   });
 
-  ipcMain.handle(CHANNELS.openBackendLoginPopup, async (_event, payload: { authorizeUrl: string; callbackUrl: string }) => {
+  handle(CHANNELS.openBackendLoginPopup, async (_event, payload: { authorizeUrl: string; callbackUrl: string }) => {
     const parentWindow = getWindow();
     if (!parentWindow) throw new Error("Ventana principal no disponible");
     await openBackendLoginInAppView(parentWindow, payload.authorizeUrl, payload.callbackUrl);
     return true;
   });
 
-  ipcMain.handle(CHANNELS.logoutMicrosoft, () => {
+  handle(CHANNELS.logoutMicrosoft, () => {
     db.prepare("DELETE FROM app_settings WHERE key IN ('msmc_token', 'mc_profile', 'mclc_auth')").run();
     return true;
   });
 
-  ipcMain.handle(CHANNELS.getProfile, () => {
+  handle(CHANNELS.getProfile, () => {
     const row = db.prepare("SELECT value FROM app_settings WHERE key = 'mc_profile'").get() as any;
     if (!row) return null;
     try {
@@ -674,7 +710,7 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     }
   });
 
-  ipcMain.handle(
+  handle(
     CHANNELS.setBackendSession,
     (
       _event,
@@ -699,7 +735,43 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     },
   );
 
-  ipcMain.handle(CHANNELS.getCapes, async () => {
+  // Re-issue backend JWT from stored MSMC session (for Discord / API features when token is missing).
+  handle(CHANNELS.ensureBackendToken, async () => {
+    try {
+      const msmcRow = db.prepare("SELECT value FROM app_settings WHERE key = 'msmc_token'").get() as
+        | { value: string }
+        | undefined;
+      const profileRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mc_profile'").get() as
+        | { value: string }
+        | undefined;
+      const authRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mclc_auth'").get() as
+        | { value: string }
+        | undefined;
+
+      if (!msmcRow?.value || !profileRow?.value) {
+        console.warn("[auth] ensureBackendToken: no hay sesión MSMC local guardada.");
+        return null;
+      }
+
+      const profile = JSON.parse(profileRow.value) as {
+        id?: string;
+        name?: string;
+        skins?: Array<{ state?: string; url?: string }>;
+      };
+      const mclcAuth = authRow?.value ? JSON.parse(authRow.value) : null;
+
+      const token = await exchangeLauncherSessionForBackendToken(msmcRow.value, mclcAuth, profile);
+      if (!token) {
+        console.warn("[auth] ensureBackendToken: el backend no emitió JWT.");
+      }
+      return token;
+    } catch (error) {
+      console.warn("[auth] ensureBackendToken failed", error);
+      return null;
+    }
+  });
+
+  handle(CHANNELS.getCapes, async () => {
     try {
       // 1) Try the cached minecraft profile (saved during login)
       const profileRow = db.prepare("SELECT value FROM app_settings WHERE key = 'mc_profile'").get() as any;
@@ -743,11 +815,11 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
   });
 
   // Versiones de Minecraft con caché
-  ipcMain.handle(CHANNELS.getVersions, async () => {
+  handle(CHANNELS.getVersions, async () => {
     return getReleaseVersions(50);
   });
 
-  ipcMain.handle(CHANNELS.getVersionCatalog, async (_event, gameDir: string) => {
+  handle(CHANNELS.getVersionCatalog, async (_event, gameDir: string) => {
     const versions = await getReleaseVersions(120);
     syncDownloadedVersions(gameDir);
 

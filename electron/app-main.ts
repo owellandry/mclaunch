@@ -19,7 +19,7 @@ const configuredApiOrigin = (() => {
 const configuredApiWsOrigin = configuredApiOrigin.replace(/^http/i, "ws");
 
 let mainWindow: BrowserWindow | null = null;
-let hasRegisteredIpc = false;
+
 
 const MICROSOFT_AUTH_POPUP_NAME = "mclaunch-ms-auth";
 
@@ -174,6 +174,11 @@ const registerWindowControls = (): void => {
     mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
   });
   ipcMain.on("window:close", () => mainWindow?.close());
+  try {
+    ipcMain.removeHandler("shell:openExternal");
+  } catch {
+    // ignore
+  }
   ipcMain.handle("shell:openExternal", async (_event, url: unknown) => {
     if (typeof url !== "string" || !/^https?:\/\//i.test(url)) {
       throw new Error("URL externa no valida.");
@@ -266,11 +271,10 @@ export const startDesktopApp = async ({ runtimePaths }: { runtimePaths: DesktopR
     },
   });
 
-  if (!hasRegisteredIpc) {
-    registerWindowControls();
-    registerLauncherIpc(() => mainWindow);
-    hasRegisteredIpc = true;
-  }
+  // Handlers are idempotent (removeHandler + handle) so re-registration is safe.
+  registerWindowControls();
+  registerLauncherIpc(() => mainWindow);
+  console.log("[ipc] Handlers registrados (incl. auth:ensureBackendToken)");
 
   session.defaultSession.webRequest.onHeadersReceived(
     (details: { url: string; responseHeaders?: Record<string, string[]> }, callback) => {

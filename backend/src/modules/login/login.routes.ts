@@ -249,7 +249,12 @@ export const registerLoginRoutes = (router: Router): void => {
         );
       }
     },
-    { private: true, module: "login", summary: "Registra un login Electron completado y emite un JWT de backend." },
+    {
+      // Public on purpose: this is how Electron obtains the first backend JWT after MSMC login.
+      private: false,
+      module: "login",
+      summary: "Registra un login Electron completado y emite un JWT de backend (sin Bearer previo).",
+    },
   );
 
   router.add(

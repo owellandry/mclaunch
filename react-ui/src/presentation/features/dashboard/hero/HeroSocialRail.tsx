@@ -1,38 +1,124 @@
+import { useEffect, type MouseEvent } from "react";
 import { FaDiscord } from "react-icons/fa";
+import { useTranslation } from "react-i18next";
+import { useDiscordStore } from "@/application/store/useDiscordStore";
+import type { DiscordFriend } from "@/infrastructure/api/discordApi";
 
-/** Public Discord invite — change when the community URL is final. */
-const DISCORD_URL = "https://discord.gg/";
+const statusColor: Record<string, string> = {
+  online: "bg-emerald-400",
+  idle: "bg-amber-400",
+  dnd: "bg-red-500",
+  offline: "bg-white/30",
+  invisible: "bg-white/30",
+  unknown: "bg-white/30",
+};
 
-function openExternalUrl(url: string) {
-  try {
-    const openExternal = window.api?.openExternal;
-    if (typeof openExternal === "function") {
-      void Promise.resolve(openExternal(url)).catch(() => {
-        window.open(url, "_blank", "noopener,noreferrer");
-      });
-      return;
-    }
-  } catch {
-    // fall through
-  }
-  window.open(url, "_blank", "noopener,noreferrer");
+function FriendAvatar({ friend }: { friend: DiscordFriend }) {
+  const label = friend.globalName || friend.username;
+  return (
+    <div
+      className="relative size-[min(40px,3.8vh)] shrink-0"
+      title={`${label}${friend.activity ? ` · ${friend.activity}` : ""} · ${friend.status}`}
+    >
+      {friend.avatarUrl ? (
+        <img
+          src={friend.avatarUrl}
+          alt={label}
+          className="size-full rounded-full border border-white/20 object-cover"
+        />
+      ) : (
+        <div className="flex size-full items-center justify-center rounded-full border border-white/20 bg-[#5865F2]/40 text-[10px] font-bold text-white">
+          {label.slice(0, 1).toUpperCase()}
+        </div>
+      )}
+      <span
+        className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-[var(--surface-dashboard)] ${
+          statusColor[friend.status] ?? statusColor.unknown
+        }`}
+      />
+    </div>
+  );
 }
 
 /**
- * Vertical rail on the far right of the hero (where the color circles used to be).
+ * Vertical rail: Discord connect button + online friends avatars.
  */
 export function HeroSocialRail() {
+  const { t } = useTranslation();
+  const link = useDiscordStore((s) => s.link);
+  const friends = useDiscordStore((s) => s.friends);
+  const isLinking = useDiscordStore((s) => s.isLinking);
+  const isLoading = useDiscordStore((s) => s.isLoading);
+  const hydrate = useDiscordStore((s) => s.hydrate);
+  const connect = useDiscordStore((s) => s.connect);
+  const refreshFriends = useDiscordStore((s) => s.refreshFriends);
+  const disconnect = useDiscordStore((s) => s.disconnect);
+
+  useEffect(() => {
+    void hydrate();
+    const timer = window.setInterval(() => {
+      void refreshFriends();
+    }, 45_000);
+    return () => window.clearInterval(timer);
+  }, [hydrate, refreshFriends]);
+
+  const onlineFriends = friends.filter((f) => f.isOnline).slice(0, 8);
+
+  const handleDiscordClick = () => {
+    if (isLinking) return;
+    if (link) {
+      void refreshFriends();
+      return;
+    }
+    void connect();
+  };
+
+  const handleContextMenu = (event: MouseEvent) => {
+    if (!link) return;
+    event.preventDefault();
+    if (window.confirm(t("discord.unlink_confirm"))) {
+      void disconnect();
+    }
+  };
+
   return (
     <div className="hidden shrink-0 flex-col items-center justify-center gap-3 xl:flex">
       <button
         type="button"
-        onClick={() => openExternalUrl(DISCORD_URL)}
-        aria-label="Discord"
-        title="Discord"
-        className="flex size-[min(48px,4.5vh)] cursor-pointer items-center justify-center rounded-full border border-white/25 bg-[#5865F2]/90 text-white shadow-[0_8px_24px_rgba(88,101,242,0.35)] transition-all hover:scale-105 hover:bg-[#5865F2] hover:border-white/40"
+        onClick={handleDiscordClick}
+        onContextMenu={handleContextMenu}
+        disabled={isLinking}
+        aria-label={link ? t("discord.connected") : t("discord.connect")}
+        title={
+          link
+            ? `${t("discord.connected")}: ${link.globalName || link.username}`
+            : t("discord.connect")
+        }
+        className={`relative flex size-[min(48px,4.5vh)] cursor-pointer items-center justify-center rounded-full border text-white shadow-[0_8px_24px_rgba(88,101,242,0.35)] transition-all hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
+          link
+            ? "border-emerald-400/50 bg-[#5865F2] hover:border-emerald-300"
+            : "border-white/25 bg-[#5865F2]/90 hover:bg-[#5865F2] hover:border-white/40"
+        }`}
       >
-        <FaDiscord className="text-[min(22px,2.2vh)]" />
+        <FaDiscord className={`text-[min(22px,2.2vh)] ${isLinking || isLoading ? "animate-pulse" : ""}`} />
+        {link ? (
+          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-[var(--surface-dashboard)] bg-emerald-400" />
+        ) : null}
       </button>
+
+      {link && onlineFriends.length > 0 ? (
+        <div className="flex flex-col items-center gap-2">
+          {onlineFriends.map((friend) => (
+            <FriendAvatar key={friend.id} friend={friend} />
+          ))}
+        </div>
+      ) : null}
+
+      {link && !isLoading && onlineFriends.length === 0 ? (
+        <span className="max-w-[3.5rem] text-center text-[9px] font-medium leading-tight text-white/40">
+          {t("discord.no_online")}
+        </span>
+      ) : null}
     </div>
   );
 }

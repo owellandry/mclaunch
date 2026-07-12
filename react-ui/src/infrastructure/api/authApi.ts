@@ -24,6 +24,24 @@ export const authApi = {
     });
   },
 
+  /**
+   * Public endpoint: exchanges an Electron/MSMC session for a backend JWT.
+   */
+  fromLauncher(
+    payload: {
+      msmcToken: string;
+      mclcAuth: unknown;
+      profile: { id?: string; name?: string; skins?: Array<{ state?: string; url?: string }> };
+    },
+    signal?: AbortSignal,
+  ): Promise<{ accessToken: string; account: BackendAccount }> {
+    return backendRequest<{ accessToken: string; account: BackendAccount }>("/api/v1/login/from-launcher", {
+      method: "POST",
+      body: payload,
+      signal,
+    });
+  },
+
   async waitForLogin(sessionId: string, signal?: AbortSignal): Promise<BackendLoginStatus> {
     const startedAt = Date.now();
     let lastStatus: BackendLoginStatus["status"] | null = null;

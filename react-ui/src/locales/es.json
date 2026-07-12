@@ -97,6 +97,12 @@
     "installed_version": "Instalada",
     "available_version": "Disponible"
   },
+  "discord": {
+    "connect": "Conectar Discord",
+    "connected": "Discord conectado",
+    "no_online": "Nadie online",
+    "unlink_confirm": "¿Desvincular Discord de esta cuenta?"
+  },
   "settings": {
     "core_config": "Configuración Core",
     "launcher_settings": "Ajustes del Launcher",

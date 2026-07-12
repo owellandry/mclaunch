@@ -102,6 +102,8 @@ export type ElectronApi = {
   }) => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean}>;
   logoutMicrosoft: () => Promise<boolean>;
   getProfile: () => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean} | null>;
+  /** Re-issues backend JWT from the stored Microsoft/MSMC session. */
+  ensureBackendToken: () => Promise<string | null>;
   getCapes: () => Promise<CapeInfo[]>;
   clearCache: () => Promise<void>;
   clearAllData: () => Promise<void>;
