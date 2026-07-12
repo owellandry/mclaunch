@@ -6,6 +6,13 @@ export type BackendEnv = {
   publicBaseUrl: string;
   jwtSecret: string;
   discordClientId: string;
+  discordClientSecret: string;
+  discordBotToken: string;
+  discordRedirectUri: string;
+  /** Space-separated OAuth scopes. Default: identify. Add relationships.read if Discord approved it. */
+  discordScopes: string;
+  /** Optional home guild id used for mutual presence when relationships API is unavailable. */
+  discordGuildId: string;
   microsoftClientId: string;
   microsoftClientSecret: string;
   microsoftRedirectUri: string;
@@ -29,6 +36,9 @@ export const loadEnv = (): BackendEnv => {
   const publicBaseUrl = process.env.MCLAUNCH_API_BASE_URL?.trim() || `http://${host}:${port}`;
   const microsoftRedirectUri =
     process.env.MCLAUNCH_MICROSOFT_REDIRECT_URI?.trim() || `${publicBaseUrl.replace(/\/+$/, "")}/api/v1/login/callback`;
+  const base = publicBaseUrl.replace(/\/+$/, "");
+  const discordRedirectUri =
+    process.env.MCLAUNCH_DISCORD_REDIRECT_URI?.trim() || `${base}/api/v1/discord/oauth/callback`;
 
   return {
     port,
@@ -36,6 +46,11 @@ export const loadEnv = (): BackendEnv => {
     publicBaseUrl,
     jwtSecret: process.env.MCLAUNCH_API_JWT_SECRET?.trim() || "mclaunch-dev-secret-change-me",
     discordClientId: process.env.MCLAUNCH_DISCORD_CLIENT_ID?.trim() || "",
+    discordClientSecret: process.env.MCLAUNCH_DISCORD_CLIENT_SECRET?.trim() || "",
+    discordBotToken: process.env.MCLAUNCH_DISCORD_BOT_TOKEN?.trim() || "",
+    discordRedirectUri,
+    discordScopes: process.env.MCLAUNCH_DISCORD_SCOPES?.trim() || "identify",
+    discordGuildId: process.env.MCLAUNCH_DISCORD_GUILD_ID?.trim() || "",
     microsoftClientId: process.env.MCLAUNCH_MICROSOFT_CLIENT_ID?.trim() || "",
     microsoftClientSecret: process.env.MCLAUNCH_MICROSOFT_CLIENT_SECRET?.trim() || "",
     microsoftRedirectUri,

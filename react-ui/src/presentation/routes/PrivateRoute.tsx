@@ -5,7 +5,7 @@
  * Implementa el patrón de renderizado condicional con Outlet para las sub-rutas.
  */
 import { Navigate, Outlet } from "react-router-dom";
-import { useAppStore } from "../../application/store/useAppStore";
+import { useAppStore } from "@/application/store/useAppStore";
 
 export function PrivateRoute() {
   const profile = useAppStore((state) => state.profile);

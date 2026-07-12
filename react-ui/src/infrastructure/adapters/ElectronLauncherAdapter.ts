@@ -1,5 +1,5 @@
-import type { ILauncherPort } from "../../core/ports/ILauncherPort";
-import type { ActivityDetails, DetailedMinecraftStats, LauncherConfig, MinecraftVersion, VersionCatalog } from "../../core/domain/launcher";
+import type { ILauncherPort } from "@/core/ports/ILauncherPort";
+import type { ActivityDetails, DetailedMinecraftStats, LauncherConfig, MinecraftVersion, VersionCatalog } from "@/core/domain/launcher";
 
 export class ElectronLauncherAdapter implements ILauncherPort {
   launch(config: LauncherConfig, username: string): void {
@@ -27,31 +27,91 @@ export class ElectronLauncherAdapter implements ILauncherPort {
   }
 
   getWeeklyActivity(): Promise<number[]> {
-    return window.api.getWeeklyActivity();
+    if (window.api?.getWeeklyActivity) {
+      return window.api.getWeeklyActivity();
+    }
+    console.warn("Electron API not found. Returning empty weekly activity");
+    return Promise.resolve([0, 0, 0, 0, 0, 0, 0]);
   }
 
   getActivityDetails(): Promise<ActivityDetails> {
-    return window.api.getActivityDetails();
+    if (window.api?.getActivityDetails) {
+      return window.api.getActivityDetails();
+    }
+    console.warn("Electron API not found. Returning empty activity details");
+    return Promise.resolve({
+      entries: [],
+      summary: {
+        total_seconds_all_time: 0,
+        total_seconds_last_30_days: 0,
+        total_seconds_last_7_days: 0,
+        average_seconds_last_7_days: 0,
+        active_days_last_30_days: 0,
+        current_streak_days: 0,
+        longest_streak_days: 0,
+        best_day: null,
+      },
+    });
   }
 
   getMinecraftStats(gameDir: string, uuid: string): Promise<{ mob_kills: number; deaths: number; blocks_mined: number; hours_played: number; play_seconds: number }> {
-    return window.api.getMinecraftStats(gameDir, uuid);
+    if (window.api?.getMinecraftStats) {
+      return window.api.getMinecraftStats(gameDir, uuid);
+    }
+    console.warn("Electron API not found. Returning empty stats");
+    return Promise.resolve({ mob_kills: 0, deaths: 0, blocks_mined: 0, hours_played: 0, play_seconds: 0 });
   }
 
   getDetailedMinecraftStats(gameDir: string, uuid: string): Promise<DetailedMinecraftStats> {
-    return window.api.getDetailedMinecraftStats(gameDir, uuid);
+    if (window.api?.getDetailedMinecraftStats) {
+      return window.api.getDetailedMinecraftStats(gameDir, uuid);
+    }
+    console.warn("Electron API not found. Returning empty detailed stats");
+    return Promise.resolve({
+      summary: {
+        mob_kills: 0,
+        deaths: 0,
+        blocks_mined: 0,
+        hours_played: 0,
+        play_seconds: 0,
+        worlds_tracked: 0,
+        kill_death_ratio: 0,
+        blocks_per_hour: 0,
+        kills_per_hour: 0,
+      },
+      worlds: [],
+    });
   }
 
   getDownloadedVersions(): Promise<string[]> {
-    return window.api.getDownloadedVersions();
+    if (window.api?.getDownloadedVersions) {
+      return window.api.getDownloadedVersions();
+    }
+    console.warn("Electron API not found. Returning empty list");
+    return Promise.resolve([]);
   }
 
   syncDownloadedVersions(gameDir: string): Promise<string[]> {
-    return window.api.syncDownloadedVersions(gameDir);
+    if (window.api?.syncDownloadedVersions) {
+      return window.api.syncDownloadedVersions(gameDir);
+    }
+    console.warn("Electron API not found. Returning empty list");
+    return Promise.resolve([]);
   }
 
   getVersionCatalog(gameDir: string): Promise<VersionCatalog> {
-    return window.api.getVersionCatalog(gameDir);
+    if (window.api?.getVersionCatalog) {
+      return window.api.getVersionCatalog(gameDir);
+    }
+    console.warn("Electron API not found. Returning empty catalog");
+    return Promise.resolve({
+      summary: {
+        available_versions: 0,
+        downloaded_versions: 0,
+        latest_downloaded_at: null,
+      },
+      versions: [],
+    });
   }
 
   onLog(callback: (message: string) => void): () => void {

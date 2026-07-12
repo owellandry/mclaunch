@@ -5,7 +5,7 @@
  * si se desea, o simplemente renderizar el Outlet para páginas abiertas.
  */
 import { Navigate, Outlet } from "react-router-dom";
-import { useAppStore } from "../../application/store/useAppStore";
+import { useAppStore } from "@/application/store/useAppStore";
 
 export function PublicRoute() {
   const profile = useAppStore((state) => state.profile);

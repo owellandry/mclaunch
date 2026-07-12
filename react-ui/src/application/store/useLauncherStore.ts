@@ -5,12 +5,12 @@
  * Patrón: Atomic Design
  */
 import { create } from "zustand";
-import type { ActivityDetails, DetailedMinecraftStats, LauncherStatus, MinecraftVersion, VersionCatalog } from "../../core/domain/launcher";
-import { getLatestRelease } from "../../core/domain/launcher";
-import { ElectronLauncherAdapter } from "../../infrastructure/adapters/ElectronLauncherAdapter";
-import { contentApi } from "../../infrastructure/api/contentApi";
-import type { BackendBanner } from "../../infrastructure/api/backendClient";
-import { ApiError } from "../../core/errors/ApiError";
+import type { ActivityDetails, DetailedMinecraftStats, LauncherStatus, MinecraftVersion, VersionCatalog } from "@/core/domain/launcher";
+import { getLatestRelease } from "@/core/domain/launcher";
+import { ElectronLauncherAdapter } from "@/infrastructure/adapters/ElectronLauncherAdapter";
+import { contentApi } from "@/infrastructure/api/contentApi";
+import type { BackendBanner } from "@/infrastructure/api/backendClient";
+import { ApiError } from "@/core/errors/ApiError";
 import { useAppStore } from "./useAppStore";
 import { useNotificationStore } from "./useNotificationStore";
 
@@ -231,8 +231,12 @@ export const useLauncherStore = create<LauncherState>((set, get) => ({
         void get().fetchDbData().catch((error) => {
           console.error("No se pudo refrescar la data del launcher tras cambiar el estado.", error);
         });
-        // Reset to idle so the button is re-enabled for the next launch
-        setTimeout(() => get().setStatus("idle"), 500);
+        const triggerStatus = status;
+        setTimeout(() => {
+          if (get().status === triggerStatus) {
+            get().setStatus("idle");
+          }
+        }, 500);
       }
     });
 

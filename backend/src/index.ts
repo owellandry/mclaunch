@@ -21,6 +21,9 @@ import { LogsService } from "./modules/logs/logs.service";
 import { registerLogsRoutes } from "./modules/logs/logs.routes";
 import { registerPublicConfigRoutes } from "./modules/public-config/public-config.routes";
 import { LauncherActivityService } from "./modules/launcher-socket/launcher-activity.service";
+import { DiscordBotService } from "./modules/discord/discord-bot.service";
+import { DiscordService } from "./modules/discord/discord.service";
+import { registerDiscordRoutes } from "./modules/discord/discord.routes";
 import { PostgresDatabase } from "./infrastructure/postgres/database";
 import { runMigrations } from "./infrastructure/postgres/migrate";
 import { RedisCache } from "./infrastructure/redis/cache";
@@ -75,7 +78,16 @@ const bootstrap = async (): Promise<void> => {
     env.hotupdatePackagesDir,
   );
   services.loginService = new LoginService(env, services.accountsService, services.tokenService, redis, services.logsService);
+  services.discordBotService = new DiscordBotService(env.discordBotToken, redis, services.logsService);
+  services.discordService = new DiscordService(
+    env,
+    postgres,
+    redis,
+    services.discordBotService,
+    services.logsService,
+  );
   services.startedAt = Date.now();
+  services.discordBotService.start();
 
   const router = new Router();
 
@@ -140,6 +152,7 @@ const bootstrap = async (): Promise<void> => {
   registerBannerRoutes(router);
   registerDownloadRoutes(router);
   registerHotupdateRoutes(router);
+  registerDiscordRoutes(router);
 
   const server = Bun.serve<{ sessionId: string }>({
     hostname: env.host,
@@ -220,6 +233,7 @@ const bootstrap = async (): Promise<void> => {
 
   process.on("SIGINT", async () => {
     services.logsService.info("bootstrap", "Cierre solicitado por SIGINT.");
+    services.discordBotService.stop();
     server.stop(true);
     await Promise.allSettled([redis.close(), postgres.close()]);
     process.exit(0);

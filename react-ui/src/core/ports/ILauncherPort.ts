@@ -1,4 +1,4 @@
-import type { ActivityDetails, DetailedMinecraftStats, LauncherConfig, MinecraftVersion, VersionCatalog } from "../domain/launcher";
+import type { ActivityDetails, DetailedMinecraftStats, LauncherConfig, LauncherStatus, MinecraftVersion, VersionCatalog } from "@/core/domain/launcher";
 
 export interface ILauncherPort {
   launch(config: LauncherConfig, username: string): void;
@@ -12,5 +12,5 @@ export interface ILauncherPort {
   getVersionCatalog(gameDir: string): Promise<VersionCatalog>;
   onLog(callback: (message: string) => void): () => void;
   onProgress(callback: (progress: { type: string; task: number; total: number }) => void): () => void;
-  onStatus(callback: (status: "idle" | "running" | "playing" | "done" | "error") => void): () => void;
+  onStatus(callback: (status: LauncherStatus) => void): () => void;
 }

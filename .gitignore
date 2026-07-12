@@ -68,3 +68,9 @@ mclaunch.db
 Cache/
 mclaunch_data/
 test-launch*.js
+
+desing/
+.claude/-
+
+.pnpm-store/
+image.png

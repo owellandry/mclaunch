@@ -599,7 +599,9 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
   ipcMain.on(CHANNELS.setLogo, (_, logo: string) => setLogo(logo));
   ipcMain.handle(CHANNELS.getLanguage, () => getLanguage());
   ipcMain.on(CHANNELS.setLanguage, (_, lang: string) => setLanguage(lang));
-  ipcMain.handle(CHANNELS.clearCache, () => clearCache());
+  ipcMain.handle(CHANNELS.clearCache, async () => {
+    await clearCache();
+  });
   ipcMain.handle(CHANNELS.clearAllData, () => clearAllData());
   ipcMain.on(CHANNELS.restartApp, () => { app.relaunch(); app.exit(0); });
 

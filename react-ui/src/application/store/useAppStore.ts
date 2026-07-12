@@ -5,11 +5,11 @@
  * Patrón: Atomic Design
  */
 import { create } from "zustand";
-import type { UserProfile } from "../../core/domain/profile";
-import type { LauncherConfig } from "../../core/domain/launcher";
-import { LocalStorageAdapter } from "../../infrastructure/adapters/LocalStorageAdapter";
-import { authApi } from "../../infrastructure/api/authApi";
-import type { BackendAccount } from "../../infrastructure/api/backendClient";
+import type { UserProfile } from "@/core/domain/profile";
+import type { LauncherConfig } from "@/core/domain/launcher";
+import { LocalStorageAdapter } from "@/infrastructure/adapters/LocalStorageAdapter";
+import { authApi } from "@/infrastructure/api/authApi";
+import type { BackendAccount } from "@/infrastructure/api/backendClient";
 
 interface AppState {
   profile: UserProfile | null;

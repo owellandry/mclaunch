@@ -30,7 +30,4 @@ export class ApiError extends Error {
     this.statusCode = statusCode;
   }
 
-  get shortLabel(): string {
-    return `Error ${this.code}`;
-  }
 }

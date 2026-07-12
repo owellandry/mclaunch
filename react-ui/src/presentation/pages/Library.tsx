@@ -1,69 +1,81 @@
-/**
- * @file Library.tsx
- * @description Página de Biblioteca. Lista las instancias instaladas, versiones de Minecraft y colecciones curadas.
- * 
- * Patrón: Atomic Design
- */
 import { FiCompass, FiDownloadCloud, FiLayers } from "react-icons/fi";
-import { Card } from "../components/atoms/Card";
-import { SectionTitle } from "../components/atoms/SectionTitle";
-import { Button } from "../components/atoms/Button";
 import { useTranslation } from "react-i18next";
+import { Button, EmptyState, PageHeader, Panel } from "@/presentation/design-system";
 
 export function Library() {
   const { t } = useTranslation();
 
-  const INSTALLATIONS = [
-    { id: "aurora", label: "Aurora Build", channel: t("library.curated"), vibe: "PvE cinematic", desc: "Shaders suaves, HUD limpio y experiencia enfocada en exploracion." },
-    { id: "pulse", label: "Pulse Ranked", channel: t("library.competitive"), vibe: "PvP veloz", desc: "Perfil ligero con UI agresiva, hotkeys priorizadas y cero distracciones." },
-    { id: "forge", label: "Forge Atelier", channel: t("library.modpack"), vibe: "Builders club", desc: "Stack creativo para mundos enormes, automatizacion y capturas bonitas." },
+  const installations = [
+    {
+      id: "aurora",
+      label: "Aurora Build",
+      channel: t("library.curated"),
+      vibe: "PvE cinematic",
+      desc: "Shaders suaves, HUD limpio y experiencia enfocada en exploracion.",
+    },
+    {
+      id: "pulse",
+      label: "Pulse Ranked",
+      channel: t("library.competitive"),
+      vibe: "PvP veloz",
+      desc: "Perfil ligero con UI agresiva, hotkeys priorizadas y cero distracciones.",
+    },
+    {
+      id: "forge",
+      label: "Forge Atelier",
+      channel: t("library.modpack"),
+      vibe: "Builders club",
+      desc: "Stack creativo para mundos enormes, automatizacion y capturas bonitas.",
+    },
   ];
-  return (
-    <div className="flex flex-col gap-8 pb-8">
-      <Card className="border-primary/20 shadow-[0_0_30px_var(--color-primary-shadow)] relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
-        <SectionTitle
-          eyebrow={t("library.library")}
-          title={t("library.instances")}
-          subtitle={t("library.instances_desc")}
-          icon={<FiLayers />}
-          action={
-            <Button variant="secondary" icon={<FiDownloadCloud />}>
-              {t("library.prepare_sync")}
-            </Button>
-          }
-        />
-        <div className="grid grid-cols-3 gap-6 mt-8 relative z-10">
-          {INSTALLATIONS.map((inst) => (
-            <div key={inst.id} className="bg-surfaceLight/40 border border-white/5 p-6 hover:bg-surfaceLight/80 hover:border-primary/30 transition-all group mc-cutout">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-xs font-bold px-3 py-1 bg-white/5 text-textMuted uppercase tracking-wider mc-cutout-small">{inst.channel}</span>
-                <span className="w-2 h-2 bg-primary shadow-[0_0_8px_var(--color-primary-shadow)] opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              <h3 className="text-xl font-black text-textMain mb-2 uppercase tracking-tight">{inst.label}</h3>
-              <p className="text-sm text-textMuted mb-6 min-h-[60px]">{inst.desc}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-primary/80 uppercase tracking-widest font-bold">{inst.vibe}</span>
-                <span className="text-[10px] text-white bg-primary px-2 py-0.5 font-bold uppercase tracking-widest mc-cutout-small">{t("library.ready")}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
 
-      <div className="grid grid-cols-2 gap-8">
-        <Card>
-          <SectionTitle
-            eyebrow={t("library.curation")}
-            title={t("library.featured_collection")}
-            subtitle={t("library.featured_desc")}
-            icon={<FiCompass />}
-          />
-          <div className="mt-6 bg-surfaceLight/30 border border-white/5 p-12 text-center text-textMuted uppercase tracking-widest text-sm font-bold mc-cutout border-dashed">
-            [ {t("library.wip")} ]
-          </div>
-        </Card>
+  return (
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        eyebrow={t("library.library")}
+        title={t("library.instances")}
+        description={t("library.instances_desc")}
+        action={
+          <Button variant="secondary" icon={<FiDownloadCloud />}>
+            {t("library.prepare_sync")}
+          </Button>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {installations.map((inst) => (
+          <Panel key={inst.id} interactive className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/45 bg-white/5 px-2.5 py-1 rounded-full">
+                {inst.channel}
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-dark)] bg-white px-2 py-0.5 rounded-full">
+                {t("library.ready")}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-lg font-black tracking-tight text-white">{inst.label}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/55 min-h-[3.5rem]">{inst.desc}</p>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary/90">
+              {inst.vibe}
+            </span>
+          </Panel>
+        ))}
       </div>
+
+      <Panel>
+        <div className="mb-4 flex items-center gap-3">
+          <FiCompass className="text-primary" />
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-hero-eyebrow)]">
+              {t("library.curation")}
+            </p>
+            <h2 className="text-base font-black text-white">{t("library.featured_collection")}</h2>
+          </div>
+        </div>
+        <EmptyState icon={<FiLayers />} label={t("library.wip")} />
+      </Panel>
     </div>
   );
 }

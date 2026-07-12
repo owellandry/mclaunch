@@ -8,6 +8,8 @@ import type { HotupdatesService } from "../../modules/hotupdates/hotupdates.serv
 import type { BannersService } from "../../modules/banners/banners.service";
 import type { LauncherActivityService } from "../../modules/launcher-socket/launcher-activity.service";
 import type { LogsService } from "../../modules/logs/logs.service";
+import type { DiscordService } from "../../modules/discord/discord.service";
+import type { DiscordBotService } from "../../modules/discord/discord-bot.service";
 import type { PostgresDatabase } from "../../infrastructure/postgres/database";
 import type { RedisCache } from "../../infrastructure/redis/cache";
 
@@ -20,6 +22,8 @@ export type RouteServices = {
   hotupdatesService: HotupdatesService;
   bannersService: BannersService;
   launcherActivityService: LauncherActivityService;
+  discordService: DiscordService;
+  discordBotService: DiscordBotService;
   logsService: LogsService;
   postgres: PostgresDatabase;
   redis: RedisCache;

@@ -114,7 +114,12 @@ Las variables viven normalmente en `backend/.env`.
 | `MCLAUNCH_API_HOST` | Host de escucha | `127.0.0.1` |
 | `MCLAUNCH_API_BASE_URL` | URL publica base usada en respuestas y links de descarga | `http://127.0.0.1:8787` |
 | `MCLAUNCH_API_JWT_SECRET` | Secreto para firmar JWT propios | `mclaunch-dev-secret-change-me` |
-| `MCLAUNCH_DISCORD_CLIENT_ID` | Se envia al launcher por WebSocket | vacio |
+| `MCLAUNCH_DISCORD_CLIENT_ID` | OAuth Discord + se envia al launcher por WebSocket | vacio |
+| `MCLAUNCH_DISCORD_CLIENT_SECRET` | Secret OAuth de la app Discord | vacio |
+| `MCLAUNCH_DISCORD_BOT_TOKEN` | Token del bot (gateway + presencia online) | vacio |
+| `MCLAUNCH_DISCORD_REDIRECT_URI` | Callback OAuth Discord | `${BASE}/api/v1/discord/oauth/callback` |
+| `MCLAUNCH_DISCORD_SCOPES` | Scopes OAuth (espacio-separados) | `identify` |
+| `MCLAUNCH_DISCORD_GUILD_ID` | Guild opcional para comunidad del launcher | vacio |
 | `MCLAUNCH_MICROSOFT_CLIENT_ID` | OAuth Microsoft | vacio |
 | `MCLAUNCH_MICROSOFT_CLIENT_SECRET` | OAuth Microsoft confidencial | vacio |
 | `MCLAUNCH_MICROSOFT_REDIRECT_URI` | Callback OAuth | `${MCLAUNCH_API_BASE_URL}/api/v1/login/callback` |
@@ -132,8 +137,50 @@ Las migraciones actuales crean solo estas tablas:
 
 - `accounts`
 - `banners`
+- `discord_links` (vinculo OAuth Discord <-> cuenta del launcher)
 
 No hay un sistema de migraciones incremental con versiones; [src/infrastructure/postgres/migrate.ts](./src/infrastructure/postgres/migrate.ts) ejecuta una lista fija de `CREATE TABLE IF NOT EXISTS` y `CREATE INDEX IF NOT EXISTS`.
+
+## Discord bot + amigos online
+
+El backend incluye un modulo Discord completo:
+
+1. **OAuth** para que el jugador vincule su Discord a la cuenta del launcher (JWT Bearer).
+2. **Bot gateway** que cachea presencia (`online` / `idle` / `dnd` / `offline`) en Redis.
+3. **Endpoint de amigos** que devuelve contactos online para pintar en el launcher.
+
+### Endpoints
+
+| Metodo | Ruta | Auth | Descripcion |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/discord/status` | no | Si OAuth/bot estan configurados |
+| `POST` | `/api/v1/discord/oauth/start` | Bearer | Inicia OAuth y devuelve `authorizeUrl` |
+| `GET` | `/api/v1/discord/oauth/status/:sessionId` | Bearer | Estado del popup OAuth |
+| `GET` | `/api/v1/discord/oauth/callback` | no | Callback Discord (cierra popup) |
+| `GET` | `/api/v1/discord/me` | Bearer | Vinculo Discord de la cuenta |
+| `GET` | `/api/v1/discord/friends` | Bearer | Amigos/red (default solo online; `?online=0` todos) |
+| `DELETE` | `/api/v1/discord/link` | Bearer | Desvincular Discord |
+
+### Flujo tipico (launcher)
+
+1. Usuario ya logueado con Microsoft -> tiene JWT backend.
+2. `POST /api/v1/discord/oauth/start` con `Authorization: Bearer <jwt>`.
+3. Abrir `authorizeUrl` en popup.
+4. Polling `GET /api/v1/discord/oauth/status/:sessionId` hasta `completed`.
+5. `GET /api/v1/discord/friends` -> lista con avatar, status y actividad.
+
+### Como obtiene "amigos online"
+
+- Si la app Discord tiene el scope privilegiado `relationships.read` (hay que pedirlo a Discord y setear `MCLAUNCH_DISCORD_SCOPES=identify relationships.read`), se usa la API real de relaciones de Discord.
+- Si no (caso normal en apps nuevas), se usa la **red del launcher**: otros jugadores que tambien vincularon Discord, enriquecidos con presencia del **bot** (gateway `PRESENCE_UPDATE`).
+
+### Configuracion en Discord Developer Portal
+
+1. Crear Application + Bot.
+2. OAuth2 -> Redirects: `http://127.0.0.1:8787/api/v1/discord/oauth/callback` (o tu URL publica).
+3. Bot -> Privileged Gateway Intents: **Server Members Intent** y **Presence Intent**.
+4. Invitar el bot a tu servidor de comunidad (scope `bot`).
+5. Copiar Client ID, Client Secret y Bot Token a `.env`.
 
 ### Redis
 

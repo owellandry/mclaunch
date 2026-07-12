@@ -174,6 +174,12 @@ const registerWindowControls = (): void => {
     mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
   });
   ipcMain.on("window:close", () => mainWindow?.close());
+  ipcMain.handle("shell:openExternal", async (_event, url: unknown) => {
+    if (typeof url !== "string" || !/^https?:\/\//i.test(url)) {
+      throw new Error("URL externa no valida.");
+    }
+    await shell.openExternal(url);
+  });
 };
 
 const resizeWindowToHalfScreen = (window: BrowserWindow): void => {

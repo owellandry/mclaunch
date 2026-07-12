@@ -1,5 +1,5 @@
-import type { UserProfile } from "../domain/profile";
-import type { LauncherConfig } from "../domain/launcher";
+import type { UserProfile } from "@/core/domain/profile";
+import type { LauncherConfig } from "@/core/domain/launcher";
 
 export interface IStoragePort {
   getProfile(): UserProfile | null;

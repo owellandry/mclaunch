@@ -48,6 +48,36 @@ const statements = [
     create index if not exists banners_placement_active_idx
     on banners (placement, is_active, sort_order asc, created_at desc);
   `,
+  `
+    create table if not exists discord_links (
+      id uuid primary key,
+      account_id uuid not null references accounts(id) on delete cascade,
+      discord_user_id text not null,
+      username text not null,
+      global_name text null,
+      discriminator text null,
+      avatar text null,
+      access_token text not null,
+      refresh_token text null,
+      token_expires_at timestamptz null,
+      scopes text not null default '',
+      metadata jsonb not null default '{}'::jsonb,
+      created_at timestamptz not null default now(),
+      updated_at timestamptz not null default now()
+    );
+  `,
+  `
+    create unique index if not exists discord_links_account_uidx
+    on discord_links (account_id);
+  `,
+  `
+    create unique index if not exists discord_links_discord_user_uidx
+    on discord_links (discord_user_id);
+  `,
+  `
+    create index if not exists discord_links_updated_at_idx
+    on discord_links (updated_at desc);
+  `,
 ];
 
 export const runMigrations = async (database: PostgresDatabase): Promise<void> => {

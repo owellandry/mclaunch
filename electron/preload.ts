@@ -9,7 +9,7 @@
 // - No se bloquea el hilo principal
 // - Documentación completa JSDoc para entender cada método
 
-import { contextBridge, ipcRenderer, IpcRendererEvent, shell } from "electron";
+import { contextBridge, ipcRenderer, IpcRendererEvent } from "electron";
 import type { LaunchPayload, MinecraftVersion } from "./ipc/launcher";
 
 /**
@@ -202,7 +202,8 @@ const api = {
     return process.env.MCLAUNCH_API_BASE_URL?.trim() || DEFAULT_API_BASE_URL;
   },
 
-  openExternal: (url: string): Promise<void> => shell.openExternal(url).then(() => undefined),
+  openExternal: (url: string): Promise<void> =>
+    ipcRenderer.invoke("shell:openExternal", url),
 
   // Controles de ventana (rápidos, fire-and-forget)
   minimizeWindow: (): void => ipcRenderer.send("window:minimize"),

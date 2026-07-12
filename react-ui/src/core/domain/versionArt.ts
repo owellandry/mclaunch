@@ -1,11 +1,12 @@
 /**
  * @file versionArt.ts
- * @description Mapeo de versiones de Minecraft a sus imágenes oficiales del Minecraft Wiki.
- * Al seleccionar una versión en el Dashboard, el hero muestra el artwork oficial.
+ * @description Mapeo de versiones de Minecraft a sus artworks locales.
+ * Las imágenes se descargan con: node scripts/download-version-art.mjs
+ * y se sirven desde /version-art/ (carpeta public/).
  */
 
 const VERSION_ART_MAP: Record<string, string> = {
-  "26.2":   "https://minecraft.wiki/images/26.2_banner.jpg",
+  "26.2":   "https://www.minecraft.net/content/dam/minecraftnet/games/minecraft/key-art/SPGD-26_Video-Banner-A_Trailer-Thumbnail_1920x1080.jpg",
   "26.1":   "https://minecraft.wiki/images/26.1_banner.jpg",
   "1.21.5": "https://minecraft.wiki/images/1.21.5_banner.jpg",
   "1.21.4": "https://minecraft.wiki/images/1.21.4_banner.jpg",
@@ -17,26 +18,40 @@ const VERSION_ART_MAP: Record<string, string> = {
   "1.16":   "https://minecraft.wiki/images/Java_Edition_1.16.png",
 };
 
+function getFileExtension(url: string): string {
+  const clean = url.split("?")[0].split("#")[0];
+  const ext = clean.split(".").pop()?.toLowerCase() || "jpg";
+  return ext === "jpeg" ? "jpg" : ext;
+}
+
+function findRemoteUrl(versionId: string): { key: string; url: string } | null {
+  if (VERSION_ART_MAP[versionId]) {
+    return { key: versionId, url: VERSION_ART_MAP[versionId] };
+  }
+  const major = versionId.split(".").slice(0, 2).join(".");
+  if (major !== versionId && VERSION_ART_MAP[major]) {
+    return { key: major, url: VERSION_ART_MAP[major] };
+  }
+  return null;
+}
+
 /**
- * Retorna la URL del artwork oficial para una versión específica.
+ * Retorna la ruta local de la imagen (en /version-art/) para una versión.
  * Si la versión no tiene artwork mapeado, retorna null.
  */
 export function getVersionArt(versionId: string): string | null {
   if (!versionId) return null;
+  const found = findRemoteUrl(versionId);
+  if (!found) return null;
 
-  // Busca exacta primero
-  if (VERSION_ART_MAP[versionId]) return VERSION_ART_MAP[versionId];
+  const ext = getFileExtension(found.url);
+  return `/version-art/${found.key}.${ext}`;
+}
 
-  // Para versiones sin banner específico (e.g. 1.21.1, 1.21.2, 1.20.1, 1.20.2, 1.19.1, 1.19.2, 1.19.3, 1.19.4)
-  // intenta con la versión mayor (e.g. 1.21, 1.20, 1.19)
-  const majorVersion = versionId
-    .split(".")
-    .slice(0, 2)
-    .join(".");
-
-  if (majorVersion !== versionId && VERSION_ART_MAP[majorVersion]) {
-    return VERSION_ART_MAP[majorVersion];
-  }
-
-  return null;
+/**
+ * Retorna el mapa de URLs remotas para el script de descarga.
+ * NO usar en componentes — solo para node scripts/download-version-art.mjs
+ */
+export function getDownloadUrls(): Record<string, string> {
+  return { ...VERSION_ART_MAP };
 }

@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import fs from "node:fs";
 import path from "node:path";
-import { app } from "electron";
+import { app, session } from "electron";
 
 const userDataPath = app.getPath("userData");
 const dbPath = path.join(userDataPath, "mclaunch.db");
@@ -416,16 +416,41 @@ export function setLanguage(lang: string): void {
   db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)").run("language", lang);
 }
 
-export function clearCache(): void {
-  const cachePath = path.join(userDataPath, "Cache");
-  if (!fs.existsSync(cachePath)) {
-    return;
-  }
+/**
+ * Clears Electron/Chromium caches while the app is running.
+ * Prefer session APIs over deleting Cache on disk: Windows locks those
+ * folders (EPERM) while Chromium has files open.
+ */
+export async function clearCache(): Promise<void> {
+  const ses = session.defaultSession;
 
-  try {
-    fs.rmSync(cachePath, { recursive: true, force: true });
-  } catch (error) {
-    throw new Error(`No se pudo limpiar la cache de Electron: ${String(error)}`);
+  await ses.clearCache();
+  await ses.clearCodeCaches({ urls: [] });
+  await ses.clearStorageData({
+    storages: ["cachestorage", "serviceworkers", "shadercache"],
+  });
+
+  // Best-effort disk cleanup for leftover folders. Never fail the whole
+  // operation if Windows still holds a lock (EPERM / EBUSY).
+  const cacheDirs = ["Cache", "Code Cache", "GPUCache", "DawnGraphiteCache", "DawnWebGPUCache"];
+
+  for (const dirName of cacheDirs) {
+    const cachePath = path.join(userDataPath, dirName);
+    if (!fs.existsSync(cachePath)) continue;
+
+    try {
+      fs.rmSync(cachePath, { recursive: true, force: true, maxRetries: 3, retryDelay: 150 });
+    } catch (error) {
+      const code =
+        error && typeof error === "object" && "code" in error
+          ? String((error as { code?: string }).code)
+          : "";
+      if (code === "EPERM" || code === "EBUSY" || code === "ENOTEMPTY") {
+        console.warn(`[clearCache] Carpeta en uso, omitida: ${cachePath}`);
+        continue;
+      }
+      console.warn(`[clearCache] No se pudo borrar ${cachePath}:`, error);
+    }
   }
 }
 

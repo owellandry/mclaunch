@@ -1,4 +1,4 @@
-import { ApiError, ApiErrorCode } from "../../core/errors/ApiError";
+import { ApiError, ApiErrorCode } from "@/core/errors/ApiError";
 
 type BackendApiError = {
   code: string;

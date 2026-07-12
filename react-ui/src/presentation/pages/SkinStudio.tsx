@@ -1,29 +1,22 @@
-/**
- * @file SkinStudio.tsx
- * @description Página de SkinStudio. Área de personalización y visualización del perfil del usuario.
- * 
- * Patrón: Atomic Design
- */
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiDownload, FiImage, FiRefreshCw, FiUpload } from "react-icons/fi";
+import { FiDownload, FiImage, FiRefreshCw, FiUpload } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
-import capeTexture from "../../assets/cape.png";
-import { Card } from "../components/atoms/Card";
-import { SectionTitle } from "../components/atoms/SectionTitle";
-import { Button } from "../components/atoms/Button";
-import { MinecraftAvatar } from "../components/atoms/MinecraftAvatar";
-import { MinecraftSkinFigure } from "../components/atoms/MinecraftSkinFigure";
-import { SkinViewerControls } from "../components/atoms/SkinViewerControls";
-import { useAppStore } from "../../application/store/useAppStore";
-import { useNotificationStore } from "../../application/store/useNotificationStore";
-import { PLAYER_AVATAR_TRANSITION_NAME, PLAYER_PROFILE_CHIP_TRANSITION_NAME, startViewTransition } from "../lib/viewTransition";
-import type { ViewerMode } from "../components/atoms/MinecraftSkinFigure";
-import type { CapeInfo } from "../../core/domain/electron-api";
+import capeTexture from "@/assets/cape.png";
+import { Button, PageHeader, Panel } from "@/presentation/design-system";
+import { MinecraftAvatar } from "@/presentation/components/minecraft/MinecraftAvatar";
+import {
+  MinecraftSkinFigure,
+  type ViewerMode,
+} from "@/presentation/components/minecraft/MinecraftSkinFigure";
+import { SkinViewerControls } from "@/presentation/components/minecraft/SkinViewerControls";
+import { useAppStore } from "@/application/store/useAppStore";
+import { useNotificationStore } from "@/application/store/useNotificationStore";
+import { PLAYER_AVATAR_TRANSITION_NAME, startViewTransition } from "@/presentation/lib/viewTransition";
+import type { CapeInfo } from "@/core/domain/electron-api";
 
 const SKIN_DRAFT_STORAGE_KEY = "nebula_skin_draft";
 const SKIN_DRAFT_NAME_STORAGE_KEY = "nebula_skin_draft_name";
-
 const CORS_PROXY = "https://api.allorigins.win/raw?url=";
 
 function normalizeSkinUrl(skinUrl?: string | null): string | null {
@@ -40,7 +33,9 @@ async function fetchSessionProfile(uuid: string): Promise<Record<string, unknown
     try {
       const res = await fetch(url);
       if (res.ok) return await res.json();
-    } catch { continue; }
+    } catch {
+      continue;
+    }
   }
   return null;
 }
@@ -48,8 +43,9 @@ async function fetchSessionProfile(uuid: string): Promise<Record<string, unknown
 async function findCapeUrl(uuid: string): Promise<string | null> {
   const data = await fetchSessionProfile(uuid);
   if (!data) return null;
-  const texturesProp = (data.properties as Array<{ name: string; value: string }> | undefined)
-    ?.find((p) => p.name === "textures");
+  const texturesProp = (data.properties as Array<{ name: string; value: string }> | undefined)?.find(
+    (p) => p.name === "textures",
+  );
   if (!texturesProp?.value) return null;
   try {
     const decoded = JSON.parse(atob(texturesProp.value));
@@ -74,10 +70,14 @@ export function SkinStudio() {
   const profile = useAppStore((state) => state.profile);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const { t } = useTranslation();
-  const [draftSkinUrl, setDraftSkinUrl] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_STORAGE_KEY));
-  const [draftSkinName, setDraftSkinName] = useState<string | null>(() => localStorage.getItem(SKIN_DRAFT_NAME_STORAGE_KEY));
-  const [viewerMode, setViewerMode] = useState<ViewerMode>('walking');
-  const [selectedCapeId, setSelectedCapeId] = useState<string>('launcher');
+  const [draftSkinUrl, setDraftSkinUrl] = useState<string | null>(() =>
+    localStorage.getItem(SKIN_DRAFT_STORAGE_KEY),
+  );
+  const [draftSkinName, setDraftSkinName] = useState<string | null>(() =>
+    localStorage.getItem(SKIN_DRAFT_NAME_STORAGE_KEY),
+  );
+  const [viewerMode, setViewerMode] = useState<ViewerMode>("walking");
+  const [selectedCapeId, setSelectedCapeId] = useState<string>("launcher");
   const [accountCapes, setAccountCapes] = useState<CapeInfo[]>([]);
 
   const officialSkinUrl = normalizeSkinUrl(profile?.skinUrl);
@@ -86,85 +86,81 @@ export function SkinStudio() {
 
   useEffect(() => {
     const uuid = profile?.uuid;
-    if (!uuid) { setAccountCapes([]); return; }
+    if (!uuid) {
+      setAccountCapes([]);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
       try {
         const capes = await window.api.getCapes();
-        if (!cancelled && capes.length > 0) { setAccountCapes(capes); return; }
-      } catch { /* ignore, fallback */ }
+        if (!cancelled && capes.length > 0) {
+          setAccountCapes(capes);
+          return;
+        }
+      } catch {
+        /* ignore, fallback */
+      }
 
       const single = await findCapeUrl(uuid);
-      if (!cancelled && single) setAccountCapes([{ id: single, url: single, alias: null, state: 'ACTIVE' }]);
+      if (!cancelled && single) {
+        setAccountCapes([{ id: single, url: single, alias: null, state: "ACTIVE" }]);
+      }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [profile?.uuid]);
 
   const capeEntries = useMemo((): CapeEntry[] => {
     const entries: CapeEntry[] = [
-      { id: 'launcher', textureUrl: capeTexture, label: 'Launcher', isActive: true },
+      { id: "launcher", textureUrl: capeTexture, label: "Launcher", isActive: true },
     ];
     accountCapes.forEach((cape) => {
       entries.push({
         id: cape.id,
         textureUrl: cape.url,
-        label: cape.alias ?? 'Cape',
-        isActive: cape.state === 'ACTIVE',
+        label: cape.alias ?? "Cape",
+        isActive: cape.state === "ACTIVE",
       });
     });
     return entries;
   }, [accountCapes]);
 
   const capeUrl = useMemo(() => {
-    if (selectedCapeId === 'none') return null;
+    if (selectedCapeId === "none") return null;
     const entry = capeEntries.find((e) => e.id === selectedCapeId);
     return entry?.textureUrl ?? null;
   }, [selectedCapeId, capeEntries]);
 
   useEffect(() => {
     const stillExists = capeEntries.some((e) => e.id === selectedCapeId);
-    if (!stillExists && selectedCapeId !== 'none') {
-      setSelectedCapeId('launcher');
+    if (!stillExists && selectedCapeId !== "none") {
+      setSelectedCapeId("launcher");
     }
   }, [capeEntries, selectedCapeId]);
 
   useEffect(() => {
-    if (draftSkinUrl) {
-      localStorage.setItem(SKIN_DRAFT_STORAGE_KEY, draftSkinUrl);
-    } else {
-      localStorage.removeItem(SKIN_DRAFT_STORAGE_KEY);
-    }
+    if (draftSkinUrl) localStorage.setItem(SKIN_DRAFT_STORAGE_KEY, draftSkinUrl);
+    else localStorage.removeItem(SKIN_DRAFT_STORAGE_KEY);
   }, [draftSkinUrl]);
 
   useEffect(() => {
-    if (draftSkinName) {
-      localStorage.setItem(SKIN_DRAFT_NAME_STORAGE_KEY, draftSkinName);
-    } else {
-      localStorage.removeItem(SKIN_DRAFT_NAME_STORAGE_KEY);
-    }
+    if (draftSkinName) localStorage.setItem(SKIN_DRAFT_NAME_STORAGE_KEY, draftSkinName);
+    else localStorage.removeItem(SKIN_DRAFT_NAME_STORAGE_KEY);
   }, [draftSkinName]);
 
   const currentSourceLabel = useMemo(() => {
-    if (usingDraftSkin) {
-      return draftSkinName || t("skin_studio.imported_skin");
-    }
-
-    if (profile?.username) {
-      return `${t("skin_studio.official_skin")} · ${profile.username}`;
-    }
-
+    if (usingDraftSkin) return draftSkinName || t("skin_studio.imported_skin");
+    if (profile?.username) return `${t("skin_studio.official_skin")} · ${profile.username}`;
     return t("skin_studio.no_skin");
   }, [draftSkinName, profile?.username, t, usingDraftSkin]);
 
-  const handleBack = () => {
-    startViewTransition(() => navigate(-1));
-  };
+  const handleBack = () => startViewTransition(() => navigate(-1));
 
-  const handleOpenPicker = () => {
-    inputRef.current?.click();
-  };
+  const handleOpenPicker = () => inputRef.current?.click();
 
   const handleResetToOfficial = () => {
     setDraftSkinUrl(null);
@@ -174,9 +170,7 @@ export function SkinStudio() {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
     if (file.type !== "image/png") {
       addNotification(t("skin_studio.invalid_skin"), t("skin_studio.invalid_skin_desc"), "error");
@@ -194,9 +188,15 @@ export function SkinStudio() {
 
       const image = new Image();
       image.onload = () => {
-        const validSize = image.naturalWidth === 64 && (image.naturalHeight === 64 || image.naturalHeight === 32);
+        const validSize =
+          image.naturalWidth === 64 &&
+          (image.naturalHeight === 64 || image.naturalHeight === 32);
         if (!validSize) {
-          addNotification(t("skin_studio.invalid_dimensions"), t("skin_studio.invalid_dimensions_desc"), "error");
+          addNotification(
+            t("skin_studio.invalid_dimensions"),
+            t("skin_studio.invalid_dimensions_desc"),
+            "error",
+          );
           return;
         }
 
@@ -214,183 +214,185 @@ export function SkinStudio() {
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-8">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-[0.3em] text-primary">{t("skin_studio.eyebrow")}</span>
-          <h1 className="mt-2 text-4xl font-black uppercase tracking-tight text-textMain">{t("skin_studio.title")}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-textMuted">{t("skin_studio.subtitle")}</p>
-        </div>
-        <Button variant="secondary" icon={<FiArrowLeft />} onClick={handleBack}>
-          {t("skin_studio.back")}
-        </Button>
-      </div>
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        eyebrow={t("skin_studio.eyebrow")}
+        title={t("skin_studio.title")}
+        description={t("skin_studio.subtitle")}
+        action={
+          <Button variant="secondary" onClick={handleBack}>
+            {t("skin_studio.back")}
+          </Button>
+        }
+      />
 
-      <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-7 flex flex-col gap-8">
-          <Card className="overflow-hidden">
-            <div className="relative isolate overflow-hidden mc-cutout bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_52%),linear-gradient(135deg,rgba(0,0,0,0.04),rgba(0,0,0,0.18))] p-8">
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:32px_32px] opacity-50" />
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-7 flex flex-col gap-4">
+          <Panel className="overflow-hidden p-0">
+            <div className="relative isolate overflow-hidden bg-[radial-gradient(circle_at_top,var(--skin-gradient-top),transparent_52%),linear-gradient(135deg,var(--skin-gradient-mid),var(--skin-gradient-bottom))] p-6 sm:p-8">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--grid-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-line)_1px,transparent_1px)] bg-[size:32px_32px] opacity-50" />
               <div className="relative z-10 flex flex-col items-center">
-                <div
-                  className="relative flex min-h-[430px] w-full items-center justify-center overflow-hidden rounded-[28px] border border-white/10 bg-white/10 px-6 py-10 shadow-[0_30px_90px_rgba(0,0,0,0.18)]"
-                >
+                <div className="relative flex min-h-[min(430px,55vh)] w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5 px-4 py-8">
                   <div className="absolute inset-x-10 bottom-8 h-10 rounded-full bg-primary/20 blur-2xl" />
                   <MinecraftSkinFigure
                     textureUrl={activeSkinUrl}
                     capeUrl={capeUrl}
                     pixelSize={11}
-                    className="drop-shadow-[0_22px_26px_rgba(0,0,0,0.22)]"
+                    className="drop-shadow-[0_22px_26px_var(--skin-shadow)]"
                     viewerMode={viewerMode}
                   />
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                  <SkinViewerControls
-                    viewerMode={viewerMode}
-                    onChange={setViewerMode}
-                  />
+                  <SkinViewerControls viewerMode={viewerMode} onChange={setViewerMode} />
                 </div>
 
-                <div
-                  className="mt-6 flex items-center gap-4 rounded-full border border-white/10 bg-surfaceLight/70 px-4 py-3 backdrop-blur"
-                  style={{ viewTransitionName: PLAYER_PROFILE_CHIP_TRANSITION_NAME }}
-                >
+                <div className="mt-5 flex items-center gap-4 rounded-full border border-white/10 bg-[var(--surface-elevated)] px-4 py-2.5 [view-transition-name:player-profile-chip]">
                   <MinecraftAvatar
                     username={profile?.username || "Player"}
                     uuid={usingDraftSkin ? undefined : profile?.uuid}
                     skinUrl={activeSkinUrl}
-                    size={44}
+                    size={40}
                     transitionName={PLAYER_AVATAR_TRANSITION_NAME}
                   />
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">{t("skin_studio.live_preview")}</p>
-                    <p className="truncate text-sm font-bold uppercase tracking-wider text-textMain">{currentSourceLabel}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                      {t("skin_studio.live_preview")}
+                    </p>
+                    <p className="truncate text-sm font-bold uppercase tracking-wider text-white">
+                      {currentSourceLabel}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-          </Card>
+          </Panel>
 
-          <Card>
-            <SectionTitle
-              eyebrow={t("skin_studio.texture")}
-              title={t("skin_studio.texture_title")}
-              subtitle={t("skin_studio.texture_subtitle")}
-              icon={<FiImage />}
-            />
-            <div className="overflow-hidden border border-white/10 bg-surfaceLight/40 p-4 mc-cutout-small">
+          <Panel>
+            <div className="mb-4 flex items-center gap-2">
+              <FiImage className="text-primary" />
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-white">
+                {t("skin_studio.texture_title")}
+              </h2>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-[var(--surface-dashboard)] p-4">
               {activeSkinUrl ? (
                 <img
                   src={activeSkinUrl}
                   alt={t("skin_studio.texture_alt")}
-                  className="w-full max-h-[420px] object-contain"
-                  style={{ imageRendering: "pixelated" }}
+                  className="mx-auto max-h-[320px] w-full object-contain [image-rendering:pixelated]"
                 />
               ) : (
-                <div className="flex min-h-[220px] items-center justify-center text-sm text-textMuted">
+                <div className="flex min-h-[180px] items-center justify-center text-sm text-white/40">
                   {t("skin_studio.no_skin")}
                 </div>
               )}
             </div>
-          </Card>
+          </Panel>
         </div>
 
-        <div className="col-span-5 flex flex-col gap-8">
-          <Card>
-            <SectionTitle
-              eyebrow={t("skin_studio.control")}
-              title={t("skin_studio.control_title")}
-              subtitle={t("skin_studio.control_subtitle")}
-              icon={<FiUpload />}
-            />
-            <div className="space-y-4">
-              <input ref={inputRef} type="file" accept=".png,image/png" className="hidden" onChange={handleFileChange} />
-              <Button className="w-full py-4" icon={<FiDownload />} onClick={handleOpenPicker}>
-                {t("skin_studio.import")}
-              </Button>
-              <Button className="w-full py-4" variant="secondary" icon={<FiRefreshCw />} onClick={handleResetToOfficial}>
-                {t("skin_studio.reset")}
-              </Button>
-              <div className="mc-cutout-small border border-white/5 bg-surfaceLight/30 p-4 text-sm text-textMuted">
-                <p className="font-bold uppercase tracking-wider text-textMain">{t("skin_studio.compatibility")}</p>
-                <p className="mt-2">{t("skin_studio.compatibility_desc")}</p>
-              </div>
+        <div className="xl:col-span-5 flex flex-col gap-4">
+          <Panel className="space-y-4">
+            <div className="flex items-center gap-2">
+              <FiUpload className="text-primary" />
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-white">
+                {t("skin_studio.control_title")}
+              </h2>
             </div>
-          </Card>
-
-          <Card>
-            <SectionTitle
-              eyebrow={t("skin_studio.capes")}
-              title={t("skin_studio.capes_title")}
-              subtitle={t("skin_studio.capes_subtitle")}
-              icon={<FiImage />}
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".png,image/png"
+              className="hidden"
+              onChange={handleFileChange}
             />
+            <Button className="w-full py-3" icon={<FiDownload />} onClick={handleOpenPicker}>
+              {t("skin_studio.import")}
+            </Button>
+            <Button
+              className="w-full py-3"
+              variant="secondary"
+              icon={<FiRefreshCw />}
+              onClick={handleResetToOfficial}
+            >
+              {t("skin_studio.reset")}
+            </Button>
+            <div className="rounded-xl border border-white/10 bg-[var(--surface-dashboard)] p-4 text-sm text-white/55">
+              <p className="font-bold uppercase tracking-wider text-white">
+                {t("skin_studio.compatibility")}
+              </p>
+              <p className="mt-2 leading-relaxed">{t("skin_studio.compatibility_desc")}</p>
+            </div>
+          </Panel>
+
+          <Panel>
+            <h2 className="mb-4 text-sm font-black uppercase tracking-[0.18em] text-white">
+              {t("skin_studio.capes_title")}
+            </h2>
             <div className="flex flex-wrap items-center justify-center gap-3">
               {capeEntries.map((cape) => (
                 <button
                   key={cape.id}
+                  type="button"
                   onClick={() => setSelectedCapeId(cape.id)}
-                  className={`group flex flex-col items-center gap-1 overflow-hidden rounded-xl border-2 p-2 transition-all ${
+                  className={`group flex cursor-pointer flex-col items-center gap-1 overflow-hidden rounded-xl border-2 p-2 transition-all ${
                     selectedCapeId === cape.id
-                      ? 'border-primary shadow-sm'
-                      : 'border-transparent opacity-60 hover:opacity-100'
+                      ? "border-primary"
+                      : "border-transparent opacity-60 hover:opacity-100"
                   }`}
                 >
                   <img
                     src={cape.textureUrl!}
                     alt=""
-                    className="h-12 w-24 rounded-lg object-cover"
-                    style={{ imageRendering: "pixelated" }}
+                    className="h-12 w-24 rounded-lg object-cover [image-rendering:pixelated]"
                   />
-                  <span className="max-w-[6rem] truncate text-[10px] font-semibold uppercase tracking-wider text-textMuted">
+                  <span className="max-w-[6rem] truncate text-[10px] font-semibold uppercase tracking-wider text-white/50">
                     {cape.label}
                   </span>
-                  {cape.isActive && (
-                    <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider text-primary">
-                      Active
-                    </span>
-                  )}
                 </button>
               ))}
               <button
-                onClick={() => setSelectedCapeId('none')}
-                className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 transition-all ${
-                  selectedCapeId === 'none'
-                    ? 'border-primary bg-primary/10 shadow-sm'
-                    : 'border-dashed border-white/15 text-textMuted hover:border-white/30'
+                type="button"
+                onClick={() => setSelectedCapeId("none")}
+                className={`flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 transition-all ${
+                  selectedCapeId === "none"
+                    ? "border-primary bg-primary/10"
+                    : "border-dashed border-white/15 text-white/45 hover:border-white/30"
                 }`}
               >
-                <div className="flex h-12 w-24 items-center justify-center rounded-lg bg-surfaceLight/30">
+                <div className="flex h-12 w-24 items-center justify-center rounded-lg bg-white/5">
                   <span className="text-xs font-bold uppercase tracking-wider">—</span>
                 </div>
                 <span className="text-[10px] font-semibold uppercase tracking-wider">None</span>
               </button>
             </div>
-          </Card>
+          </Panel>
 
-          <Card>
-            <SectionTitle
-              eyebrow={t("skin_studio.workflow")}
-              title={t("skin_studio.workflow_title")}
-              subtitle={t("skin_studio.workflow_subtitle")}
-              icon={<FiImage />}
-            />
-            <div className="space-y-3 text-sm">
-              <div className="mc-cutout-small border border-white/5 bg-surfaceLight/20 p-4">
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{t("skin_studio.step_one")}</span>
-                <p className="mt-2 text-textMain">{t("skin_studio.step_one_desc")}</p>
+          <Panel className="space-y-3 text-sm">
+            <h2 className="text-sm font-black uppercase tracking-[0.18em] text-white">
+              {t("skin_studio.workflow_title")}
+            </h2>
+            {[
+              { title: t("skin_studio.step_one"), desc: t("skin_studio.step_one_desc") },
+              { title: t("skin_studio.step_two"), desc: t("skin_studio.step_two_desc") },
+            ].map((step) => (
+              <div
+                key={step.title}
+                className="rounded-xl border border-white/10 bg-[var(--surface-dashboard)] p-4"
+              >
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                  {step.title}
+                </span>
+                <p className="mt-2 text-white/70">{step.desc}</p>
               </div>
-              <div className="mc-cutout-small border border-white/5 bg-surfaceLight/20 p-4">
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{t("skin_studio.step_two")}</span>
-                <p className="mt-2 text-textMain">{t("skin_studio.step_two_desc")}</p>
-              </div>
-              <div className="mc-cutout-small border border-dashed border-primary/40 bg-primary/5 p-4">
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{t("skin_studio.next_phase")}</span>
-                <p className="mt-2 text-textMain">{t("skin_studio.next_phase_desc")}</p>
-              </div>
+            ))}
+            <div className="rounded-xl border border-dashed border-primary/40 bg-primary/5 p-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+                {t("skin_studio.next_phase")}
+              </span>
+              <p className="mt-2 text-white/80">{t("skin_studio.next_phase_desc")}</p>
             </div>
-          </Card>
+          </Panel>
         </div>
       </div>
     </div>
