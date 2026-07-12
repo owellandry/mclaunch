@@ -212,12 +212,57 @@ export class DiscordBotService {
     if (!eventName) return;
 
     if (eventName === "READY") {
-      const ready = data as { session_id?: string; resume_gateway_url?: string };
+      const ready = data as {
+        session_id?: string;
+        resume_gateway_url?: string;
+        guilds?: Array<{ id?: string }>;
+      };
       this.sessionId = ready.session_id ?? null;
       this.resumeUrl = ready.resume_gateway_url?.replace("wss://", "wss://") ?? null;
       this.logsService.info("discord-bot", "Bot READY en Discord gateway.", {
         sessionId: this.sessionId,
+        guilds: ready.guilds?.length ?? 0,
       });
+      return;
+    }
+
+    // Seed presence cache from guild create payloads when available.
+    if (eventName === "GUILD_CREATE") {
+      const guild = data as {
+        id?: string;
+        presences?: Array<{
+          user?: { id?: string };
+          status?: string;
+          activities?: Array<{ name?: string; type?: number }>;
+        }>;
+      };
+      const presences = guild.presences ?? [];
+      for (const presence of presences) {
+        const userId = presence.user?.id;
+        if (!userId) continue;
+        const status = this.normalizeStatus(presence.status);
+        await this.cache.setJson(
+          PRESENCE_KEY(userId),
+          {
+            userId,
+            status,
+            activities: (presence.activities ?? [])
+              .filter((activity) => typeof activity.name === "string")
+              .map((activity) => ({
+                name: activity.name as string,
+                type: typeof activity.type === "number" ? activity.type : 0,
+              })),
+            updatedAt: Date.now(),
+          } satisfies DiscordPresenceSnapshot,
+          PRESENCE_TTL_SECONDS,
+        );
+      }
+      if (presences.length > 0) {
+        this.logsService.info("discord-bot", "Presencias iniciales de guild cacheadas.", {
+          guildId: guild.id,
+          count: presences.length,
+        });
+      }
       return;
     }
 

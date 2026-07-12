@@ -269,9 +269,14 @@ export class DiscordService {
   }
 
   /**
-   * Returns Discord friends/online social graph for the linked account.
-   * Prefer Discord relationships API when the app has relationships.read.
-   * Otherwise falls back to other launcher users with Discord linked + bot presence.
+   * Friends graph for the linked Discord account.
+   *
+   * Strategy (best → fallback):
+   * 1) Discord relationships API (real friends) — may require privileged scope
+   * 2) Online members in configured guild (bot presence) + other launcher users
+   *
+   * Online filter: prefer presence from bot. If we have friends but zero presence
+   * hits, still return friends so the UI is not empty (bot often cannot see DMs-only friends).
    */
   async listOnlineFriends(accountId: string): Promise<{
     link: DiscordLinkPublic;
@@ -279,45 +284,25 @@ export class DiscordService {
     source: "relationships" | "launcher_network" | "mixed";
     note: string | null;
   }> {
-    const row = await this.getLinkRowByAccountId(accountId);
-    if (!row) {
-      throw new Error("Esta cuenta no tiene Discord vinculado.");
+    const full = await this.listAllFriends(accountId);
+    const online = full.friends.filter((friend) => friend.isOnline);
+
+    if (online.length > 0) {
+      return { ...full, friends: online };
     }
 
-    const accessToken = await this.ensureFreshAccessToken(row);
-    let friends: DiscordFriend[] = [];
-    let source: "relationships" | "launcher_network" | "mixed" = "launcher_network";
-    let note: string | null = null;
-
-    const scopes = row.scopes.split(/\s+/).filter(Boolean);
-    if (scopes.includes("relationships.read")) {
-      try {
-        const relationships = await this.fetchRelationships(accessToken);
-        friends = await this.mapRelationshipsToFriends(relationships);
-        source = "relationships";
-      } catch (error) {
-        note =
-          error instanceof Error
-            ? `No se pudo leer relationships de Discord (${error.message}). Usando red del launcher.`
-            : "No se pudo leer relationships de Discord. Usando red del launcher.";
-        friends = await this.listLauncherNetworkFriends(row.discord_user_id);
-        source = "launcher_network";
-      }
-    } else {
-      friends = await this.listLauncherNetworkFriends(row.discord_user_id);
-      source = "launcher_network";
-      note =
-        "El scope relationships.read no esta activo. Se muestran jugadores del launcher con Discord vinculado y presencia del bot.";
+    // No presence data: still surface friends so the rail is not empty.
+    if (full.friends.length > 0) {
+      return {
+        ...full,
+        friends: full.friends.slice(0, 24),
+        note:
+          (full.note ? `${full.note} ` : "") +
+          "Sin presencia en vivo del bot para estos usuarios; se muestran contactos sin filtrar solo-online.",
+      };
     }
 
-    const online = friends.filter((friend) => friend.isOnline);
-
-    return {
-      link: mapLink(row),
-      friends: online,
-      source,
-      note,
-    };
+    return { ...full, friends: [] };
   }
 
   async listAllFriends(accountId: string): Promise<{
@@ -326,8 +311,6 @@ export class DiscordService {
     source: "relationships" | "launcher_network" | "mixed";
     note: string | null;
   }> {
-    const payload = await this.listOnlineFriends(accountId);
-    // listOnlineFriends already filters online; re-fetch full set for this endpoint
     const row = await this.getLinkRowByAccountId(accountId);
     if (!row) throw new Error("Esta cuenta no tiene Discord vinculado.");
 
@@ -335,21 +318,34 @@ export class DiscordService {
     let friends: DiscordFriend[] = [];
     let source: "relationships" | "launcher_network" | "mixed" = "launcher_network";
     let note: string | null = null;
-    const scopes = row.scopes.split(/\s+/).filter(Boolean);
 
-    if (scopes.includes("relationships.read")) {
-      try {
-        friends = await this.mapRelationshipsToFriends(await this.fetchRelationships(accessToken));
-        source = "relationships";
-      } catch (error) {
-        friends = await this.listLauncherNetworkFriends(row.discord_user_id);
-        source = "launcher_network";
-        note = error instanceof Error ? error.message : "Fallback a red del launcher.";
-      }
-    } else {
-      friends = await this.listLauncherNetworkFriends(row.discord_user_id);
+    // 1) Always try real Discord friends (relationships), even if scope string omits it.
+    try {
+      const relationships = await this.fetchRelationships(accessToken);
+      friends = await this.mapRelationshipsToFriends(relationships);
+      source = "relationships";
+      this.logsService.info("discord", "Relationships API OK", {
+        accountId,
+        count: friends.length,
+      });
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : "relationships falló";
+      this.logsService.warn("discord", "Relationships API no disponible, usando fallbacks.", {
+        accountId,
+        message: msg,
+      });
+
+      // 2) Guild members (community) + launcher network
+      const [guildMembers, network] = await Promise.all([
+        this.listGuildCommunityFriends(row.discord_user_id),
+        this.listLauncherNetworkFriends(row.discord_user_id),
+      ]);
+
+      friends = this.mergeFriends([...guildMembers, ...network]);
+      source = guildMembers.length > 0 && network.length > 0 ? "mixed" : guildMembers.length > 0 ? "mixed" : "launcher_network";
       note =
-        "El scope relationships.read no esta activo. Se muestran jugadores del launcher con Discord vinculado y presencia del bot.";
+        "Discord no permite leer la lista de amigos con este token (hace falta scope privilegiado relationships.read). " +
+        "Mostrando comunidad del servidor + jugadores del launcher con Discord vinculado.";
     }
 
     return {
@@ -358,6 +354,23 @@ export class DiscordService {
       source,
       note,
     };
+  }
+
+  private mergeFriends(list: DiscordFriend[]): DiscordFriend[] {
+    const map = new Map<string, DiscordFriend>();
+    for (const friend of list) {
+      const prev = map.get(friend.id);
+      if (!prev) {
+        map.set(friend.id, friend);
+        continue;
+      }
+      // Prefer richer presence / relationships source
+      const preferNew =
+        (friend.isOnline && !prev.isOnline) ||
+        (friend.source === "relationships" && prev.source !== "relationships");
+      if (preferNew) map.set(friend.id, friend);
+    }
+    return [...map.values()];
   }
 
   private async listLauncherNetworkFriends(excludeDiscordUserId: string): Promise<DiscordFriend[]> {
@@ -376,7 +389,8 @@ export class DiscordService {
 
     return result.rows.map((row) => {
       const presence = presenceMap.get(row.discord_user_id);
-      const status = presence?.status ?? "offline";
+      const status = presence?.status ?? "unknown";
+      const isOnline = status === "online" || status === "idle" || status === "dnd";
       return {
         id: row.discord_user_id,
         username: row.username,
@@ -385,9 +399,64 @@ export class DiscordService {
         status,
         activity: presence?.activities[0]?.name ?? null,
         source: "launcher_network" as const,
-        isOnline: status === "online" || status === "idle" || status === "dnd",
+        // If bot never saw them, still treat as visible contact (not hard-offline).
+        isOnline: presence ? isOnline : true,
       };
     });
+  }
+
+  /** Members of the configured guild enriched with bot presence cache. */
+  private async listGuildCommunityFriends(excludeDiscordUserId: string): Promise<DiscordFriend[]> {
+    const guildId = this.env.discordGuildId;
+    const botToken = this.env.discordBotToken;
+    if (!guildId || !botToken) return [];
+
+    try {
+      const response = await fetch(`${DISCORD_API}/guilds/${guildId}/members?limit=1000`, {
+        headers: { Authorization: `Bot ${botToken}` },
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        this.logsService.warn("discord", "No se pudieron listar miembros del guild.", {
+          guildId,
+          status: response.status,
+          text: text.slice(0, 200),
+        });
+        return [];
+      }
+
+      const members = (await response.json()) as Array<{
+        user?: DiscordUser & { bot?: boolean };
+      }>;
+
+      const people = members
+        .map((m) => m.user)
+        .filter((u): u is DiscordUser & { bot?: boolean } => Boolean(u?.id))
+        .filter((u) => !u.bot && u.id !== excludeDiscordUserId);
+
+      const presenceMap = await this.bot.getPresenceMap(people.map((u) => u.id));
+
+      return people.map((user) => {
+        const presence = presenceMap.get(user.id);
+        const status = presence?.status ?? "unknown";
+        const isOnline = status === "online" || status === "idle" || status === "dnd";
+        return {
+          id: user.id,
+          username: user.username,
+          globalName: user.global_name ?? null,
+          avatarUrl: buildAvatarUrl(user.id, user.avatar, user.discriminator),
+          status,
+          activity: presence?.activities[0]?.name ?? null,
+          source: "launcher_network" as const,
+          isOnline: presence ? isOnline : false,
+        };
+      });
+    } catch (error) {
+      this.logsService.warn("discord", "Error listando guild members.", {
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return [];
+    }
   }
 
   private async mapRelationshipsToFriends(relationships: DiscordRelationship[]): Promise<DiscordFriend[]> {
@@ -395,11 +464,13 @@ export class DiscordService {
     const friendsOnly = relationships.filter((rel) => rel.type === 1 && rel.user?.id);
     const userIds = friendsOnly.map((rel) => rel.user!.id);
     const presenceMap = await this.bot.getPresenceMap(userIds);
+    const hasAnyPresence = presenceMap.size > 0;
 
     return friendsOnly.map((rel) => {
       const user = rel.user!;
       const presence = presenceMap.get(user.id);
-      const status = presence?.status ?? "offline";
+      const status = presence?.status ?? "unknown";
+      const isOnline = status === "online" || status === "idle" || status === "dnd";
       return {
         id: user.id,
         username: user.username,
@@ -408,7 +479,8 @@ export class DiscordService {
         status,
         activity: presence?.activities[0]?.name ?? null,
         source: "relationships" as const,
-        isOnline: status === "online" || status === "idle" || status === "dnd",
+        // If bot can't see presence for anyone, keep friends visible as "available contacts".
+        isOnline: presence ? isOnline : !hasAnyPresence,
       };
     });
   }

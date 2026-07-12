@@ -10,14 +10,15 @@ const statusColor: Record<string, string> = {
   dnd: "bg-red-500",
   offline: "bg-white/30",
   invisible: "bg-white/30",
-  unknown: "bg-white/30",
+  unknown: "bg-sky-400/70",
 };
 
 function FriendAvatar({ friend }: { friend: DiscordFriend }) {
   const label = friend.globalName || friend.username;
+  const dimmed = friend.status === "offline" || friend.status === "invisible";
   return (
     <div
-      className="relative size-[min(40px,3.8vh)] shrink-0"
+      className={`relative size-[min(40px,3.8vh)] shrink-0 ${dimmed ? "opacity-55" : ""}`}
       title={`${label}${friend.activity ? ` · ${friend.activity}` : ""} · ${friend.status}`}
     >
       {friend.avatarUrl ? (
@@ -41,12 +42,14 @@ function FriendAvatar({ friend }: { friend: DiscordFriend }) {
 }
 
 /**
- * Vertical rail: Discord connect button + online friends avatars.
+ * Vertical rail: Discord connect button + friend avatars.
  */
 export function HeroSocialRail() {
   const { t } = useTranslation();
   const link = useDiscordStore((s) => s.link);
   const friends = useDiscordStore((s) => s.friends);
+  const onlineCount = useDiscordStore((s) => s.onlineCount);
+  const note = useDiscordStore((s) => s.note);
   const isLinking = useDiscordStore((s) => s.isLinking);
   const isLoading = useDiscordStore((s) => s.isLoading);
   const hydrate = useDiscordStore((s) => s.hydrate);
@@ -62,7 +65,10 @@ export function HeroSocialRail() {
     return () => window.clearInterval(timer);
   }, [hydrate, refreshFriends]);
 
-  const onlineFriends = friends.filter((f) => f.isOnline).slice(0, 8);
+  // Prefer truly online first, then the rest (so the rail never looks empty if we have contacts).
+  const visibleFriends = [...friends]
+    .sort((a, b) => Number(b.isOnline) - Number(a.isOnline))
+    .slice(0, 8);
 
   const handleDiscordClick = () => {
     if (isLinking) return;
@@ -81,6 +87,12 @@ export function HeroSocialRail() {
     }
   };
 
+  const title = link
+    ? `${t("discord.connected")}: ${link.globalName || link.username}` +
+      (friends.length ? ` · ${friends.length} contactos` : "") +
+      (note ? ` — ${note}` : "")
+    : t("discord.connect");
+
   return (
     <div className="hidden shrink-0 flex-col items-center justify-center gap-3 xl:flex">
       <button
@@ -89,11 +101,7 @@ export function HeroSocialRail() {
         onContextMenu={handleContextMenu}
         disabled={isLinking}
         aria-label={link ? t("discord.connected") : t("discord.connect")}
-        title={
-          link
-            ? `${t("discord.connected")}: ${link.globalName || link.username}`
-            : t("discord.connect")
-        }
+        title={title}
         className={`relative flex size-[min(48px,4.5vh)] cursor-pointer items-center justify-center rounded-full border text-white shadow-[0_8px_24px_rgba(88,101,242,0.35)] transition-all hover:scale-105 disabled:cursor-wait disabled:opacity-70 ${
           link
             ? "border-emerald-400/50 bg-[#5865F2] hover:border-emerald-300"
@@ -104,18 +112,26 @@ export function HeroSocialRail() {
         {link ? (
           <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-[var(--surface-dashboard)] bg-emerald-400" />
         ) : null}
+        {link && friends.length > 0 ? (
+          <span className="absolute -top-1 -right-1 min-w-[16px] rounded-full bg-white px-1 text-center text-[9px] font-black text-[#5865F2]">
+            {onlineCount > 0 ? onlineCount : friends.length}
+          </span>
+        ) : null}
       </button>
 
-      {link && onlineFriends.length > 0 ? (
+      {link && visibleFriends.length > 0 ? (
         <div className="flex flex-col items-center gap-2">
-          {onlineFriends.map((friend) => (
+          {visibleFriends.map((friend) => (
             <FriendAvatar key={friend.id} friend={friend} />
           ))}
         </div>
       ) : null}
 
-      {link && !isLoading && onlineFriends.length === 0 ? (
-        <span className="max-w-[3.5rem] text-center text-[9px] font-medium leading-tight text-white/40">
+      {link && !isLoading && visibleFriends.length === 0 ? (
+        <span
+          className="max-w-[4.5rem] text-center text-[9px] font-medium leading-tight text-white/40"
+          title={note ?? undefined}
+        >
           {t("discord.no_online")}
         </span>
       ) : null}

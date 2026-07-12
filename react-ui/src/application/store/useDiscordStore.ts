@@ -77,14 +77,24 @@ export const useDiscordStore = create<DiscordState>((set, get) => ({
       try {
         const link = await discordApi.getMe(token);
         set({ link });
+        // online=true uses smart filter; if presence is empty backend still returns contacts.
         const friendsPayload = await discordApi.getFriends(token, true);
         set({
           friends: friendsPayload.friends,
-          onlineCount: friendsPayload.onlineCount,
+          onlineCount:
+            friendsPayload.onlineCount ||
+            friendsPayload.friends.filter((f) => f.isOnline).length ||
+            friendsPayload.friends.length,
           source: friendsPayload.source,
           note: friendsPayload.note,
           isLoading: false,
         });
+        if (friendsPayload.note) {
+          console.info("[discord] friends note:", friendsPayload.note, {
+            source: friendsPayload.source,
+            count: friendsPayload.friends.length,
+          });
+        }
       } catch (error) {
         if (
           error instanceof ApiError &&
@@ -110,11 +120,20 @@ export const useDiscordStore = create<DiscordState>((set, get) => ({
       const friendsPayload = await discordApi.getFriends(token, true);
       set({
         friends: friendsPayload.friends,
-        onlineCount: friendsPayload.onlineCount,
+        onlineCount:
+          friendsPayload.onlineCount ||
+          friendsPayload.friends.filter((f) => f.isOnline).length ||
+          friendsPayload.friends.length,
         source: friendsPayload.source,
         note: friendsPayload.note,
         lastError: null,
       });
+      if (friendsPayload.note) {
+        console.info("[discord] friends note:", friendsPayload.note, {
+          source: friendsPayload.source,
+          count: friendsPayload.friends.length,
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudieron refrescar amigos.";
       set({ lastError: message });
