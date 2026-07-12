@@ -109,6 +109,14 @@ export const discordApi = {
       }
 
       const status = await this.getOAuthStatus(token, sessionId, signal);
+      if (status.status !== "pending") {
+        console.info("[discord] OAuth status", {
+          sessionId,
+          status: status.status,
+          hasLink: Boolean(status.link),
+          error: status.error,
+        });
+      }
       if (status.status === "completed") return status;
       if (status.status === "error") {
         throw new Error(status.error || "No se pudo vincular Discord.");
@@ -117,7 +125,9 @@ export const discordApi = {
         throw new Error("La sesión de Discord expiró. Inténtalo de nuevo.");
       }
       if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
-        throw new Error("Discord tardó demasiado en responder. Reintenta.");
+        throw new Error(
+          "Discord quedó en pending: el callback no llegó al backend. Revisa redirect_uri en Discord y reinicia el launcher.",
+        );
       }
 
       await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));

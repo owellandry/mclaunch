@@ -75,21 +75,35 @@ const DEFAULT_API_BASE_URL = "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
 
 const trimTrailingSlashes = (value: string): string => value.replace(/\/+$/, "");
 
+/**
+ * Resolve the backend HTTP base URL.
+ *
+ * Priority:
+ * 1. Electron preload (`window.api.getApiBaseUrl`) — real runtime URL
+ * 2. Non-empty `VITE_MCLAUNCH_API_BASE_URL`
+ * 3. Hardcoded default (production API)
+ *
+ * Never fall back to "" / same-origin Vite, or API calls become HTML 200s
+ * from the dev server and explode with ApiError 3003.
+ */
 export const getBackendApiBaseUrl = (): string => {
-  // En desarrollo: VITE_MCLAUNCH_API_BASE_URL="" → usa current origin (proxy de Vite)
-  // En producción: Electron preload (window.api) tiene la URL real
+  try {
+    const runtimeValue = window.api?.getApiBaseUrl?.();
+    if (typeof runtimeValue === "string" && runtimeValue.trim()) {
+      return trimTrailingSlashes(runtimeValue.trim());
+    }
+  } catch {
+    // window.api may be unavailable outside Electron
+  }
+
   const viteValue =
     typeof import.meta !== "undefined" && typeof import.meta.env?.VITE_MCLAUNCH_API_BASE_URL === "string"
       ? import.meta.env.VITE_MCLAUNCH_API_BASE_URL
       : undefined;
 
-  if (viteValue !== undefined) {
-    if (viteValue.trim()) return trimTrailingSlashes(viteValue.trim());
-    return ""; // explícitamente vacío → URL relativa (proxy de Vite)
+  if (typeof viteValue === "string" && viteValue.trim()) {
+    return trimTrailingSlashes(viteValue.trim());
   }
-
-  const runtimeValue = window.api?.getApiBaseUrl?.();
-  if (runtimeValue?.trim()) return trimTrailingSlashes(runtimeValue.trim());
 
   return DEFAULT_API_BASE_URL;
 };

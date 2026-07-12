@@ -24,25 +24,25 @@ type DiscordState = {
   refreshFriends: () => Promise<void>;
 };
 
-const openAuthPopup = (url: string): Window | null => {
-  try {
-    return window.open(url, "mclaunch-discord-auth", "popup=yes,width=520,height=720,resizable=yes,scrollbars=yes");
-  } catch {
-    return null;
+/**
+ * Opens Discord OAuth inside the launcher (Electron child window), matching Microsoft login.
+ * Falls back to a browser popup only outside Electron (e.g. pure Vite).
+ */
+const openDiscordAuthInApp = async (authorizeUrl: string, callbackUrl: string): Promise<void> => {
+  if (typeof window.api?.openBackendLoginPopup === "function") {
+    await window.api.openBackendLoginPopup({ authorizeUrl, callbackUrl });
+    return;
   }
-};
 
-const openExternalFallback = (url: string): void => {
-  try {
-    const openExternal = window.api?.openExternal;
-    if (typeof openExternal === "function") {
-      void Promise.resolve(openExternal(url));
-      return;
-    }
-  } catch {
-    // ignore
+  // Browser-only fallback (dev without Electron)
+  const popup = window.open(
+    authorizeUrl,
+    "mclaunch-discord-auth",
+    "popup=yes,width=520,height=720,resizable=yes,scrollbars=yes",
+  );
+  if (!popup) {
+    throw new Error("No se pudo abrir la ventana de autenticación de Discord.");
   }
-  window.open(url, "_blank", "noopener,noreferrer");
 };
 
 export const useDiscordStore = create<DiscordState>((set, get) => ({
@@ -128,7 +128,6 @@ export const useDiscordStore = create<DiscordState>((set, get) => ({
     set({ isLinking: true, lastError: null });
 
     const controller = new AbortController();
-    let popup: Window | null = null;
 
     try {
       // User is already on the dashboard (Minecraft session), but Discord needs a backend JWT.
@@ -144,12 +143,15 @@ export const useDiscordStore = create<DiscordState>((set, get) => ({
       }
 
       const session = await discordApi.startOAuth(token, controller.signal);
-      popup = openAuthPopup(session.authorizeUrl);
-      if (!popup) {
-        openExternalFallback(session.authorizeUrl);
-      }
+
+      // Fire-and-forget UI: openBackendLoginPopup resolves after loading Discord,
+      // not after the user finishes. Polling is the source of truth.
+      void openDiscordAuthInApp(session.authorizeUrl, session.callbackUrl).catch((error) => {
+        console.warn("[discord] No se pudo abrir el popup in-app:", error);
+      });
 
       const result = await discordApi.waitForOAuth(token, session.sessionId, controller.signal);
+
       if (result.link) {
         set({ link: result.link });
       } else {
@@ -164,7 +166,6 @@ export const useDiscordStore = create<DiscordState>((set, get) => ({
       set({ lastError: message });
       notify("Discord", message, "error");
     } finally {
-      if (popup && !popup.closed) popup.close();
       set({ isLinking: false });
     }
   },

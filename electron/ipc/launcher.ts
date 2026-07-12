@@ -12,7 +12,7 @@
 // - Mejor manejo de errores y logs
 // - Uso de child_process.spawn para compilación no bloqueante
 
-import { BrowserView, BrowserWindow, ipcMain, app } from "electron";
+import { BrowserWindow, ipcMain, app } from "electron";
 import { spawn, SpawnOptions } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -123,8 +123,6 @@ const CHANNELS = {
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
 type WindowProvider = () => BrowserWindow | null;
 let backendAuthWindow: BrowserWindow | null = null;
-let backendAuthView: BrowserView | null = null;
-let backendAuthViewOwner: BrowserWindow | null = null;
 
 /* ==================== EMITTERS ==================== */
 const emitLog = (window: BrowserWindow | null, message: string): void => {
@@ -479,139 +477,278 @@ const loginWithMicrosoftPopup = async (parentWindow: BrowserWindow): Promise<any
   return auth.login(authCode);
 };
 
+/** Discord desktop protocol — must never leave the small web OAuth popup. */
+const isDiscordDesktopProtocol = (url: string): boolean =>
+  url.startsWith("discord:") || url.startsWith("discordapp:");
+
+/** Allow only web OAuth pages + our backend callback (no desktop app, no random sites). */
+const isAllowedOAuthNavigation = (url: string, callbackUrl: string): boolean => {
+  if (extractOAuthCallbackParams(url, callbackUrl)) return true;
+  if (isDiscordDesktopProtocol(url)) return false;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return false;
+    const host = parsed.hostname.toLowerCase();
+    return (
+      host === "discord.com" ||
+      host.endsWith(".discord.com") ||
+      host === "discordapp.com" ||
+      host.endsWith(".discordapp.com") ||
+      host.includes("hcaptcha.com") ||
+      host.includes("recaptcha.net") ||
+      host.includes("google.com") ||
+      host.includes("gstatic.com") ||
+      host.includes("cloudflare.com") ||
+      host.includes("challenges.cloudflare.com")
+    );
+  } catch {
+    return false;
+  }
+};
+
+type OAuthCallbackParams = {
+  state: string;
+  code?: string;
+  error?: string;
+  errorDescription?: string;
+  rawUrl: string;
+};
+
+/**
+ * Extract OAuth result from a redirect URL.
+ * Matches by path (not strict string prefix) so trailing slashes / encoding don't break detection.
+ */
+const extractOAuthCallbackParams = (url: string, callbackUrl: string): OAuthCallbackParams | null => {
+  try {
+    const target = new URL(url);
+    const expected = new URL(callbackUrl);
+
+    const sameHost = target.hostname.toLowerCase() === expected.hostname.toLowerCase();
+    const pathA = target.pathname.replace(/\/+$/, "");
+    const pathB = expected.pathname.replace(/\/+$/, "");
+    const samePath = pathA === pathB || pathA.endsWith("/discord/oauth/callback");
+
+    if (!sameHost || !samePath) return null;
+
+    const state = target.searchParams.get("state")?.trim();
+    if (!state) return null;
+
+    const code = target.searchParams.get("code")?.trim();
+    const error = target.searchParams.get("error")?.trim();
+    const errorDescription = target.searchParams.get("error_description")?.trim();
+    const result: OAuthCallbackParams = { state, rawUrl: url };
+    if (code) result.code = code;
+    if (error) result.error = error;
+    if (errorDescription) result.errorDescription = errorDescription;
+    return result;
+  } catch {
+    return null;
+  }
+};
+
+const resolveOAuthCompleteEndpoint = (callbackUrl: string): string => {
+  try {
+    const u = new URL(callbackUrl);
+    // .../discord/oauth/callback → .../discord/oauth/complete
+    u.pathname = u.pathname.replace(/\/callback\/?$/, "/complete");
+    u.search = "";
+    u.hash = "";
+    return u.toString();
+  } catch {
+    return callbackUrl.replace(/\/callback\/?(\?.*)?$/, "/complete");
+  }
+};
+
+/**
+ * Small in-app OAuth popup (Microsoft / Discord).
+ * Completes OAuth by POSTing code+state to the backend (does not rely on the popup GET finishing).
+ */
 const openBackendLoginPopup = async (
   parentWindow: BrowserWindow,
   authorizeUrl: string,
   callbackUrl: string,
 ): Promise<void> => {
+  // Always start clean so handlers/closures match this session.
   if (backendAuthWindow && !backendAuthWindow.isDestroyed()) {
-    backendAuthWindow.focus();
-    await backendAuthWindow.loadURL(authorizeUrl);
-    return;
+    backendAuthWindow.destroy();
+    backendAuthWindow = null;
   }
+
+  const popupWidth = 480;
+  const popupHeight = 680;
+  const parentBounds = parentWindow.getBounds();
+  const x = Math.round(parentBounds.x + (parentBounds.width - popupWidth) / 2);
+  const y = Math.round(parentBounds.y + (parentBounds.height - popupHeight) / 2);
 
   const authWindow = new BrowserWindow({
     parent: parentWindow,
-    modal: false,
-    width: 520,
-    height: 720,
+    modal: true,
+    width: popupWidth,
+    height: popupHeight,
+    x,
+    y,
     resizable: false,
     minimizable: false,
     maximizable: false,
+    fullscreenable: false,
     autoHideMenuBar: true,
     show: false,
-    title: "Iniciar sesión con Microsoft",
+    title: "Conectar Discord",
+    backgroundColor: "#1e1f22",
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      partition: "temp:oauth-popup",
     },
   });
   backendAuthWindow = authWindow;
   authWindow.removeMenu();
+  authWindow.setMenuBarVisibility(false);
 
-  const closeIfCallbackReached = (targetUrl: string): void => {
-    if (!targetUrl.startsWith(callbackUrl)) return;
-    if (!authWindow.isDestroyed()) authWindow.close();
+  let finished = false;
+  let inFlight: Promise<void> | null = null;
+  const completeEndpoint = resolveOAuthCompleteEndpoint(callbackUrl);
+
+  const finishAndClose = (): void => {
+    if (finished) return;
+    finished = true;
+    setTimeout(() => {
+      if (!authWindow.isDestroyed()) authWindow.close();
+    }, 400);
   };
 
-  authWindow.once("ready-to-show", () => authWindow.show());
+  const completeOAuthFromUrl = (url: string): Promise<void> => {
+    const params = extractOAuthCallbackParams(url, callbackUrl);
+    if (!params) return Promise.resolve();
+    if (finished) return Promise.resolve();
+    if (inFlight) return inFlight;
+
+    inFlight = (async () => {
+      console.info("[auth-popup] OAuth callback detectado", {
+        state: params.state,
+        hasCode: Boolean(params.code),
+        error: params.error ?? null,
+        completeEndpoint,
+      });
+
+      try {
+        // Prefer explicit JSON complete (robust). Also fire GET callback as backup.
+        const response = await fetch(completeEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({
+            state: params.state,
+            code: params.code,
+            error: params.error,
+            error_description: params.errorDescription,
+          }),
+        });
+        const bodyText = await response.text();
+        console.info("[auth-popup] POST /oauth/complete →", response.status, bodyText.slice(0, 200));
+
+        // Backup: classic GET callback (in case complete route is not deployed yet).
+        if (!response.ok) {
+          const getRes = await fetch(params.rawUrl, { method: "GET", redirect: "follow" });
+          console.info("[auth-popup] GET callback fallback →", getRes.status);
+        }
+      } catch (error) {
+        console.warn("[auth-popup] Fallo completando OAuth:", error);
+        try {
+          const getRes = await fetch(params.rawUrl, { method: "GET", redirect: "follow" });
+          console.info("[auth-popup] GET callback fallback →", getRes.status);
+        } catch (fallbackError) {
+          console.warn("[auth-popup] Fallback GET también falló:", fallbackError);
+        }
+      } finally {
+        finishAndClose();
+      }
+    })();
+
+    return inFlight;
+  };
+
+  const guardNavigation = (event: { preventDefault: () => void }, url: string): void => {
+    console.info("[auth-popup] nav:", url.slice(0, 160));
+
+    if (extractOAuthCallbackParams(url, callbackUrl)) {
+      // Do not abort — still complete via main-process fetch.
+      void completeOAuthFromUrl(url);
+      return;
+    }
+    if (isDiscordDesktopProtocol(url)) {
+      event.preventDefault();
+      console.info("[auth-popup] Bloqueado protocolo Discord desktop");
+      return;
+    }
+    if (!isAllowedOAuthNavigation(url, callbackUrl)) {
+      event.preventDefault();
+      console.info("[auth-popup] Navegación bloqueada:", url.slice(0, 120));
+    }
+  };
+
+  authWindow.once("ready-to-show", () => {
+    if (!authWindow.isDestroyed()) {
+      authWindow.show();
+      authWindow.focus();
+    }
+  });
   authWindow.on("closed", () => {
     if (backendAuthWindow === authWindow) backendAuthWindow = null;
   });
+
   authWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void authWindow.loadURL(url);
+    if (extractOAuthCallbackParams(url, callbackUrl)) {
+      void completeOAuthFromUrl(url);
+      return { action: "deny" };
+    }
+    if (isAllowedOAuthNavigation(url, callbackUrl) && !isDiscordDesktopProtocol(url)) {
+      void authWindow.loadURL(url);
+    }
     return { action: "deny" };
   });
-  authWindow.webContents.on("did-navigate", (_, url) => closeIfCallbackReached(url));
-  authWindow.webContents.on("did-redirect-navigation", (_, url) => closeIfCallbackReached(url));
-  authWindow.webContents.on("render-process-gone", (_event, details) => {
-    console.error("[auth-popup] El renderer del popup de login se cerrÃ³", details);
+
+  authWindow.webContents.on("will-navigate", (event, url) => guardNavigation(event, url));
+  authWindow.webContents.on("will-redirect", (event, url) => guardNavigation(event, url));
+  authWindow.webContents.on("did-navigate", (_, url) => {
+    void completeOAuthFromUrl(url);
   });
-  authWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
+  authWindow.webContents.on("did-redirect-navigation", (_, url) => {
+    void completeOAuthFromUrl(url);
+  });
+  authWindow.webContents.on("did-finish-load", () => {
+    if (authWindow.isDestroyed()) return;
+    void completeOAuthFromUrl(authWindow.webContents.getURL());
+  });
+  authWindow.webContents.on("did-fail-load", (_event, errorCode, _desc, validatedUrl) => {
     if (errorCode === -3) return;
-    console.error("[auth-popup] Error cargando autenticaciÃ³n", {
-      errorCode,
-      errorDescription,
-      validatedUrl,
-    });
+    if (extractOAuthCallbackParams(validatedUrl, callbackUrl)) {
+      void completeOAuthFromUrl(validatedUrl);
+    }
   });
 
-  await authWindow.loadURL(authorizeUrl);
-};
-void openBackendLoginPopup;
-
-const openBackendLoginInAppView = async (
-  parentWindow: BrowserWindow,
-  authorizeUrl: string,
-  callbackUrl: string,
-): Promise<void> => {
-  if (backendAuthViewOwner && backendAuthViewOwner !== parentWindow && backendAuthView) {
-    backendAuthViewOwner.setBrowserView(null);
-    backendAuthView.webContents.close({ waitForBeforeUnload: false });
-    backendAuthView = null;
-    backendAuthViewOwner = null;
+  let finalAuthorizeUrl = authorizeUrl;
+  try {
+    const u = new URL(authorizeUrl);
+    if (!u.searchParams.has("prompt")) u.searchParams.set("prompt", "consent");
+    finalAuthorizeUrl = u.toString();
+  } catch {
+    // use as-is
   }
 
-  const closeAuthView = (): void => {
-    if (!backendAuthView || !backendAuthViewOwner) return;
-    backendAuthView.webContents.removeAllListeners();
-    backendAuthViewOwner.setBrowserView(null);
-    backendAuthView.webContents.close({ waitForBeforeUnload: false });
-    backendAuthView = null;
-    backendAuthViewOwner = null;
-  };
-
-  const fitAuthView = (): void => {
-    if (!backendAuthView) return;
-    const [width, height] = parentWindow.getContentSize();
-    backendAuthView.setBounds({ x: 0, y: 0, width, height });
-    backendAuthView.setAutoResize({ width: true, height: true });
-  };
-
-  const view =
-    backendAuthView ??
-    new BrowserView({
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        sandbox: true,
-      },
-    });
-
-  backendAuthView = view;
-  backendAuthViewOwner = parentWindow;
-  parentWindow.setBrowserView(view);
-  fitAuthView();
-  parentWindow.removeListener("resize", fitAuthView);
-  parentWindow.on("resize", fitAuthView);
-  parentWindow.once("closed", closeAuthView);
-
-  const closeIfCallbackReached = (targetUrl: string): void => {
-    if (!targetUrl.startsWith(callbackUrl)) return;
-    closeAuthView();
-  };
-
-  view.webContents.setWindowOpenHandler(({ url }) => {
-    void view.webContents.loadURL(url);
-    return { action: "deny" };
-  });
-  view.webContents.on("did-navigate", (_event, url) => closeIfCallbackReached(url));
-  view.webContents.on("did-redirect-navigation", (_event, url) => closeIfCallbackReached(url));
-  view.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedUrl) => {
-    if (errorCode === -3) return;
-    console.error("[auth-inline] Error cargando autenticacion", {
-      errorCode,
-      errorDescription,
-      validatedUrl,
-    });
-  });
-  view.webContents.on("render-process-gone", (_event, details) => {
-    console.error("[auth-inline] El renderer del login integrado se cerro", details);
-    closeAuthView();
+  console.info("[auth-popup] Abriendo OAuth popup", {
+    authorizeHost: (() => {
+      try {
+        return new URL(finalAuthorizeUrl).host;
+      } catch {
+        return "?";
+      }
+    })(),
+    callbackUrl,
+    completeEndpoint: resolveOAuthCompleteEndpoint(callbackUrl),
   });
 
-  await view.webContents.loadURL(authorizeUrl);
+  await authWindow.loadURL(finalAuthorizeUrl);
 };
 
 /* ==================== REGISTRO PRINCIPAL IPC ==================== */
@@ -690,7 +827,8 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
   handle(CHANNELS.openBackendLoginPopup, async (_event, payload: { authorizeUrl: string; callbackUrl: string }) => {
     const parentWindow = getWindow();
     if (!parentWindow) throw new Error("Ventana principal no disponible");
-    await openBackendLoginInAppView(parentWindow, payload.authorizeUrl, payload.callbackUrl);
+    // Child BrowserWindow (same pattern as Microsoft login) — never the system browser.
+    await openBackendLoginPopup(parentWindow, payload.authorizeUrl, payload.callbackUrl);
     return true;
   });
 

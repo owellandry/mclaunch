@@ -151,6 +151,12 @@ export const registerDiscordRoutes = (router: Router): void => {
       const oauthError = query.get("error");
       const oauthDescription = query.get("error_description");
 
+      services.logsService.info("discord-route", "Callback OAuth Discord (GET) recibido.", {
+        hasState: Boolean(state),
+        hasCode: Boolean(code),
+        oauthError: oauthError ?? null,
+      });
+
       if (!state) {
         return html(callbackPage("Sesion invalida", "Falta el parametro state de Discord OAuth."));
       }
@@ -189,7 +195,77 @@ export const registerDiscordRoutes = (router: Router): void => {
     },
     {
       module: "discord",
-      summary: "Callback OAuth de Discord. Vincula la cuenta y cierra el popup.",
+      summary: "Callback OAuth de Discord (browser redirect). Vincula la cuenta y cierra el popup.",
+    },
+  );
+
+  /**
+   * Explicit completion used by the Electron main process.
+   * More reliable than depending on the popup finishing the GET redirect.
+   */
+  router.add(
+    "POST",
+    "/api/v1/discord/oauth/complete",
+    async ({ jsonBody, services }) => {
+      try {
+        const body = await jsonBody<{ state?: string; code?: string; error?: string; error_description?: string }>();
+        const state = body?.state?.trim();
+        const code = body?.code?.trim();
+
+        services.logsService.info("discord-route", "Complete OAuth Discord (POST) recibido.", {
+          hasState: Boolean(state),
+          hasCode: Boolean(code),
+          oauthError: body?.error ?? null,
+        });
+
+        if (!state) {
+          return json(
+            { ok: false, error: { code: "INVALID_PAYLOAD", message: "state es obligatorio." } },
+            { status: 400 },
+          );
+        }
+
+        if (body?.error) {
+          await services.discordService.failOAuth(state, body.error_description || body.error);
+          return json({
+            ok: true,
+            data: { status: "error", error: body.error_description || body.error, link: null },
+          });
+        }
+
+        if (!code) {
+          return json(
+            { ok: false, error: { code: "INVALID_PAYLOAD", message: "code es obligatorio." } },
+            { status: 400 },
+          );
+        }
+
+        const session = await services.discordService.completeOAuth(state, code);
+        return json({
+          ok: true,
+          data: {
+            id: session.id,
+            status: session.status,
+            error: session.error ?? null,
+            link: session.result?.link ?? null,
+          },
+        });
+      } catch (error) {
+        return json(
+          {
+            ok: false,
+            error: {
+              code: "DISCORD_COMPLETE_FAILED",
+              message: error instanceof Error ? error.message : "No se pudo completar Discord OAuth.",
+            },
+          },
+          { status: 500 },
+        );
+      }
+    },
+    {
+      module: "discord",
+      summary: "Completa OAuth Discord con code+state (usado por Electron main). Publico.",
     },
   );
 

@@ -37,6 +37,14 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    // Optional safety net if someone uses relative /api paths in the browser.
+    proxy: {
+      '/api': {
+        target: process.env.MCLAUNCH_API_BASE_URL?.trim() || 'https://my3u2eiq2b78xmirlj4l.servgrid.xyz',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 
   optimizeDeps: {

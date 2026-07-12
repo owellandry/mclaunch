@@ -190,6 +190,7 @@ export class DiscordService {
   async completeOAuth(sessionId: string, code: string): Promise<OAuthSession> {
     const session = await this.getOAuthStatus(sessionId);
     if (!session) {
+      this.logsService.error("discord", "completeOAuth: sesion no encontrada en Redis.", { sessionId });
       throw new Error("No se encontro la sesion OAuth de Discord.");
     }
     if (session.status === "expired") {
@@ -200,6 +201,11 @@ export class DiscordService {
     }
 
     try {
+      this.logsService.info("discord", "completeOAuth: intercambiando code…", {
+        sessionId,
+        accountId: session.accountId,
+        redirectUri: session.redirectUri,
+      });
       const tokens = await this.exchangeCode(code, session.redirectUri);
       const user = await this.fetchDiscordUser(tokens.access_token);
       const link = await this.upsertLink({
