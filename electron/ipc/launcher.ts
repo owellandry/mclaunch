@@ -37,6 +37,7 @@ import {
   addLauncherTime,
 } from "./db";
 import { discordPresence } from "../services/discordPresence";
+import { discordSocial } from "../services/discordSocial";
 import { launcherActivitySocket } from "../services/launcherActivitySocket";
 
 let versionsCache: MinecraftVersion[] | null = null;
@@ -118,6 +119,10 @@ const CHANNELS = {
   setBackendSession: "auth:setBackendSession",
   ensureBackendToken: "auth:ensureBackendToken",
   getCapes: "auth:getCapes",
+  discordSocialStatus: "discord:socialStatus",
+  discordSocialLinkFriends: "discord:socialLinkFriends",
+  discordSocialRefreshFriends: "discord:socialRefreshFriends",
+  discordSocialOpenFriend: "discord:socialOpenFriend",
 } as const;
 
 type LauncherStatus = "idle" | "running" | "playing" | "done" | "error";
@@ -950,6 +955,87 @@ export const registerLauncherIpc = (getWindow: WindowProvider): void => {
     } catch {
       return [];
     }
+  });
+
+  // --- Discord Social (prototype via Desktop IPC RPC) ---
+  handle(CHANNELS.discordSocialStatus, () => discordSocial.getStatus());
+
+  handle(CHANNELS.discordSocialLinkFriends, async () => {
+    const clientId =
+      process.env.MCLAUNCH_DISCORD_CLIENT_ID?.trim() ||
+      process.env.DISCORD_CLIENT_ID?.trim() ||
+      "";
+    discordSocial.configure(clientId);
+
+    const redirectUri =
+      process.env.MCLAUNCH_DISCORD_REDIRECT_URI?.trim() ||
+      `${getApiBaseUrl().replace(/\/+$/, "")}/api/v1/discord/oauth/callback`;
+
+    const friends = await discordSocial.linkAndFetchFriends({
+      redirectUri,
+      exchangeCode: async (code: string) => {
+        // Exchange RPC authorize code using Discord app credentials (from env).
+        const clientSecret = process.env.MCLAUNCH_DISCORD_CLIENT_SECRET?.trim() || "";
+        if (!clientId || !clientSecret) {
+          throw new Error("Faltan MCLAUNCH_DISCORD_CLIENT_ID / CLIENT_SECRET para canjear el code RPC.");
+        }
+        const body = new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: redirectUri,
+        });
+        // Discord RPC AUTHORIZE often returns a code that exchanges without redirect_uri
+        // matching web OAuth — try with redirect_uri first, then without.
+        let res = await fetch("https://discord.com/api/v10/oauth2/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body,
+        });
+        if (!res.ok) {
+          const body2 = new URLSearchParams({
+            client_id: clientId,
+            client_secret: clientSecret,
+            grant_type: "authorization_code",
+            code,
+          });
+          res = await fetch("https://discord.com/api/v10/oauth2/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: body2,
+          });
+        }
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Token exchange falló (${res.status}): ${text.slice(0, 200)}`);
+        }
+        const json = (await res.json()) as { access_token?: string };
+        if (!json.access_token) throw new Error("Discord no devolvió access_token.");
+        return json.access_token;
+      },
+    });
+
+    return {
+      status: discordSocial.getStatus(),
+      friends,
+    };
+  });
+
+  handle(CHANNELS.discordSocialRefreshFriends, async () => {
+    const friends = await discordSocial.fetchRelationships();
+    return {
+      status: discordSocial.getStatus(),
+      friends,
+    };
+  });
+
+  handle(CHANNELS.discordSocialOpenFriend, async (_e, friendId: string) => {
+    if (typeof friendId !== "string" || !friendId.trim()) {
+      throw new Error("friendId inválido");
+    }
+    await discordSocial.openFriend(friendId.trim());
+    return true;
   });
 
   // Versiones de Minecraft con caché

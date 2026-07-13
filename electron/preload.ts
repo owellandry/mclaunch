@@ -41,6 +41,10 @@ const CHANNELS = {
   getProfile: "auth:getProfile",
   setBackendSession: "auth:setBackendSession",
   ensureBackendToken: "auth:ensureBackendToken",
+  discordSocialStatus: "discord:socialStatus",
+  discordSocialLinkFriends: "discord:socialLinkFriends",
+  discordSocialRefreshFriends: "discord:socialRefreshFriends",
+  discordSocialOpenFriend: "discord:socialOpenFriend",
 } as const;
 
 const DEFAULT_API_BASE_URL = "https://my3u2eiq2b78xmirlj4l.servgrid.xyz";
@@ -189,6 +193,22 @@ const api = {
 
   ensureBackendToken: (): Promise<string | null> => {
     return ipcRenderer.invoke(CHANNELS.ensureBackendToken);
+  },
+
+  discordSocialStatus: (): Promise<unknown> => {
+    return ipcRenderer.invoke(CHANNELS.discordSocialStatus);
+  },
+
+  discordSocialLinkFriends: (): Promise<unknown> => {
+    return ipcRenderer.invoke(CHANNELS.discordSocialLinkFriends);
+  },
+
+  discordSocialRefreshFriends: (): Promise<unknown> => {
+    return ipcRenderer.invoke(CHANNELS.discordSocialRefreshFriends);
+  },
+
+  discordSocialOpenFriend: (friendId: string): Promise<boolean> => {
+    return ipcRenderer.invoke(CHANNELS.discordSocialOpenFriend, friendId);
   },
 
   clearCache: (): Promise<void> => {

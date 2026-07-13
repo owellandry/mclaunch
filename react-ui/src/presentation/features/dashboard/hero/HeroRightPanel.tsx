@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FiActivity, FiBarChart2, FiPackage } from "react-icons/fi";
+import type { ReactNode } from "react";
 
 type HeroRightPanelProps = {
   weeklyActivity: number[];
@@ -11,12 +12,43 @@ type HeroRightPanelProps = {
   availableCount: number;
 };
 
+/** Same chrome as Titlebar SearchBox: elevated surface + white/10 border + rounded-lg */
+const chrome =
+  "bg-[var(--surface-elevated)] border border-white/10 rounded-lg transition-colors hover:border-primary/50";
+
 function formatSeconds(total: number): string {
   if (total <= 0) return "0m";
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   if (h <= 0) return `${m}m`;
   return `${h}h ${m}m`;
+}
+
+function PanelBlock({
+  icon,
+  title,
+  trailing,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  trailing?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`w-full min-w-0 px-4 py-3 ${chrome}`}>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-3 text-white">
+          <span className="shrink-0 text-white/60">{icon}</span>
+          <span className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-white/90">
+            {title}
+          </span>
+        </div>
+        {trailing}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 export function HeroRightPanel({
@@ -32,24 +64,21 @@ export function HeroRightPanel({
   const weekTotal = weeklyActivity.reduce((a, b) => a + b, 0);
 
   return (
-    <div className="relative z-10 flex w-full max-w-[min(24rem,100%)] flex-col gap-3 min-w-0">
-      <div className="w-full rounded-xl border border-white/15 bg-[var(--surface-trending-inactive-alpha)] p-4 backdrop-blur-sm">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-white">
-            <FiActivity className="text-primary" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.18em]">
-              {t("dashboard.weekly_activity")}
-            </span>
-          </div>
-          <span className="font-mono text-xs text-white/70">{formatSeconds(weekTotal)}</span>
-        </div>
-        <div className="flex h-16 items-end gap-1.5">
+    <div className="relative z-10 flex w-full max-w-[min(24rem,100%)] min-w-0 flex-col gap-2">
+      <PanelBlock
+        icon={<FiActivity className="text-sm" />}
+        title={t("dashboard.weekly_activity")}
+        trailing={
+          <span className="shrink-0 font-mono text-xs text-white/50">{formatSeconds(weekTotal)}</span>
+        }
+      >
+        <div className="flex h-14 items-end gap-1.5">
           {weeklyActivity.map((value, index) => {
             const height = value <= 0 ? 8 : Math.max(12, Math.round((value / max) * 100));
             return (
               <div
                 key={index}
-                className="flex-1 rounded-t-md bg-gradient-to-t from-primary/80 to-primary/40"
+                className="flex-1 rounded-sm bg-primary/50 transition-colors hover:bg-primary/70"
                 style={{ height: `${height}%` }}
                 title={formatSeconds(value)}
               />
@@ -58,19 +87,13 @@ export function HeroRightPanel({
         </div>
         <Link
           to="/dashboard/activity"
-          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-hero-eyebrow)] hover:text-white"
+          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 transition-colors hover:text-primary"
         >
           {t("dashboard.see_full_activity")} ›
         </Link>
-      </div>
+      </PanelBlock>
 
-      <div className="w-full rounded-xl border border-white/15 bg-[var(--surface-trending-inactive-alpha)] p-4 backdrop-blur-sm">
-        <div className="mb-3 flex items-center gap-2 text-white">
-          <FiBarChart2 className="text-primary" />
-          <span className="text-[11px] font-bold uppercase tracking-[0.18em]">
-            {t("dashboard.your_stats")}
-          </span>
-        </div>
+      <PanelBlock icon={<FiBarChart2 className="text-sm" />} title={t("dashboard.your_stats")}>
         <div className="grid grid-cols-3 gap-2">
           {[
             { label: t("dashboard.mob_kills"), value: mobKills.toLocaleString() },
@@ -87,19 +110,13 @@ export function HeroRightPanel({
         </div>
         <Link
           to="/dashboard/statistics"
-          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-hero-eyebrow)] hover:text-white"
+          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 transition-colors hover:text-primary"
         >
           {t("dashboard.see_stats")} ›
         </Link>
-      </div>
+      </PanelBlock>
 
-      <div className="w-full rounded-xl border border-white/15 bg-[var(--surface-trending-inactive-alpha)] p-4 backdrop-blur-sm">
-        <div className="mb-2 flex items-center gap-2 text-white">
-          <FiPackage className="text-primary" />
-          <span className="text-[11px] font-bold uppercase tracking-[0.18em]">
-            {t("dashboard.select_version")}
-          </span>
-        </div>
+      <PanelBlock icon={<FiPackage className="text-sm" />} title={t("dashboard.select_version")}>
         <p className="text-sm text-white/70">
           <span className="font-black text-white">{downloadedCount}</span>
           {" / "}
@@ -110,11 +127,11 @@ export function HeroRightPanel({
         </p>
         <Link
           to="/dashboard/versions"
-          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-hero-eyebrow)] hover:text-white"
+          className="mt-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 transition-colors hover:text-primary"
         >
           {t("dashboard.see_all_versions")} ›
         </Link>
-      </div>
+      </PanelBlock>
     </div>
   );
 }

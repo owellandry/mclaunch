@@ -104,6 +104,53 @@ export type ElectronApi = {
   getProfile: () => Promise<{username: string, uuid: string, skinUrl?: string | null, isOnboardingCompleted: boolean} | null>;
   /** Re-issues backend JWT from the stored Microsoft/MSMC session. */
   ensureBackendToken: () => Promise<string | null>;
+  /** Discord Social prototype (Desktop RPC) — friends + invite open. */
+  discordSocialStatus: () => Promise<{
+    connected: boolean;
+    authenticated: boolean;
+    discordUser: { id: string; username: string } | null;
+    lastError: string | null;
+    friendsCount: number;
+  }>;
+  discordSocialLinkFriends: () => Promise<{
+    status: {
+      connected: boolean;
+      authenticated: boolean;
+      discordUser: { id: string; username: string } | null;
+      lastError: string | null;
+      friendsCount: number;
+    };
+    friends: Array<{
+      id: string;
+      username: string;
+      globalName: string | null;
+      avatarUrl: string | null;
+      status: string;
+      activity: string | null;
+      isOnline: boolean;
+      source: string;
+    }>;
+  }>;
+  discordSocialRefreshFriends: () => Promise<{
+    status: {
+      connected: boolean;
+      authenticated: boolean;
+      discordUser: { id: string; username: string } | null;
+      lastError: string | null;
+      friendsCount: number;
+    };
+    friends: Array<{
+      id: string;
+      username: string;
+      globalName: string | null;
+      avatarUrl: string | null;
+      status: string;
+      activity: string | null;
+      isOnline: boolean;
+      source: string;
+    }>;
+  }>;
+  discordSocialOpenFriend: (friendId: string) => Promise<boolean>;
   getCapes: () => Promise<CapeInfo[]>;
   clearCache: () => Promise<void>;
   clearAllData: () => Promise<void>;

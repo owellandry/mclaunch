@@ -1,5 +1,5 @@
 import { useEffect, type MouseEvent } from "react";
-import { FaDiscord } from "react-icons/fa";
+import { FaDiscord, FaCommentDots } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import { useDiscordStore } from "@/application/store/useDiscordStore";
 import type { DiscordFriend } from "@/infrastructure/api/discordApi";
@@ -13,19 +13,27 @@ const statusColor: Record<string, string> = {
   unknown: "bg-sky-400/70",
 };
 
-function FriendAvatar({ friend }: { friend: DiscordFriend }) {
+function FriendAvatar({
+  friend,
+  onInvite,
+}: {
+  friend: DiscordFriend;
+  onInvite: (id: string) => void;
+}) {
   const label = friend.globalName || friend.username;
   const dimmed = friend.status === "offline" || friend.status === "invisible";
   return (
-    <div
-      className={`relative size-[min(40px,3.8vh)] shrink-0 ${dimmed ? "opacity-55" : ""}`}
-      title={`${label}${friend.activity ? ` · ${friend.activity}` : ""} · ${friend.status}`}
+    <button
+      type="button"
+      onClick={() => onInvite(friend.id)}
+      className={`group relative size-[min(40px,3.8vh)] shrink-0 cursor-pointer ${dimmed ? "opacity-55" : ""}`}
+      title={`${label}${friend.activity ? ` · ${friend.activity}` : ""} · ${friend.status} — clic para abrir en Discord`}
     >
       {friend.avatarUrl ? (
         <img
           src={friend.avatarUrl}
           alt={label}
-          className="size-full rounded-full border border-white/20 object-cover"
+          className="size-full rounded-full border border-white/20 object-cover transition group-hover:border-primary"
         />
       ) : (
         <div className="flex size-full items-center justify-center rounded-full border border-white/20 bg-[#5865F2]/40 text-[10px] font-bold text-white">
@@ -37,12 +45,15 @@ function FriendAvatar({ friend }: { friend: DiscordFriend }) {
           statusColor[friend.status] ?? statusColor.unknown
         }`}
       />
-    </div>
+      <span className="pointer-events-none absolute inset-0 hidden items-center justify-center rounded-full bg-black/50 text-white group-hover:flex">
+        <FaCommentDots className="text-[11px]" />
+      </span>
+    </button>
   );
 }
 
 /**
- * Vertical rail: Discord connect button + friend avatars.
+ * Social widget rail — Discord friends (Social RPC prototype) + invite open.
  */
 export function HeroSocialRail() {
   const { t } = useTranslation();
@@ -50,12 +61,14 @@ export function HeroSocialRail() {
   const friends = useDiscordStore((s) => s.friends);
   const onlineCount = useDiscordStore((s) => s.onlineCount);
   const note = useDiscordStore((s) => s.note);
+  const socialMode = useDiscordStore((s) => s.socialMode);
   const isLinking = useDiscordStore((s) => s.isLinking);
   const isLoading = useDiscordStore((s) => s.isLoading);
   const hydrate = useDiscordStore((s) => s.hydrate);
   const connect = useDiscordStore((s) => s.connect);
   const refreshFriends = useDiscordStore((s) => s.refreshFriends);
   const disconnect = useDiscordStore((s) => s.disconnect);
+  const openFriend = useDiscordStore((s) => s.openFriend);
 
   useEffect(() => {
     void hydrate();
@@ -65,7 +78,6 @@ export function HeroSocialRail() {
     return () => window.clearInterval(timer);
   }, [hydrate, refreshFriends]);
 
-  // Prefer truly online first, then the rest (so the rail never looks empty if we have contacts).
   const visibleFriends = [...friends]
     .sort((a, b) => Number(b.isOnline) - Number(a.isOnline))
     .slice(0, 8);
@@ -89,7 +101,8 @@ export function HeroSocialRail() {
 
   const title = link
     ? `${t("discord.connected")}: ${link.globalName || link.username}` +
-      (friends.length ? ` · ${friends.length} contactos` : "") +
+      (socialMode === "rpc" ? " · Social RPC" : " · Backend") +
+      (friends.length ? ` · ${friends.length}` : "") +
       (note ? ` — ${note}` : "")
     : t("discord.connect");
 
@@ -122,7 +135,13 @@ export function HeroSocialRail() {
       {link && visibleFriends.length > 0 ? (
         <div className="flex flex-col items-center gap-2">
           {visibleFriends.map((friend) => (
-            <FriendAvatar key={friend.id} friend={friend} />
+            <FriendAvatar
+              key={friend.id}
+              friend={friend}
+              onInvite={(id) => {
+                void openFriend(id);
+              }}
+            />
           ))}
         </div>
       ) : null}

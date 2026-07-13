@@ -1,10 +1,6 @@
 import { HeroMain } from "@/presentation/features/dashboard/hero/HeroMain";
-import {
-  HeroLaunchAction,
-  HeroLibraryAction,
-} from "@/presentation/features/dashboard/hero/HeroActions";
+import { HeroActionsRow } from "@/presentation/features/dashboard/hero/HeroActions";
 import { HeroRightPanel } from "@/presentation/features/dashboard/hero/HeroRightPanel";
-import { HeroSocialRail } from "@/presentation/features/dashboard/hero/HeroSocialRail";
 
 export type HeroSectionProps = {
   heroBgImage: string;
@@ -73,15 +69,15 @@ export function HeroSection({
             hoursPlayed={hoursPlayed}
             playerName={playerName}
           />
-          <HeroLaunchAction
+          <HeroActionsRow
             isLaunchDisabled={isLaunchDisabled}
             launchLabel={launchLabel}
             onLaunch={onLaunch}
           />
         </div>
 
-        <div className="hidden min-h-0 min-w-0 shrink-0 basis-[min(28rem,42%)] flex-col justify-between pl-4 lg:flex">
-          <div className="flex min-h-0 flex-1 items-center justify-end gap-4">
+        <div className="hidden min-h-0 min-w-0 shrink-0 basis-[min(26rem,40%)] flex-col pl-4 lg:flex">
+          <div className="flex min-h-0 flex-1 flex-col items-end justify-center overflow-y-auto">
             <HeroRightPanel
               weeklyActivity={weeklyActivity}
               mobKills={mobKills}
@@ -90,17 +86,8 @@ export function HeroSection({
               downloadedCount={downloadedCount}
               availableCount={availableCount}
             />
-            <div className="hidden h-[clamp(8rem,40vh,24rem)] w-px shrink-0 bg-gradient-to-b from-transparent via-white/10 to-transparent xl:block" />
-            <HeroSocialRail />
-          </div>
-          <div className="flex justify-end">
-            <HeroLibraryAction />
           </div>
         </div>
-      </div>
-
-      <div className="absolute bottom-[var(--hero-inset-bottom)] right-[var(--hero-inset-right)] z-10 lg:hidden">
-        <HeroLibraryAction />
       </div>
     </section>
   );

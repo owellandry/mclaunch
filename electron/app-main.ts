@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { registerLauncherIpc } from "./ipc/launcher";
 import { discordPresence } from "./services/discordPresence";
+import { discordSocial } from "./services/discordSocial";
 import { launcherActivitySocket } from "./services/launcherActivitySocket";
 import type { DesktopRuntimePaths } from "./services/hotupdateRuntime";
 
@@ -267,7 +268,10 @@ export const startDesktopApp = async ({ runtimePaths }: { runtimePaths: DesktopR
     apiBaseUrl,
     launcherVersion: app.getVersion(),
     onWelcomeConfig: ({ discordClientId }) => {
-      void discordPresence.start({ clientId: discordClientId });
+      const clientId =
+        process.env.MCLAUNCH_DISCORD_CLIENT_ID?.trim() || discordClientId || "";
+      void discordPresence.start({ clientId });
+      if (clientId) discordSocial.configure(clientId);
     },
   });
 
