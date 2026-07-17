@@ -53,6 +53,7 @@ const preloadSecondaryPrivateRoutes = async (): Promise<void> => {
     import('./presentation/pages/Servers'),
     import('./presentation/pages/Settings'),
     import('./presentation/pages/SkinStudio'),
+    import('./presentation/pages/Credits'),
     import('./presentation/pages/ActivityDetails'),
     import('./presentation/pages/StatisticsDetails'),
     import('./presentation/pages/VersionsDetails'),

@@ -1,86 +1,88 @@
-/**
- * @file FeaturesListSection.tsx
- * @description Sección de características con Grid Glassmorphism y detalles avanzados.
- */
 import { useTranslation } from "react-i18next";
-import { LayoutGrid, ShieldCheck, Paintbrush, Cpu } from "lucide-react";
+import { FiGrid, FiShield, FiEdit3, FiCpu } from "react-icons/fi";
+import { Card } from "../atoms/Card";
+import { Reveal } from "../atoms/Reveal";
 
 export function FeaturesListSection() {
   const { t } = useTranslation();
 
   const features = [
     {
-      icon: <LayoutGrid className="text-primary" size={40} strokeWidth={1.5} />,
+      icon: <FiGrid size={20} strokeWidth={1.5} />,
       title: t("features.f1_title"),
       desc: t("features.f1_desc"),
+      delay: 0,
     },
     {
-      icon: <ShieldCheck className="text-primary" size={40} strokeWidth={1.5} />,
+      icon: <FiShield size={20} strokeWidth={1.5} />,
       title: t("features.f2_title"),
       desc: t("features.f2_desc"),
+      delay: 100,
     },
     {
-      icon: <Paintbrush className="text-primary" size={40} strokeWidth={1.5} />,
+      icon: <FiEdit3 size={20} strokeWidth={1.5} />,
       title: t("features.f3_title"),
       desc: t("features.f3_desc"),
+      delay: 200,
     },
     {
-      icon: <Cpu className="text-primary" size={40} strokeWidth={1.5} />,
+      icon: <FiCpu size={20} strokeWidth={1.5} />,
       title: t("features.f4_title"),
       desc: t("features.f4_desc"),
-    }
+      delay: 300,
+    },
   ];
 
   return (
-    <section id="features" className="relative w-full py-20 sm:py-24 lg:py-32 scroll-mt-20">
-      
-      {/* Minecraft-style Section Header */}
-      <div className="max-w-6xl mx-auto px-4 mb-10 sm:mb-16">
-        <div className="flex items-center gap-4 text-primary font-mono text-xs sm:text-base tracking-[0.2em] uppercase min-w-0">
-          <div className="px-4 sm:px-6 py-2 bg-surface border-2 border-surfaceLight mc-cutout-small font-bold text-textMain shrink-0">
-            01 // {t("features.title")}
-          </div>
-          <div className="flex-1 h-px border-t-2 border-dashed border-surfaceLight" />
+    <section id="features" className="relative w-full scroll-mt-24 py-16 sm:py-28">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.015]" aria-hidden>
+        <div className="absolute left-1/4 top-0 grid grid-cols-6 gap-1 -translate-x-1/2 -translate-y-1/3 rotate-12 scale-[2]">
+          {Array.from({ length: 36 }, (_, i) => (
+            <div
+              key={i}
+              className="size-4 border border-white/20"
+              style={{
+                background: i % 4 === 0 ? 'rgba(34, 217, 93, 0.12)' : 'transparent',
+              }}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="text-center mb-12 sm:mb-24 relative z-10">
-        <p className="text-textMuted max-w-2xl mx-auto text-base sm:text-lg md:text-xl font-medium tracking-wide px-2 sm:px-0">
-          {t("features.subtitle")}
-        </p>
-      </div>
+      <Reveal variant="fade-up">
+        <div className="mb-12 max-w-2xl sm:mb-16">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.03] px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-white/40">
+            {t("features.eyebrow")}
+          </span>
+          <h2 className="mt-4 text-3xl font-black tracking-tight text-white/90 sm:text-4xl">
+            {t("features.title")}
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-white/45 sm:text-base">
+            {t("features.subtitle")}
+          </p>
+        </div>
+      </Reveal>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto relative z-10 px-4">
-        {features.map((f, i) => (
-          <div key={i} className="group relative p-6 sm:p-8 lg:p-10 bg-surface border-2 border-surfaceLight mc-cutout hover:border-primary/50 transition-all duration-500 flex flex-col gap-6 shadow-sm hover:shadow-md">
-            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none mc-cutout" />
-            <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-background border-2 border-surfaceLight flex items-center justify-center mc-cutout-small">
-              {f.icon}
-            </div>
-            <div className="flex flex-col">
-              <h3 className="text-xl sm:text-2xl font-bold text-textMain mb-3 uppercase tracking-tight">{f.title}</h3>
-              <p className="text-base text-textMuted leading-relaxed font-medium">{f.desc}</p>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {features.map((f) => (
+          <Reveal key={f.title} variant="fade-up" delay={f.delay}>
+            <Card
+              interactive
+              glass
+              className="group flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:gap-5 sm:p-7"
+            >
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.03] text-primary/80 backdrop-blur-sm transition-all duration-300 group-hover:bg-primary/[0.06] group-hover:border-primary/20 group-hover:text-primary">
+                {f.icon}
+              </span>
+              <div className="min-w-0">
+                <h3 className="text-base font-black tracking-tight text-white/90 sm:text-lg">
+                  {f.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/45">{f.desc}</p>
+              </div>
+            </Card>
+          </Reveal>
         ))}
-      </div>
-      
-      {/* Decorative background elements */}
-      <div className="absolute top-1/2 -left-64 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-1/2 -right-64 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
-
-      {/* Decorative Line Separator */}
-      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[120vw] sm:w-[110vw] overflow-hidden bg-textMain py-1.5 flex whitespace-nowrap rotate-1 z-20 pointer-events-none">
-        <div className="animate-scroll_40s_linear_infinite flex gap-4 text-background font-bold font-mono text-[9px] sm:text-[10px] tracking-[0.24em] sm:tracking-[0.3em] uppercase px-2 opacity-50">
-          {Array(15).fill(t("hero.ticker_3")).map((text, i) => (
-            <span key={`feat-a-${i}`}>{text}</span>
-          ))}
-        </div>
-        <div className="animate-scroll_40s_linear_infinite flex gap-4 text-background font-bold font-mono text-[9px] sm:text-[10px] tracking-[0.24em] sm:tracking-[0.3em] uppercase px-2 opacity-50">
-          {Array(15).fill(t("hero.ticker_3")).map((text, i) => (
-            <span key={`feat-b-${i}`}>{text}</span>
-          ))}
-        </div>
       </div>
     </section>
   );

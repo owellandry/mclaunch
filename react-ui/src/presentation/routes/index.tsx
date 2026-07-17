@@ -4,7 +4,7 @@ import { PrivateRoute } from "./PrivateRoute";
 import { PublicRoute } from "./PublicRoute";
 import loginBgGif from "@/assets/login-bg.gif";
 
-/** Avoid a black flash while lazy chunks resolve after boot. */
+/** Full boot chrome — only for first paint / public routes, not tab switches. */
 function RouteFallback() {
   return (
     <div className="fixed inset-0 z-[150] bg-black">
@@ -52,11 +52,14 @@ const Servers = lazy(() =>
 const Settings = lazy(() =>
   import("@/presentation/pages/Settings").then((module) => ({ default: module.Settings })),
 );
+const Credits = lazy(() =>
+  import("@/presentation/pages/Credits").then((module) => ({ default: module.Credits })),
+);
 const SkinStudio = lazy(() =>
   import("@/presentation/pages/SkinStudio").then((module) => ({ default: module.SkinStudio })),
 );
 
-const withSuspense = (element: ReactElement) => (
+const withBootSuspense = (element: ReactElement) => (
   <Suspense fallback={<RouteFallback />}>{element}</Suspense>
 );
 
@@ -66,7 +69,7 @@ export const router = createHashRouter([
     children: [
       {
         path: "/onboarding",
-        element: withSuspense(<Onboarding />),
+        element: withBootSuspense(<Onboarding />),
       },
     ],
   },
@@ -75,17 +78,20 @@ export const router = createHashRouter([
     children: [
       {
         path: "/",
-        element: withSuspense(<MainLayout />),
+        element: withBootSuspense(<MainLayout />),
         children: [
           { index: true, element: <Navigate to="/dashboard" replace /> },
-          { path: "dashboard", element: withSuspense(<Dashboard />) },
-          { path: "dashboard/activity", element: withSuspense(<ActivityDetails />) },
-          { path: "dashboard/statistics", element: withSuspense(<StatisticsDetails />) },
-          { path: "dashboard/versions", element: withSuspense(<VersionsDetails />) },
-          { path: "library", element: withSuspense(<Library />) },
-          { path: "servers", element: withSuspense(<Servers />) },
-          { path: "profile", element: withSuspense(<SkinStudio />) },
-          { path: "settings", element: withSuspense(<Settings />) },
+          // Lazy pages — Suspense lives once in MainLayout (no full-screen flash).
+          // KeepAliveOutlet caches visited pages so return visits stay warm.
+          { path: "dashboard", element: <Dashboard /> },
+          { path: "dashboard/activity", element: <ActivityDetails /> },
+          { path: "dashboard/statistics", element: <StatisticsDetails /> },
+          { path: "dashboard/versions", element: <VersionsDetails /> },
+          { path: "library", element: <Library /> },
+          { path: "servers", element: <Servers /> },
+          { path: "credits", element: <Credits /> },
+          { path: "profile", element: <SkinStudio /> },
+          { path: "settings", element: <Settings /> },
         ],
       },
     ],

@@ -1,75 +1,81 @@
-/**
- * @file Footer.tsx
- * @description Pie de página con selector de idioma, links legales y copyright.
- */
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import { Globe } from "lucide-react";
 
 export function Footer() {
   const { t, i18n } = useTranslation();
 
   const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
+    void i18n.changeLanguage(lng);
   };
 
+  const langs = [
+    { id: "es", label: "ES" },
+    { id: "en", label: "EN" },
+    { id: "pt", label: "PT" },
+  ] as const;
+
   return (
-    <footer className="relative z-10 w-full bg-surface mt-auto overflow-hidden">
-      <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
-      <div className="h-1 w-full border-t-2 border-dashed border-surfaceLight" />
-
-      <div className="absolute inset-0 opacity-[0.03] [background-image:linear-gradient(var(--color-primary)_1px,transparent_1px),linear-gradient(90deg,var(--color-primary)_1px,transparent_1px)] [background-size:32px_32px] pointer-events-none" />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 flex flex-col lg:flex-row justify-between items-center lg:items-start gap-12">
-        <div className="flex flex-col items-center lg:items-start gap-6">
-          <Link to="/" className="flex items-center gap-4 group">
-            <div className="h-10 w-10 bg-primary mc-cutout-small flex items-center justify-center shadow-[0_4px_0_var(--color-primary-shadow)] group-hover:-translate-y-1 transition-transform">
-              <div className="w-4 h-4 border-2 border-white/80 mc-cutout-small" />
-            </div>
-            <strong className="text-3xl font-black uppercase tracking-tighter text-textMain group-hover:text-primary transition-colors">Slaumcher</strong>
+    <footer className="relative z-10 mt-auto w-full border-t border-white/[0.04]">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 sm:px-6 lg:flex-row lg:items-start lg:justify-between lg:px-8 lg:py-14">
+        <div className="max-w-md">
+          <Link to="/" className="inline-flex items-center gap-2.5">
+            <img
+              src="/logo_slaumcher.png"
+              alt="Slaumcher"
+              className="size-7"
+            />
+            <strong className="text-sm font-black tracking-tight text-white/70">
+              Slaumcher
+            </strong>
           </Link>
-          <div className="text-xs font-bold uppercase tracking-[0.2em] text-textMuted text-center lg:text-left max-w-xs leading-relaxed">
-            {t("footer.rights")}
-          </div>
+          <p className="mt-4 text-xs leading-relaxed text-white/35">{t("footer.rights")}</p>
+          <p className="mt-3 text-[11px] leading-relaxed text-white/25">{t("footer.disclaimer")}</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center lg:items-start gap-10 sm:gap-16">
-          <div className="flex flex-col items-center sm:items-start gap-4">
-            <span className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-2">{t("footer.section_legal")}</span>
-            <Link to="/privacy" className="text-sm font-bold uppercase tracking-widest text-textMain hover:text-primary transition-colors relative group">
+        <div className="flex flex-col gap-8 sm:flex-row sm:gap-14">
+          <div className="flex flex-col gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">
+              {t("footer.section_legal")}
+            </span>
+            <Link
+              to="/privacy"
+              className="text-sm font-bold text-white/60 transition-colors hover:text-white/90"
+            >
               {t("footer.privacy")}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
             </Link>
-            <Link to="/terms" className="text-sm font-bold uppercase tracking-widest text-textMain hover:text-primary transition-colors relative group">
+            <Link
+              to="/terms"
+              className="text-sm font-bold text-white/60 transition-colors hover:text-white/90"
+            >
               {t("footer.terms")}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
             </Link>
           </div>
 
-          <div className="flex flex-col items-center sm:items-start gap-4">
-            <span className="text-[10px] text-primary font-bold uppercase tracking-[0.3em] mb-2">{t("footer.section_language")}</span>
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs font-bold uppercase tracking-widest text-textMuted bg-background px-4 py-3 border-2 border-surfaceLight mc-cutout shadow-sm">
-              <Globe size={16} className="text-primary" />
-              <button 
-                onClick={() => changeLanguage('es')} 
-                className={`transition-colors px-2 py-1 ${i18n.language?.startsWith('es') ? 'bg-primary text-white mc-cutout-small' : 'hover:text-textMain'}`}
-              >ES</button>
-              <button 
-                onClick={() => changeLanguage('en')} 
-                className={`transition-colors px-2 py-1 ${i18n.language?.startsWith('en') ? 'bg-primary text-white mc-cutout-small' : 'hover:text-textMain'}`}
-              >EN</button>
-              <button 
-                onClick={() => changeLanguage('pt')} 
-                className={`transition-colors px-2 py-1 ${i18n.language?.startsWith('pt') ? 'bg-primary text-white mc-cutout-small' : 'hover:text-textMain'}`}
-              >PT</button>
+          <div className="flex flex-col gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-white/35">
+              {t("footer.section_language")}
+            </span>
+            <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm p-1">
+              {langs.map((lng) => {
+                const active = i18n.language?.startsWith(lng.id);
+                return (
+                  <button
+                    key={lng.id}
+                    type="button"
+                    onClick={() => changeLanguage(lng.id)}
+                    className={`cursor-pointer rounded-full px-3.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${
+                      active
+                        ? "bg-white text-[#08100C] shadow-sm"
+                        : "text-white/40 hover:text-white/80"
+                    }`}
+                  >
+                    {lng.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
-      </div>
-      <div className="w-full bg-background py-4 border-t-2 border-surfaceLight flex justify-center px-4">
-        <span className="text-[10px] font-mono font-bold text-textMuted uppercase tracking-[0.25em] sm:tracking-[0.4em] text-center">
-          {t("footer.status")}
-        </span>
       </div>
     </footer>
   );

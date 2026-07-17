@@ -28,10 +28,6 @@ export default defineConfig({
             return 'vendor-router'
           }
 
-          if (id.includes('/lucide-react/')) {
-            return 'vendor-icons'
-          }
-
           return undefined
         },
       },

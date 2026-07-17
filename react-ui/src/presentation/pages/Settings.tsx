@@ -141,6 +141,7 @@ export function Settings() {
                 <button
                   key={item.id}
                   type="button"
+                  aria-label={item.name}
                   onClick={() => setLogo(item.id)}
                   className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border p-2 transition-all ${
                     logo === item.id
@@ -148,7 +149,12 @@ export function Settings() {
                       : "border-white/10 bg-white/[0.03] hover:border-white/20"
                   }`}
                 >
-                  <img src={getLogoSrc(item.id)} alt={item.name} className="h-10 w-10 object-contain" />
+                  <img
+                    src={getLogoSrc(item.id)}
+                    alt=""
+                    aria-hidden
+                    className="h-10 w-10 object-contain"
+                  />
                   <span className="text-[9px] font-bold uppercase tracking-wider text-white/50">
                     {item.name.split(" ")[0]}
                   </span>

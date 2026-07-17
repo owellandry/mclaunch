@@ -1,30 +1,40 @@
-/**
- * @file TermsAndConditions.tsx
- * @description Página de Términos y Condiciones
- */
 import { useTranslation } from "react-i18next";
-import { FileText } from "lucide-react";
+import { FiFileText } from "react-icons/fi";
+import { Card } from "../components/atoms/Card";
+import { Link } from "react-router-dom";
 
 export function TermsAndConditions() {
   const { t } = useTranslation();
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-20 sm:py-24 lg:py-32 min-h-[85vh] animate-in fade-in duration-500 px-4 sm:px-0">
-      <div className="flex flex-col items-start gap-8 mb-16">
-        <div className="w-20 h-20 bg-surface border-2 border-surfaceLight flex items-center justify-center mc-cutout">
-          <FileText className="text-primary" size={40} strokeWidth={1.5} />
+    <div className="w-full max-w-3xl py-12 sm:py-16 animate-[fade-in_0.35s_cubic-bezier(0.22,1,0.36,1)_forwards]">
+      <Link
+        to="/"
+        className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/45 transition-colors hover:text-white"
+      >
+        ← {t("nav.home")}
+      </Link>
+
+      <div className="mt-8 mb-10 flex items-start gap-4">
+        <span className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[var(--surface-elevated)]">
+          <FiFileText className="text-primary" size={22} strokeWidth={1.75} />
+        </span>
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-hero-eyebrow)]">
+            {t("terms.eyebrow")}
+          </span>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-[var(--color-hero-heading)] sm:text-4xl">
+            {t("terms.title")}
+          </h1>
         </div>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black uppercase tracking-tighter text-textMain">
-          {t("terms.title")}
-        </h1>
       </div>
 
-      <div className="space-y-8 sm:space-y-10 text-textMuted font-medium leading-relaxed text-base sm:text-lg lg:text-xl max-w-3xl">
+      <div className="space-y-4 text-sm leading-relaxed text-white/55 sm:text-base">
         <p>{t("terms.p1")}</p>
         <p>{t("terms.p2")}</p>
-        <div className="p-6 sm:p-8 bg-surface border-l-4 border-l-primary mc-cutout shadow-sm">
-          <p className="text-textMain font-bold">{t("terms.p3")}</p>
-        </div>
+        <Card className="border-primary/20 bg-primary/5 p-5 sm:p-6">
+          <p className="font-semibold text-white/80">{t("terms.p3")}</p>
+        </Card>
       </div>
     </div>
   );

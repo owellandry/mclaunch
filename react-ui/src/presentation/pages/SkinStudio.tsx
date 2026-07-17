@@ -279,7 +279,8 @@ export function SkinStudio() {
               {activeSkinUrl ? (
                 <img
                   src={activeSkinUrl}
-                  alt={t("skin_studio.texture_alt")}
+                  alt=""
+                  aria-label={t("skin_studio.texture_alt")}
                   className="mx-auto max-h-[320px] w-full object-contain [image-rendering:pixelated]"
                 />
               ) : (

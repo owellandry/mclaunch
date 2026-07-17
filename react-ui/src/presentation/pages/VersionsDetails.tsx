@@ -15,8 +15,10 @@ export function VersionsDetails() {
   const setConfig = useAppStore((state) => state.setConfig);
 
   useEffect(() => {
+    // Skip when catalog already lives in the store (keep-alive / return visits)
+    if (versionCatalog !== null) return;
     void fetchVersionCatalog();
-  }, [fetchVersionCatalog]);
+  }, [fetchVersionCatalog, versionCatalog]);
 
   const versions = versionCatalog?.versions ?? [];
   const installedVersions = useMemo(

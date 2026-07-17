@@ -96,7 +96,8 @@ export const MinecraftAvatar = memo(function MinecraftAvatar({
   return (
     <img
       src={avatarUrl}
-      alt={`Avatar de ${username}`}
+      alt=""
+      aria-label={username}
       className={`bg-surfaceLight rounded-lg [image-rendering:pixelated] ${transitionClass} ${className}`}
       style={{ width: size, height: size }}
       loading="lazy"

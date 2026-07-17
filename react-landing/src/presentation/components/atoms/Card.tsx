@@ -1,20 +1,23 @@
-/**
- * @file Card.tsx
- * @description Componente atómico Card. Un contenedor básico con estilo glassmorphism.
- *
- * Patrón: Atomic Design
- */
 import type { ReactNode } from "react";
 
 interface CardProps {
   children: ReactNode;
   className?: string;
-  cutout?: boolean;
+  interactive?: boolean;
+  glass?: boolean;
 }
 
-export function Card({ children, className = "", cutout = true }: CardProps) {
+export function Card({ children, className = "", interactive = false, glass = false }: CardProps) {
+  const base = glass
+    ? "rounded-xl border border-white/[0.06] bg-[var(--surface-glass)] backdrop-blur-xl"
+    : "rounded-xl border border-white/10 bg-[var(--surface-elevated)]";
+
+  const hover = interactive
+    ? "transition-all duration-300 hover:border-white/20 hover:bg-[var(--surface-card-hover-alpha)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.3)]"
+    : "";
+
   return (
-    <div className={`glass-panel ${cutout ? 'mc-cutout' : 'rounded-2xl'} ${className}`}>
+    <div className={`${base} ${hover} ${className}`}>
       {children}
     </div>
   );

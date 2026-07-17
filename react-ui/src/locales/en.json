@@ -3,6 +3,7 @@
     "dashboard": "Home",
     "library": "Library",
     "servers": "Servers",
+    "credits": "Credits",
     "settings": "Settings"
   },
   "topbar": {
@@ -242,5 +243,34 @@
     "squad": "Squad",
     "social_presence": "Social presence",
     "visual_friends": "Visual friends list."
+  },
+  "credits": {
+    "eyebrow": "Community",
+    "title": "Credits & support",
+    "description": "The people behind Slaumcher, plus channels for help and project updates.",
+    "team": "Team",
+    "support_title": "Support & links",
+    "support_desc": "Join the support channel, visit the site, or browse the launcher repository.",
+    "visit_profile": "Visit",
+    "thanks": "Thanks for using Slaumcher. If something breaks or you have ideas, the support channel is the best place to talk.",
+    "roles": {
+      "studio": "Studio",
+      "development": "Development"
+    },
+    "bios": {
+      "cubytlab": "Studio behind the visual identity, branding, and creative direction of the launcher.",
+      "owellandry": "Launcher development, Electron, backend, and product integrations."
+    },
+    "links": {
+      "discord": "Support channel",
+      "website": "Website",
+      "github": "GitHub"
+    },
+    "trademark": "Slaumcher is an independent project and is not affiliated with, associated with, authorized by, or endorsed by Mojang Studios, Microsoft, or Minecraft. Minecraft is a trademark of Mojang / Microsoft.",
+    "link_hints": {
+      "discord": "Help, announcements, and community on Discord.",
+      "website": "cubytlab and project news.",
+      "github": "Source, issues, and contributions."
+    }
   }
 }

@@ -1,55 +1,60 @@
 {
   "nav": {
     "features": "Recursos",
-    "download": "Baixar"
+    "download": "Baixar",
+    "home": "Início"
   },
   "hero": {
-    "badge": "A Nova Era dos Launchers",
-    "title_1": "Jogue",
-    "title_mc": "Minecraft",
-    "title_2": "Sem Limites",
-    "desc": "Um launcher atômico, ultra-rápido e visualmente espetacular. Suporte nativo para contas Microsoft e mods Fabric integrados.",
+    "badge": "Launcher independente",
+    "title_1": "Jogue com",
+    "title_brand": "Slaumcher",
+    "title_2": "Rápido. Limpo. Seu.",
+    "desc": "Um launcher moderno e ultra-rápido, com a mesma linguagem visual do app desktop Slaumcher. Contas Microsoft, versões e ferramentas em um só lugar.",
     "btn_download": "Baixar Slaumcher",
-    "detected": "Detectado para",
-    "ticker_1": "// EXPERIMENTE O LAUNCHER DA PRÓXIMA GERAÇÃO ",
-    "ticker_2": "// JOGUE COM AMIGOS // EXPLORE NOVOS MUNDOS ",
-    "ticker_3": "+++ PROTEJA SUA CONTA +++ ATUALIZAÇÕES RÁPIDAS +++ SUPORTE A MODS "
+    "btn_all_platforms": "Todas as plataformas",
+    "detected": "Detectado",
+    "independent": "Não afiliado à Mojang",
+    "players": "jogadores online"
   },
   "features": {
-    "title": "Projetado para o Futuro",
-    "subtitle": "Não é apenas um launcher, é uma extensão da sua experiência de jogo.",
-    "f1_title": "Design Atômico",
-    "f1_desc": "Interface Glassmorphism ultra rápida com animações fluidas.",
-    "f2_title": "Contas Premium",
-    "f2_desc": "Suporte nativo e seguro usando MSMC para contas oficiais da Microsoft.",
-    "f3_title": "Mod Injetável",
-    "f3_desc": "Menu principal Java totalmente reimaginado mostrando sua skin 3D.",
-    "f4_title": "Alto Desempenho",
-    "f4_desc": "Otimizado com Electron, Vite e React para consumir o mínimo de memória RAM."
+    "eyebrow": "Produto",
+    "title": "Desenhado como o launcher",
+    "subtitle": "A mesma interface glass, tipografia e superfícies do app — agora na web.",
+    "f1_title": "Interface glass",
+    "f1_desc": "Cards com blur, bordas suaves e hover sutil. O mesmo chrome do dashboard.",
+    "f2_title": "Contas Microsoft",
+    "f2_desc": "Login seguro com contas oficiais. Seus tokens ficam na sua máquina.",
+    "f3_title": "Skin studio",
+    "f3_desc": "Visualização de skin, capas e ferramentas de perfil no launcher.",
+    "f4_title": "Performance real",
+    "f4_desc": "Electron + React otimizados para iniciar rápido e usar pouca memória."
   },
   "download": {
+    "eyebrow": "Instalar",
     "title": "Multiplataforma",
-    "subtitle": "Baixe a versão oficial para o seu sistema operacional e comece a desfrutar de uma experiência de jogo sem precedentes.",
+    "subtitle": "Escolha seu sistema. A opção recomendada é destacada conforme o que detectamos.",
     "recommended": "Recomendado"
   },
   "footer": {
-    "rights": "© 2026 Slaumcher. Não associado à Mojang ou Microsoft.",
+    "rights": "© 2026 Slaumcher.",
+    "disclaimer": "Slaumcher é um projeto independente e não é afiliado, associado, autorizado nem endossado pela Mojang Studios, Microsoft ou Minecraft. Minecraft é uma marca registrada da Mojang / Microsoft.",
     "privacy": "Privacidade",
     "terms": "Termos",
-    "section_legal": "// LEGAL",
-    "section_language": "// IDIOMA",
-    "status": "SISTEMA OFFLINE [ // ]"
+    "section_legal": "Legal",
+    "section_language": "Idioma"
   },
   "privacy": {
-    "title": "Políticas de Privacidade",
-    "p1": "Na Slaumcher, levamos a sua privacidade a sério. Não coletamos telemetria, não vendemos seus dados e não rastreamos suas sessões de jogo.",
-    "p2": "Seus tokens da Microsoft são armazenados exclusivamente em um banco de dados SQLite criptografado localmente na sua máquina.",
-    "p3": "Se você tiver dúvidas sobre como lidamos com as informações, pode revisar o código aberto em nosso repositório."
+    "eyebrow": "Legal",
+    "title": "Política de privacidade",
+    "p1": "No Slaumcher levamos sua privacidade a sério. Não coletamos telemetria invasiva, não vendemos seus dados e não rastreamos suas sessões de jogo.",
+    "p2": "Seus tokens da Microsoft ficam armazenados localmente na sua máquina.",
+    "p3": "Se tiver dúvidas, você pode revisar o código-fonte aberto no nosso repositório."
   },
   "terms": {
-    "title": "Termos e Condições",
-    "p1": "O software é fornecido 'como está', sem garantia de qualquer tipo, expressa ou implícita. Slaumcher não é um produto oficial do Minecraft ou da Mojang Studios.",
-    "p2": "O uso deste launcher requer uma cópia legítima (Premium) do Minecraft associada a uma conta Microsoft válida.",
-    "p3": "Ao baixar este software, você concorda com nossa licença MIT de código aberto."
+    "eyebrow": "Legal",
+    "title": "Termos e condições",
+    "p1": "O software é fornecido «como está», sem garantia de qualquer tipo. Slaumcher não é um produto oficial do Minecraft, Mojang Studios ou Microsoft, e não é afiliado a eles.",
+    "p2": "O uso deste launcher requer uma cópia legítima do Minecraft associada a uma conta Microsoft válida quando aplicável.",
+    "p3": "Ao baixar este software, você aceita a licença MIT de código aberto do projeto."
   }
 }

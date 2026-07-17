@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { FiActivity, FiBarChart2, FiPackage } from "react-icons/fi";
 import type { ReactNode } from "react";
+import { HoverLabel } from "@/presentation/design-system";
 
 type HeroRightPanelProps = {
   weeklyActivity: number[];
@@ -14,7 +15,7 @@ type HeroRightPanelProps = {
 
 /** Same chrome as Titlebar SearchBox: elevated surface + white/10 border + rounded-lg */
 const chrome =
-  "bg-[var(--surface-elevated)] border border-white/10 rounded-lg transition-colors hover:border-primary/50";
+  "rounded-2xl border border-white/[0.06] bg-white/[0.03] px-4 py-3 backdrop-blur-2xl transition-colors hover:border-primary/50";
 
 function formatSeconds(total: number): string {
   if (total <= 0) return "0m";
@@ -36,7 +37,7 @@ function PanelBlock({
   children: ReactNode;
 }) {
   return (
-    <div className={`w-full min-w-0 px-4 py-3 ${chrome}`}>
+    <div className={`w-full min-w-0 ${chrome}`}>
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-3 text-white">
           <span className="shrink-0 text-white/60">{icon}</span>
@@ -76,12 +77,19 @@ export function HeroRightPanel({
           {weeklyActivity.map((value, index) => {
             const height = value <= 0 ? 8 : Math.max(12, Math.round((value / max) * 100));
             return (
-              <div
+              <HoverLabel
                 key={index}
-                className="flex-1 rounded-sm bg-primary/50 transition-colors hover:bg-primary/70"
-                style={{ height: `${height}%` }}
-                title={formatSeconds(value)}
-              />
+                label={formatSeconds(value)}
+                side="top"
+                className="min-h-0 min-w-0 flex-1 self-end"
+                labelClassName="normal-case tracking-normal font-mono"
+              >
+                <div
+                  className="w-full rounded-sm bg-primary/50 transition-colors hover:bg-primary/70"
+                  style={{ height: `${height}%` }}
+                  aria-label={formatSeconds(value)}
+                />
+              </HoverLabel>
             );
           })}
         </div>

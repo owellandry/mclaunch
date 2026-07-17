@@ -1,42 +1,32 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        background: '#e5e5e5', // Light stone gray
-        surface: '#f4f4f5', // Nearly white
-        surfaceLight: '#d4d4d8', // Gray for borders/accents
-        primary: 'var(--color-primary)', 
-        primaryHover: 'var(--color-primary-hover)',
-        primaryShadow: 'var(--color-primary-shadow)',
-        secondary: '#ef4444', // Red
-        textMain: '#18181b', // Dark gray almost black
-        textMuted: '#52525b', // Medium gray
+        background: "#08100C",
+        surface: "#070D0F",
+        surfaceLight: "#0E171B",
+        primary: "var(--color-primary)",
+        primaryHover: "var(--color-primary-hover)",
+        primaryShadow: "var(--color-primary-shadow)",
+        secondary: "#ff3b5c",
+        textMain: "#F5F7F7",
+        textMuted: "#A8B3B5",
+        line: "#294047",
+        panel: "#070D0F",
+        panel2: "#0E171B",
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace'],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        heading: ["Anton", "sans-serif"],
+        mono: ['"JetBrains Mono"', "monospace"],
       },
-      keyframes: {
-        scroll: {
-          '0%': { transform: 'translateX(0)' },
-          '100%': { transform: 'translateX(-100%)' },
-        },
-        scroll_reverse: {
-          '0%': { transform: 'translateX(-100%)' },
-          '100%': { transform: 'translateX(0)' },
-        }
+      borderRadius: {
+        xl: "12px",
+        "2xl": "16px",
       },
-      animation: {
-        'scroll_20s_linear_infinite': 'scroll 20s linear infinite',
-        'scroll_30s_linear_infinite_reverse': 'scroll_reverse 30s linear infinite',
-        'scroll_40s_linear_infinite': 'scroll 40s linear infinite',
-      }
     },
   },
   plugins: [],
-}
+};
