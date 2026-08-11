@@ -3,7 +3,7 @@ import { useOutlet, useLocation } from "react-router-dom";
 import { PageShell } from "@/presentation/layout/PageShell";
 
 /** Routes that own full-bleed layout (no PageShell padding). */
-const FULL_BLEED = new Set(["/dashboard", "/credits"]);
+const FULL_BLEED = new Set(["/dashboard", "/credits", "/library", "/servers"]);
 
 function isFullBleed(pathname: string): boolean {
   return FULL_BLEED.has(pathname);

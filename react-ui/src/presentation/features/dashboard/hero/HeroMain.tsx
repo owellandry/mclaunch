@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { FiChevronRight, FiHardDrive, FiCpu } from "react-icons/fi";
+import { FiChevronRight, FiClock, FiCpu } from "react-icons/fi";
 
 type HeroMainProps = {
   versionId: string;
@@ -8,7 +8,6 @@ type HeroMainProps = {
   isInstalled: boolean;
   memoryMb: number;
   hoursPlayed: number;
-  playerName: string;
 };
 
 export function HeroMain({
@@ -17,7 +16,6 @@ export function HeroMain({
   isInstalled,
   memoryMb,
   hoursPlayed,
-  playerName,
 }: HeroMainProps) {
   const { t } = useTranslation();
 
@@ -38,60 +36,55 @@ export function HeroMain({
       </span>
 
       <h1
-        className="mt-[clamp(0.85rem,2.2vh,1.75rem)] mb-[clamp(0.85rem,2vh,1.4rem)] font-[Inter] font-black leading-[0.9] tracking-tight text-[var(--color-hero-heading)]"
+        className="mt-[clamp(0.7rem,1.8vh,1.35rem)] mb-[clamp(0.7rem,1.6vh,1.15rem)] font-black leading-[0.92] tracking-tight text-[var(--color-hero-heading)]"
         style={{ fontSize: "var(--hero-title-size)" }}
       >
         Minecraft {versionId || "—"}
       </h1>
 
       <p
-        className="w-full max-w-[var(--hero-body-max)] font-[Inter] leading-relaxed text-[var(--color-hero-description)]/90"
+        className="w-full max-w-[var(--hero-body-max)] leading-relaxed text-[var(--color-hero-description)]/80"
         style={{ fontSize: "var(--hero-body-size)" }}
       >
         {t("dashboard.hero_desc")}
       </p>
 
-      <div className="mt-[clamp(1.1rem,2.8vh,1.75rem)] flex flex-wrap items-center gap-2 sm:gap-3">
+      <div className="mt-[clamp(1rem,2.4vh,1.5rem)] flex flex-wrap items-center gap-x-4 gap-y-2">
         <span
-          className={`inline-flex items-center rounded-lg border px-3.5 py-2 font-bold uppercase tracking-[0.14em] sm:px-4 sm:py-2.5 ${
+          className={`inline-flex items-center rounded-full px-3 py-1 font-bold uppercase tracking-[0.14em] ${
             isInstalled
-              ? "border-primary/40 bg-primary/15 text-primary"
-              : "border-white/15 bg-[var(--surface-elevated)] text-white/60"
+              ? "bg-primary/20 text-primary"
+              : "bg-white/10 text-white/70"
           }`}
           style={{ fontSize: "var(--hero-meta-size)" }}
         >
           {isInstalled ? t("dashboard.installed_version") : t("dashboard.available_version")}
         </span>
-        <span
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3.5 py-2 font-bold uppercase tracking-[0.12em] text-white/70 sm:px-4 sm:py-2.5"
-          style={{ fontSize: "var(--hero-meta-size)" }}
-        >
-          <FiCpu className="shrink-0 opacity-70" style={{ fontSize: "1.05em" }} />
-          {memoryMb} MB
-        </span>
-        <span
-          className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[var(--surface-elevated)] px-3.5 py-2 font-bold uppercase tracking-[0.12em] text-white/70 sm:px-4 sm:py-2.5"
-          style={{ fontSize: "var(--hero-meta-size)" }}
-        >
-          <FiHardDrive className="shrink-0 opacity-70" style={{ fontSize: "1.05em" }} />
-          {hoursPlayed.toFixed(1)}h
-        </span>
-      </div>
 
-      <div className="mt-[clamp(1.15rem,3.2vh,2.25rem)] flex flex-wrap items-center gap-3 sm:gap-5">
         <span
-          className="font-bold tracking-wide text-white"
-          style={{ fontSize: "var(--hero-body-size)" }}
+          className="inline-flex items-center gap-3 text-white/55"
+          style={{ fontSize: "var(--hero-meta-size)" }}
         >
-          {playerName}
+          <span className="inline-flex items-center gap-1.5">
+            <FiCpu className="opacity-70" style={{ fontSize: "1.05em" }} />
+            {memoryMb} MB
+          </span>
+          <span className="text-white/25" aria-hidden>
+            ·
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <FiClock className="opacity-70" style={{ fontSize: "1.05em" }} />
+            {hoursPlayed.toFixed(1)}h
+          </span>
         </span>
+
         <Link
           to="/dashboard/versions"
-          className="inline-flex items-center gap-1.5 font-bold uppercase tracking-[0.16em] text-[var(--color-hero-eyebrow)] transition-colors hover:text-white"
+          className="inline-flex items-center gap-1 font-bold uppercase tracking-[0.14em] text-[var(--color-hero-eyebrow)] transition-colors hover:text-white"
           style={{ fontSize: "var(--hero-meta-size)" }}
         >
           {t("dashboard.select_version")}
-          <FiChevronRight className="text-[1.15em]" />
+          <FiChevronRight className="text-[1.1em]" />
         </Link>
       </div>
     </div>

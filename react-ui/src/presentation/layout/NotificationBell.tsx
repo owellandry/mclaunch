@@ -33,30 +33,46 @@ export function NotificationBell() {
   return (
     <div className="relative" ref={notifRef}>
       <button
+        type="button"
         onClick={() => setShowNotifications(!showNotifications)}
         aria-label={t("topbar.notifications")}
-        className={`w-10 h-10 flex items-center justify-center rounded-lg bg-[var(--surface-elevated)] border transition-colors relative cursor-pointer
-          ${showNotifications
-            ? 'border-primary/50 text-white'
-            : 'border-white/10 text-white/60 hover:text-white hover:border-primary/50'}`}
+        aria-expanded={showNotifications}
+        className={`relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border bg-[var(--surface-elevated)] transition-colors
+          ${
+            showNotifications
+              ? "border-primary/50 text-white"
+              : "border-white/10 text-white/60 hover:border-primary/50 hover:text-white"
+          }`}
       >
         <FiBell />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {showNotifications && (
-        <div className="absolute right-0 top-12 w-80 bg-[var(--surface-overlay)] border border-white/10 rounded-xl z-50 overflow-hidden flex flex-col animate-[fade-in_0.35s_cubic-bezier(0.22,1,0.36,1)_forwards]">
-          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest">{t("topbar.notifications")}</h3>
-            <div className="flex gap-2">
-              <button onClick={markAllAsRead} className="text-white/40 hover:text-primary transition-colors" aria-label={t("topbar.mark_all_read")}>
+        <div className="absolute right-0 top-12 z-50 flex w-80 flex-col overflow-hidden rounded-2xl border border-white/[0.1] bg-[var(--surface-elevated)]/95 shadow-[0_24px_60px_rgba(0,0,0,0.5)] backdrop-blur-xl animate-[fade-in_0.35s_cubic-bezier(0.22,1,0.36,1)_forwards]">
+          <div className="flex items-center justify-between border-b border-white/[0.08] bg-white/[0.03] px-4 py-3.5">
+            <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-white">
+              {t("topbar.notifications")}
+            </h3>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={markAllAsRead}
+                className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/5 hover:text-primary"
+                aria-label={t("topbar.mark_all_read")}
+              >
                 <FiCheck />
               </button>
-              <button onClick={clearAll} className="text-white/40 hover:text-red-500 transition-colors" aria-label={t("topbar.clear_all")}>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/5 hover:text-red-400"
+                aria-label={t("topbar.clear_all")}
+              >
                 <FiTrash2 />
               </button>
             </div>
@@ -64,36 +80,39 @@ export function NotificationBell() {
 
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-white/40 text-xs">
+              <div className="px-6 py-10 text-center text-xs text-white/40">
                 {t("topbar.no_notifications")}
               </div>
             ) : (
               notifications.map((notif) => (
-                <div
+                <button
+                  type="button"
                   key={notif.id}
                   onClick={() => markAsRead(notif.id)}
-                  className={`p-4 border-b border-white/5 flex gap-3 cursor-pointer hover:bg-white/5 transition-colors ${!notif.read ? 'bg-primary/5' : ''}`}
+                  className={`flex w-full cursor-pointer gap-3 border-b border-white/[0.05] p-4 text-left transition-colors hover:bg-white/[0.04] ${
+                    !notif.read ? "bg-primary/[0.06]" : ""
+                  }`}
                 >
-                  <div className="shrink-0 mt-1">
-                    {getNotificationIcon(notif.type)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h4 className={`text-sm truncate ${!notif.read ? 'font-bold text-white' : 'text-white/80'}`}>
-                        {notif.title}
-                      </h4>
-                    </div>
-                    <p className="text-xs text-white/50 line-clamp-2 leading-relaxed">
+                  <div className="mt-0.5 shrink-0">{getNotificationIcon(notif.type)}</div>
+                  <div className="min-w-0 flex-1">
+                    <h4
+                      className={`truncate text-sm ${
+                        !notif.read ? "font-bold text-white" : "font-medium text-white/75"
+                      }`}
+                    >
+                      {notif.title}
+                    </h4>
+                    <p className="mt-1 text-xs leading-relaxed text-white/45 line-clamp-2">
                       {notif.message}
                     </p>
-                    <span className="text-[10px] text-white/30 block mt-2 font-mono">
+                    <span className="mt-2 block font-mono text-[10px] text-white/30">
                       {timeAgo(notif.timestamp, (key, opts) => String(t(key, opts)))}
                     </span>
                   </div>
-                  {!notif.read && (
-                    <div className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
-                  )}
-                </div>
+                  {!notif.read ? (
+                    <div className="mt-1.5 size-2 shrink-0 rounded-full bg-primary" />
+                  ) : null}
+                </button>
               ))
             )}
           </div>

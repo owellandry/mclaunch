@@ -234,6 +234,9 @@ const api = {
   minimizeWindow: (): void => ipcRenderer.send("window:minimize"),
   maximizeWindow: (): void => ipcRenderer.send("window:maximize"),
   closeWindow: (): void => ipcRenderer.send("window:close"),
+  /** compact = boot/onboarding; expanded = home / launcher shell */
+  setWindowLayout: (mode: "compact" | "expanded"): Promise<boolean> =>
+    ipcRenderer.invoke("window:setLayout", mode),
 
   /**
    * Suscripción a logs del launcher (retorna función de cleanup automática)

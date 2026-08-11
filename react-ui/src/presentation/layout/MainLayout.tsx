@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Titlebar } from "@/presentation/layout/Titlebar";
 import { Sidebar } from "@/presentation/layout/Sidebar";
 import { KeepAliveOutlet } from "@/presentation/layout/KeepAliveOutlet";
+import { NotificationToaster } from "@/presentation/layout/NotificationToaster";
+import { useWindowLayout } from "@/presentation/lib/windowLayout";
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -15,6 +17,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 export function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  useWindowLayout("expanded");
 
   // Esc → dashboard (default home of the launcher shell)
   useEffect(() => {
@@ -40,6 +43,7 @@ export function MainLayout() {
       <main className="flex-1 flex flex-col relative z-10 overflow-hidden min-w-0">
         <KeepAliveOutlet />
       </main>
+      <NotificationToaster />
     </div>
   );
 }

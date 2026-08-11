@@ -121,8 +121,8 @@ const ROTATION_X_MIN = -55;
 const ROTATION_X_MAX = 35;
 const DRAG_SENSITIVITY_X = 0.5;
 const DRAG_SENSITIVITY_Y = 0.35;
-const FIGURE_OFFSET_X = "-50% - 4px";
-const FIGURE_OFFSET_Y = "-42%";
+const FIGURE_OFFSET_X = "-50%";
+const FIGURE_OFFSET_Y = "-48%";
 
 function toPixels(value: number, pixelSize: number): number {
   return value * pixelSize;
@@ -130,6 +130,7 @@ function toPixels(value: number, pixelSize: number): number {
 
 function faceBackgroundStyle(slice: Slice, textureUrl: string, textureInfo: TextureInfo, pixelSize: number) {
   return {
+    backgroundColor: "transparent",
     backgroundImage: `url("${textureUrl}")`,
     backgroundRepeat: "no-repeat",
     backgroundSize: `${textureInfo.width * pixelSize}px ${textureInfo.height * pixelSize}px`,
@@ -225,14 +226,53 @@ function Cuboid({
   const halfWidth = width / 2;
   const halfHeight = height / 2;
   const halfDepth = depth / 2;
+  // Tiny Z bias reduces z-fighting between base mesh and overlay layer.
+  const zBias = inflate > 0 ? 0.35 : 0;
 
   const faceStyles = [
-    { key: "front", slice: faces.front, width, height, transform: `rotateY(0deg) translateZ(${halfDepth}px)` },
-    { key: "back", slice: faces.back, width, height, transform: `rotateY(180deg) translateZ(${halfDepth}px)` },
-    { key: "left", slice: faces.left, width: depth, height, transform: `rotateY(90deg) translateZ(${halfWidth}px)` },
-    { key: "right", slice: faces.right, width: depth, height, transform: `rotateY(-90deg) translateZ(${halfWidth}px)` },
-    { key: "top", slice: faces.top, width, height: depth, transform: `rotateX(90deg) translateZ(${halfHeight}px)` },
-    { key: "bottom", slice: faces.bottom, width, height: depth, transform: `rotateX(-90deg) translateZ(${halfHeight}px)` },
+    {
+      key: "front",
+      slice: faces.front,
+      width,
+      height,
+      transform: `rotateY(0deg) translateZ(${halfDepth + zBias}px)`,
+    },
+    {
+      key: "back",
+      slice: faces.back,
+      width,
+      height,
+      transform: `rotateY(180deg) translateZ(${halfDepth + zBias}px)`,
+    },
+    {
+      key: "left",
+      slice: faces.left,
+      width: depth,
+      height,
+      transform: `rotateY(90deg) translateZ(${halfWidth + zBias}px)`,
+    },
+    {
+      key: "right",
+      slice: faces.right,
+      width: depth,
+      height,
+      transform: `rotateY(-90deg) translateZ(${halfWidth + zBias}px)`,
+    },
+    {
+      key: "top",
+      slice: faces.top,
+      width,
+      height: depth,
+      transform: `rotateX(90deg) translateZ(${halfHeight + zBias}px)`,
+    },
+    {
+      key: "bottom",
+      slice: faces.bottom,
+      width,
+      height: depth,
+      // Flip UV so Minecraft bottom faces aren't upside-down.
+      transform: `rotateX(-90deg) translateZ(${halfHeight + zBias}px) rotateZ(180deg)`,
+    },
   ];
 
   return (
@@ -240,14 +280,16 @@ function Cuboid({
       {faceStyles.map((face) => (
         <div
           key={face.key}
-          className="absolute left-1/2 top-1/2 overflow-hidden"
+          className="absolute left-1/2 top-1/2"
           style={{
             width: face.width,
             height: face.height,
             marginLeft: -face.width / 2,
             marginTop: -face.height / 2,
             transform: face.transform,
-            backfaceVisibility: "hidden",
+            // hidden backfaces cause missing limbs while orbiting in Chromium/Electron
+            backfaceVisibility: "visible",
+            WebkitBackfaceVisibility: "visible",
             ...faceBackgroundStyle(face.slice, textureUrl, textureInfo, pixelSize),
           }}
         />
@@ -412,10 +454,10 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
   if (!deferredTextureUrl || !textureInfo) {
     return (
       <div
-        className={`rounded-xl bg-surfaceLight/70 border border-white/5 flex items-center justify-center text-textMuted ${className}`}
+        className={`flex items-center justify-center rounded-xl border border-white/10 bg-black/20 text-xs font-bold uppercase tracking-[0.16em] text-white/40 ${className}`}
         style={{ width: 30 * pixelSize, height: 42 * pixelSize }}
       >
-        Skin no disponible
+        …
       </div>
     );
   }
@@ -424,18 +466,18 @@ export const MinecraftSkinFigure = memo(function MinecraftSkinFigure({
 
   return (
     <div
-      className={`[perspective:1400px] [transform-style:preserve-3d] touch-none cursor-grab select-none relative ${isDragging ? "cursor-grabbing" : ""} ${className}`}
+      key={deferredTextureUrl}
+      className={`relative touch-none select-none [perspective:1400px] [transform-style:preserve-3d] ${
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      } ${className}`}
       style={{
-        width: 30 * p,
-        height: 42 * p,
+        width: 32 * p,
+        height: 48 * p,
       }}
       aria-label="Vista completa de la skin 3D"
       onPointerDown={handlePointerDown}
       onDoubleClick={resetView}
     >
-      <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/25 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.25em] text-white/80 backdrop-blur">
-        Arrastra
-      </div>
       <div
         ref={rotationGroupRef}
         className="absolute left-1/2 top-1/2"

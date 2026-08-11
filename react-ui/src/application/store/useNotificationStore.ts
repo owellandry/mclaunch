@@ -1,7 +1,7 @@
 /**
  * @file useNotificationStore.ts
  * @description Store de notificaciones. Sistema centralizado para despachar y gestionar alertas o mensajes (info, error, success).
- * 
+ *
  * Patrón: Atomic Design
  */
 import { create } from "zustand";
@@ -19,15 +19,22 @@ export interface NotificationItem {
 
 export interface NotificationStore {
   notifications: NotificationItem[];
+  /** Currently visible toast stack (surface alerts without opening the bell). */
+  toasts: NotificationItem[];
   unreadCount: number;
   addNotification: (title: string, message: string, type?: NotificationType) => void;
+  dismissToast: (id: string) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearAll: () => void;
 }
 
+const MAX_HISTORY = 40;
+const MAX_TOASTS = 4;
+
 export const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: [],
+  toasts: [],
   unreadCount: 0,
   addNotification: (title, message, type = "info") => {
     const newNotification: NotificationItem = {
@@ -39,8 +46,14 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
       timestamp: Date.now(),
     };
     set((state) => ({
-      notifications: [newNotification, ...state.notifications],
+      notifications: [newNotification, ...state.notifications].slice(0, MAX_HISTORY),
+      toasts: [newNotification, ...state.toasts].slice(0, MAX_TOASTS),
       unreadCount: state.notifications.filter((n) => !n.read).length + 1,
+    }));
+  },
+  dismissToast: (id) => {
+    set((state) => ({
+      toasts: state.toasts.filter((n) => n.id !== id),
     }));
   },
   markAsRead: (id) => {
@@ -56,6 +69,6 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
     }));
   },
   clearAll: () => {
-    set({ notifications: [], unreadCount: 0 });
+    set({ notifications: [], toasts: [], unreadCount: 0 });
   },
 }));

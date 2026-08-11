@@ -8,11 +8,13 @@ type HeroActionsRowProps = {
   onLaunch: () => void;
 };
 
-/** Shared large sizing so hero CTAs match the rest of the dashboard scale. */
-const heroBtnSize =
-  "!min-h-[3.25rem] !px-8 !py-3.5 !text-sm !font-extrabold !tracking-[0.12em] !uppercase sm:!min-h-[3.5rem] sm:!px-10 sm:!text-[0.9375rem]";
+const primarySize =
+  "!min-h-[3rem] !px-9 !py-3 !text-sm !font-extrabold !tracking-[0.12em] !uppercase sm:!min-h-[3.25rem] sm:!px-10";
 
-/** Play/Download + Games side by side (same row). */
+const secondarySize =
+  "!min-h-[3rem] !px-6 !py-3 !text-xs !font-bold !tracking-[0.1em] !uppercase sm:!min-h-[3.25rem]";
+
+/** Primary launch CTA + quieter library link, grouped with hero copy. */
 export function HeroActionsRow({
   isLaunchDisabled,
   launchLabel,
@@ -21,17 +23,17 @@ export function HeroActionsRow({
   const { t } = useTranslation();
 
   return (
-    <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
+    <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-3">
       <Button
         onClick={onLaunch}
         disabled={isLaunchDisabled}
-        className={`${heroBtnSize} !min-w-[9.5rem] sm:!min-w-[11rem]`}
+        className={`${primarySize} !min-w-[9rem] sm:!min-w-[10.5rem]`}
       >
         {launchLabel}
       </Button>
       <Link to="/library">
-        <Button variant="secondary" type="button" className={`${heroBtnSize} !min-w-[8.5rem] sm:!min-w-[10rem]`}>
-          {t("dashboard.games")} ›
+        <Button variant="secondary" type="button" className={secondarySize}>
+          {t("dashboard.games")}
         </Button>
       </Link>
     </div>

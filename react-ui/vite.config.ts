@@ -6,7 +6,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      // Bun workspaces can nest a second React under @gsap/react; force one copy.
+      react: path.resolve(__dirname, 'node_modules/react'),
+      'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
     },
+    dedupe: ['react', 'react-dom'],
   },
   base: './',
   plugins: [
@@ -49,6 +53,7 @@ export default defineConfig({
 
   optimizeDeps: {
     exclude: ['better-sqlite3'],
+    include: ['gsap', '@gsap/react'],
   },
 
   build: {

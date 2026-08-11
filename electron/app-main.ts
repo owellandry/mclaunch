@@ -176,6 +176,17 @@ const registerWindowControls = (): void => {
   });
   ipcMain.on("window:close", () => mainWindow?.close());
   try {
+    ipcMain.removeHandler("window:setLayout");
+  } catch {
+    // ignore
+  }
+  ipcMain.handle("window:setLayout", (_event, mode: unknown) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return false;
+    if (mode !== "compact" && mode !== "expanded") return false;
+    applyWindowLayout(mainWindow, mode);
+    return true;
+  });
+  try {
     ipcMain.removeHandler("shell:openExternal");
   } catch {
     // ignore
@@ -188,20 +199,47 @@ const registerWindowControls = (): void => {
   });
 };
 
-const resizeWindowToHalfScreen = (window: BrowserWindow): void => {
+type WindowLayoutMode = "compact" | "expanded";
+
+const COMPACT_WINDOW = {
+  width: 880,
+  height: 560,
+  minWidth: 720,
+  minHeight: 460,
+} as const;
+
+const EXPANDED_WINDOW = {
+  minWidth: 960,
+  minHeight: 620,
+} as const;
+
+let currentWindowLayout: WindowLayoutMode | null = null;
+
+const applyWindowLayout = (window: BrowserWindow, mode: WindowLayoutMode): void => {
+  if (currentWindowLayout === mode) return;
+  currentWindowLayout = mode;
+
   const display = screen.getDisplayMatching(window.getBounds());
   const { width, height, x, y } = display.workArea;
-  const targetWidth = Math.max(960, Math.floor(width / 2));
-  const targetHeight = Math.max(620, Math.floor(height / 2));
-  const targetX = x + Math.floor((width - targetWidth) / 2);
-  const targetY = y + Math.floor((height - targetHeight) / 2);
 
-  window.setBounds({
-    x: targetX,
-    y: targetY,
-    width: targetWidth,
-    height: targetHeight,
-  });
+  if (mode === "compact") {
+    if (window.isMaximized()) window.unmaximize();
+    window.setMinimumSize(COMPACT_WINDOW.minWidth, COMPACT_WINDOW.minHeight);
+    const targetWidth = Math.min(COMPACT_WINDOW.width, Math.max(COMPACT_WINDOW.minWidth, width - 48));
+    const targetHeight = Math.min(COMPACT_WINDOW.height, Math.max(COMPACT_WINDOW.minHeight, height - 48));
+    window.setBounds({
+      x: x + Math.floor((width - targetWidth) / 2),
+      y: y + Math.floor((height - targetHeight) / 2),
+      width: targetWidth,
+      height: targetHeight,
+    });
+    return;
+  }
+
+  window.setMinimumSize(EXPANDED_WINDOW.minWidth, EXPANDED_WINDOW.minHeight);
+  if (window.isMaximized()) return;
+  window.setBounds({ x, y, width, height });
+  window.maximize();
 };
 
 const resolveWindowIconPath = (runtimePaths: DesktopRuntimePaths): string => {
@@ -223,10 +261,10 @@ const createWindow = async (runtimePaths: DesktopRuntimePaths): Promise<void> =>
   const iconPath = resolveWindowIconPath(runtimePaths);
 
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 760,
-    minWidth: 960,
-    minHeight: 620,
+    width: COMPACT_WINDOW.width,
+    height: COMPACT_WINDOW.height,
+    minWidth: COMPACT_WINDOW.minWidth,
+    minHeight: COMPACT_WINDOW.minHeight,
     title: "Slaumcher",
     icon: iconPath,
     frame: false,
@@ -243,12 +281,15 @@ const createWindow = async (runtimePaths: DesktopRuntimePaths): Promise<void> =>
   });
 
   mainWindow.removeMenu();
-  mainWindow.on("closed", () => (mainWindow = null));
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+    currentWindowLayout = null;
+  });
   registerAuthPopupSupport(mainWindow);
 
   mainWindow.once("ready-to-show", () => {
     if (!mainWindow) return;
-    resizeWindowToHalfScreen(mainWindow);
+    applyWindowLayout(mainWindow, "compact");
     mainWindow.show();
     if (isDev && shouldOpenDevTools) mainWindow.webContents.openDevTools({ mode: "detach" });
   });

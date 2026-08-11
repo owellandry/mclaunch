@@ -34,7 +34,6 @@ export function Dashboard() {
   const weeklyActivity = useLauncherStore((state) => state.weeklyActivity);
   const statistics = useLauncherStore((state) => state.statistics);
 
-  const profile = useAppStore((state) => state.profile);
   const config = useAppStore((state) => state.config);
 
   const versionId = useMemo(() => {
@@ -59,7 +58,6 @@ export function Dashboard() {
       isInstalled={isInstalled}
       memoryMb={config.memoryMb}
       hoursPlayed={statistics.hours_played}
-      playerName={profile?.username || t("topbar.player")}
       isLaunchDisabled={isBusy}
       launchLabel={launchLabel}
       onLaunch={launch}

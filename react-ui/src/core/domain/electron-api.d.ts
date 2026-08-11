@@ -160,6 +160,8 @@ export type ElectronApi = {
   minimizeWindow: () => void;
   maximizeWindow: () => void;
   closeWindow: () => void;
+  /** compact = boot/onboarding; expanded = home / launcher shell */
+  setWindowLayout: (mode: "compact" | "expanded") => Promise<boolean>;
   onLauncherLog: (callback: (message: string) => void) => () => void;
   onLauncherProgress: (callback: (progress: { type: string; task: number; total: number }) => void) => () => void;
   onLauncherStatus: (callback: (status: LauncherStatus) => void) => () => void;

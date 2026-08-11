@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { useRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { gsap, useGSAP } from "@/presentation/lib/gsap";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -23,12 +24,57 @@ export function Button({
   icon,
   children,
   className = "",
+  onMouseEnter,
+  onMouseLeave,
   ...props
 }: ButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null);
+
+  useGSAP(
+    (_context, contextSafe) => {
+      const el = ref.current;
+      if (!el || !contextSafe || variant === "ghost") return;
+
+      const mm = gsap.matchMedia();
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const enter = contextSafe(() => {
+          gsap.to(el, {
+            scale: 1.035,
+            duration: 0.28,
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+        });
+        const leave = contextSafe(() => {
+          gsap.to(el, {
+            scale: 1,
+            duration: 0.32,
+            ease: "power2.out",
+            overwrite: "auto",
+          });
+        });
+
+        el.addEventListener("pointerenter", enter);
+        el.addEventListener("pointerleave", leave);
+        return () => {
+          el.removeEventListener("pointerenter", enter);
+          el.removeEventListener("pointerleave", leave);
+        };
+      });
+
+      return () => mm.revert();
+    },
+    { scope: ref, dependencies: [variant] },
+  );
+
   return (
     <button
+      ref={ref}
       type="button"
-      className={`inline-flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer will-change-transform ${variants[variant]} ${className}`}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       {...props}
     >
       {icon ? <span className="text-base leading-none">{icon}</span> : null}

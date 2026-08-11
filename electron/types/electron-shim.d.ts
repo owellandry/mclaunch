@@ -41,6 +41,9 @@ declare module "electron" {
     close(): void;
     show(): void;
     isDestroyed(): boolean;
+    setBounds(bounds: { x: number; y: number; width: number; height: number }): void;
+    getBounds(): { x: number; y: number; width: number; height: number };
+    setMinimumSize(width: number, height: number): void;
     once(event: "ready-to-show", listener: () => void): void;
     on(event: "closed", listener: () => void): void;
     webContents: WebContents;
@@ -75,6 +78,7 @@ declare module "electron" {
   export const ipcMain: {
     on(channel: string, listener: (...args: any[]) => void): void;
     handle(channel: string, listener: (...args: any[]) => unknown): void;
+    removeHandler(channel: string): void;
   };
 
   export const ipcRenderer: {
@@ -86,6 +90,16 @@ declare module "electron" {
 
   export const contextBridge: {
     exposeInMainWorld(apiKey: string, api: unknown): void;
+  };
+
+  export const shell: {
+    openExternal(url: string): Promise<void>;
+  };
+
+  export const screen: {
+    getDisplayMatching(rect: { x: number; y: number; width: number; height: number }): {
+      workArea: { x: number; y: number; width: number; height: number };
+    };
   };
 }
 

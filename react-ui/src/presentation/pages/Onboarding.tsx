@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaMicrosoft } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/application/store/useAppStore";
 import { useNotificationStore } from "@/application/store/useNotificationStore";
 import { WindowControls } from "@/presentation/layout/WindowControls";
+import { gsap, useGSAP } from "@/presentation/lib/gsap";
+import { useWindowLayout } from "@/presentation/lib/windowLayout";
 import loginBgGif from "@/assets/login-bg.gif";
 
 export function Onboarding() {
@@ -16,6 +18,68 @@ export function Onboarding() {
   const { t } = useTranslation();
   const memoryMb = 4096;
   const gameDir = "./slaumcher_data";
+  const rootRef = useRef<HTMLDivElement>(null);
+  useWindowLayout("compact");
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.from(rootRef.current, { opacity: 0, duration: 0.2, ease: "none" });
+      });
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const bg = rootRef.current?.querySelector<HTMLElement>("[data-onboard-bg]");
+        const copy = gsap.utils.toArray<HTMLElement>("[data-onboard-copy] > *");
+        const card = rootRef.current?.querySelector<HTMLElement>("[data-onboard-card]");
+        const credit = rootRef.current?.querySelector<HTMLElement>("[data-onboard-credit]");
+
+        if (bg) {
+          gsap.fromTo(
+            bg,
+            { scale: 1.12, opacity: 0.6 },
+            { scale: 1, opacity: 1, duration: 1.6, ease: "power2.out" },
+          );
+        }
+
+        if (copy.length) {
+          gsap.from(copy, {
+            y: 36,
+            opacity: 0,
+            filter: "blur(10px)",
+            duration: 0.85,
+            stagger: 0.1,
+            delay: 0.15,
+          });
+        }
+
+        if (card) {
+          gsap.from(card, {
+            y: 40,
+            opacity: 0,
+            scale: 0.94,
+            filter: "blur(8px)",
+            duration: 0.75,
+            delay: 0.28,
+            ease: "power3.out",
+          });
+        }
+
+        if (credit) {
+          gsap.from(credit, {
+            opacity: 0,
+            y: 8,
+            duration: 0.5,
+            delay: 0.7,
+          });
+        }
+      });
+
+      return () => mm.revert();
+    },
+    { scope: rootRef },
+  );
 
   const handleMicrosoftLogin = async () => {
     setIsLoggingIn(true);
@@ -38,12 +102,16 @@ export function Onboarding() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--surface-dashboard)] p-6">
+    <div
+      ref={rootRef}
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--surface-dashboard)] p-6"
+    >
       <img
+        data-onboard-bg
         src={loginBgGif}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover will-change-transform"
       />
       <div className="pointer-events-none absolute inset-0 bg-[var(--surface-dashboard)]/55" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary-shadow)_0%,transparent_65%)] opacity-30" />
@@ -58,7 +126,7 @@ export function Onboarding() {
       </div>
 
       <div className="relative z-10 grid w-full max-w-4xl grid-cols-1 items-center gap-10 md:grid-cols-2">
-        <div className="text-center md:text-left">
+        <div data-onboard-copy className="text-center md:text-left">
           <p className="text-xs font-semibold tracking-wide text-[var(--color-hero-eyebrow)] drop-shadow-sm">
             SLAUMCHER
           </p>
@@ -70,7 +138,10 @@ export function Onboarding() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-[var(--surface-elevated)]/90 p-8 backdrop-blur-xl">
+        <div
+          data-onboard-card
+          className="rounded-xl border border-white/10 bg-[var(--surface-elevated)]/90 p-8 backdrop-blur-xl"
+        >
           <div className="mb-8 text-center">
             <h2 className="text-sm font-black uppercase tracking-[0.22em] text-white">
               {t("onboarding.premium_only")}
@@ -99,6 +170,7 @@ export function Onboarding() {
       </div>
 
       <a
+        data-onboard-credit
         href="https://cubyt.co/"
         target="_blank"
         rel="noopener noreferrer"

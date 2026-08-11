@@ -6,3 +6,4 @@ export { StatTile } from "./StatTile";
 export { EmptyState } from "./EmptyState";
 export { BackLink } from "./BackLink";
 export { HoverLabel } from "./HoverLabel";
+export { Modal } from "./Modal";

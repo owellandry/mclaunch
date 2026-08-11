@@ -7,6 +7,7 @@ import { router } from './presentation/routes'
 import { useLauncherStore } from './application/store/useLauncherStore'
 import { useAppStore } from './application/store/useAppStore'
 import { WindowControls } from './presentation/layout/WindowControls'
+import { setBootSplashActive, setWindowLayout } from './presentation/lib/windowLayout'
 import loginBgGif from './assets/login-bg.gif'
 import heroImage from './assets/hero.png'
 import './index.css'
@@ -52,7 +53,7 @@ const preloadSecondaryPrivateRoutes = async (): Promise<void> => {
     import('./presentation/pages/Library'),
     import('./presentation/pages/Servers'),
     import('./presentation/pages/Settings'),
-    import('./presentation/pages/SkinStudio'),
+    import('./presentation/layout/SkinStudioModal'),
     import('./presentation/pages/Credits'),
     import('./presentation/pages/ActivityDetails'),
     import('./presentation/pages/StatisticsDetails'),
@@ -313,6 +314,18 @@ function AppRoot() {
 
   const showSplash =
     splashVisible || bootstrapState.status === 'loading' || bootstrapState.status === 'error'
+
+  useEffect(() => {
+    setBootSplashActive(showSplash)
+
+    if (showSplash) {
+      setWindowLayout('compact')
+      return
+    }
+
+    const completed = Boolean(useAppStore.getState().profile?.isOnboardingCompleted)
+    setWindowLayout(completed ? 'expanded' : 'compact')
+  }, [showSplash])
 
   return (
     <div className="relative min-h-screen bg-black">

@@ -55,9 +55,6 @@ const Settings = lazy(() =>
 const Credits = lazy(() =>
   import("@/presentation/pages/Credits").then((module) => ({ default: module.Credits })),
 );
-const SkinStudio = lazy(() =>
-  import("@/presentation/pages/SkinStudio").then((module) => ({ default: module.SkinStudio })),
-);
 
 const withBootSuspense = (element: ReactElement) => (
   <Suspense fallback={<RouteFallback />}>{element}</Suspense>
@@ -90,7 +87,7 @@ export const router = createHashRouter([
           { path: "library", element: <Library /> },
           { path: "servers", element: <Servers /> },
           { path: "credits", element: <Credits /> },
-          { path: "profile", element: <SkinStudio /> },
+          { path: "profile", element: <Navigate to="/dashboard" replace /> },
           { path: "settings", element: <Settings /> },
         ],
       },
